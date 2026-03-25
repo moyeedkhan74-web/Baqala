@@ -1,0 +1,75 @@
+const Download = require('../models/Download');
+const App = require('../models/App');
+const path = require('path');
+const fs = require('fs');
+
+exports.downloadApp = async (req, res) => {
+  try {
+    const app = await App.findById(req.params.appId);
+    if (!app) {
+      return res.status(404).json({ message: 'App not found.' });
+    }
+
+    if (app.status !== 'approved') {
+      return res.status(400).json({ message: 'This app is not available for download.' });
+    }
+
+    // Record download
+    await Download.create({
+      user: req.user ? req.user._id : null,
+      app: app._id,
+      ip: req.ip
+    });
+
+    // Increment download counter
+    await App.findByIdAndUpdate(app._id, { $inc: { totalDownloads: 1 } });
+
+    // Check if file exists
+    const filePath = path.resolve(app.filePath);
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: 'File not found on server.' });
+    }
+
+    res.download(filePath, app.fileName);
+  } catch (error) {
+    console.error('Download error:', error);
+    res.status(500).json({ message: 'Server error during download.' });
+  }
+};
+
+exports.getDownloadStats = async (req, res) => {
+  try {
+    const appId = req.params.appId;
+    const app = await App.findById(appId);
+    if (!app) {
+      return res.status(404).json({ message: 'App not found.' });
+    }
+
+    const totalDownloads = await Download.countDocuments({ app: appId });
+
+    // Last 30 days breakdown
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const dailyDownloads = await Download.aggregate([
+      {
+        $match: {
+          app: app._id,
+          createdAt: { $gte: thirtyDaysAgo }
+        }
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    res.json({ totalDownloads, dailyDownloads });
+  } catch (error) {
+    console.error('Download stats error:', error);
+    res.status(500).json({ message: 'Server error.' });
+  }
+};

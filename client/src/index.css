@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background-light text-dark-800 dark:bg-background-dark dark:text-dark-100 font-sans antialiased selection:bg-accent-magenta selection:text-white transition-colors duration-500 overflow-x-hidden;
+  }
+  ::-webkit-scrollbar {
+    @apply w-1.5;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-background-light dark:bg-background-dark transition-colors duration-500;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-dark-300 hover:bg-dark-400 dark:bg-dark-700 dark:hover:bg-dark-600 rounded-full transition-colors;
+  }
+}
+
+@layer components {
+  /* Glassmorphism primitives */
+  .glass-panel {
+    @apply bg-white/70 dark:bg-surface-dark/80 backdrop-blur-xl border border-dark-200/50 dark:border-accent-violet/10 shadow-[0_8px_32px_rgba(0,0,0,0.05)] dark:shadow-glass-colorful transition-colors duration-500;
+  }
+
+  /* Typography */
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-magenta via-accent-violet to-accent-neon;
+  }
+  
+  .heading-hero {
+    @apply text-5xl md:text-7xl font-extrabold tracking-tight text-dark-900 dark:text-white mb-6 transition-colors;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply relative overflow-hidden bg-gradient-to-r from-accent-magenta to-accent-violet text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 shadow-glow-magenta active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed z-10 before:absolute before:inset-0 before:-z-10 before:bg-gradient-to-r before:from-accent-violet before:to-accent-neon before:opacity-0 hover:before:opacity-100 before:transition-opacity;
+  }
+  
+  .btn-secondary {
+    @apply glass-panel text-dark-700 dark:text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 hover:bg-dark-100 dark:hover:bg-white/10 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-success {
+    @apply bg-gradient-to-r from-emerald-600 to-accent-emerald text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 hover:shadow-[0_0_20px_-5px_rgba(16,185,129,0.5)] active:scale-95;
+  }
+
+  .btn-danger {
+    @apply bg-gradient-to-r from-red-600 to-rose-500 text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 hover:shadow-[0_0_20px_-5px_rgba(244,63,94,0.5)] active:scale-95;
+  }
+
+  /* Forms */
+  .input-field {
+    @apply w-full glass-panel rounded-xl px-4 py-3 text-dark-800 dark:text-white placeholder-dark-400 focus:outline-none focus:border-accent-violet focus:ring-1 focus:ring-accent-violet transition-all duration-300;
+  }
+  
+  .select-field {
+    @apply w-full glass-panel rounded-xl px-4 py-3 text-dark-800 dark:text-white focus:outline-none focus:border-accent-violet focus:ring-1 focus:ring-accent-violet transition-all duration-300 appearance-none bg-transparent;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase;
+  }
+  .badge-primary {
+    @apply badge bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-300 border border-primary-200 dark:border-primary-500/30;
+  }
+  .badge-success {
+    @apply badge bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30;
+  }
+  .badge-warning {
+    @apply badge bg-yellow-100 dark:bg-yellow-500/20 text-yellow-600 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-500/30;
+  }
+  .badge-danger {
+    @apply badge bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30;
+  }
+  .badge-neon {
+    @apply badge bg-cyan-100 dark:bg-accent-neon/20 text-cyan-600 dark:text-accent-neon border border-cyan-200 dark:border-accent-neon/30;
+  }
+
+  /* Utilities */
+  .glow-bg {
+    @apply absolute w-96 h-96 rounded-full blur-[120px] pointer-events-none opacity-50 dark:opacity-40;
+  }
+}
