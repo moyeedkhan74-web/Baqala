@@ -73,6 +73,29 @@ const uploadImages = multer({
   { name: 'screenshots', maxCount: 5 }
 ]);
 
+const uploadAll = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      let folder = 'uploads/apps';
+      if (file.fieldname === 'icon') folder = 'uploads/icons';
+      if (file.fieldname === 'screenshots') folder = 'uploads/screenshots';
+      cb(null, path.join(__dirname, '..', folder));
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+  }),
+  fileFilter: appFileFilter,
+  limits: {
+    fileSize: parseInt(process.env.MAX_FILE_SIZE) || 209715200 // 200MB
+  }
+}).fields([
+  { name: 'appFile', maxCount: 1 },
+  { name: 'icon', maxCount: 1 },
+  { name: 'screenshots', maxCount: 5 }
+]);
+
 const handleUploadError = (uploadFn) => (req, res, next) => {
   uploadFn(req, res, (err) => {
     if (err instanceof multer.MulterError) {
@@ -90,5 +113,6 @@ const handleUploadError = (uploadFn) => (req, res, next) => {
 
 module.exports = {
   uploadApp: handleUploadError(uploadApp),
-  uploadImages: handleUploadError(uploadImages)
+  uploadImages: handleUploadError(uploadImages),
+  uploadAll: handleUploadError(uploadAll)
 };

@@ -22,14 +22,20 @@ const AppCard = ({ app, featured = false }) => {
               className="w-32 h-32 md:w-48 md:h-48 flex-shrink-0 relative"
             >
               <div className="absolute inset-0 bg-accent-neon blur-2xl opacity-20 dark:opacity-40 group-hover:opacity-50 dark:group-hover:opacity-70 transition-opacity duration-500 rounded-full" />
-              <img src={app.icon} alt={app.title} className="w-full h-full object-cover rounded-3xl shadow-glass relative z-10 border border-white/50 dark:border-white/20 bg-white dark:bg-dark-800" />
+              <img 
+                src={app.icon} 
+                alt={app.title} 
+                className="w-full h-full object-cover rounded-3xl shadow-glass relative z-10 border border-white/50 dark:border-white/20 bg-white dark:bg-dark-800" 
+                onError={(e) => { e.target.src = 'https://uuoczotaitlitzgijltx.supabase.co/storage/v1/object/public/Baqala/icons/default_app_icon.png'; }}
+              />
             </motion.div>
             
             <div className="flex-1 text-center md:text-left">
               <h2 className="text-4xl md:text-5xl font-extrabold text-dark-900 dark:text-white mb-2 tracking-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-accent-violet group-hover:to-accent-neon transition-all duration-300">
                 {app.title}
               </h2>
-              <p className="text-lg text-accent-violet dark:text-accent-neon font-bold mb-4">{app.developer?.name || 'Unknown'}</p>
+              {app.tagline && <p className="text-lg text-gray-700 dark:text-gray-300 font-bold mb-2">{app.tagline}</p>}
+              <p className="text-lg text-accent-violet dark:text-accent-neon font-bold mb-4">{app.developerName || app.developer?.name || 'Unknown'}</p>
               <p className="text-dark-600 dark:text-gray-400 max-w-xl mb-6 line-clamp-2 md:line-clamp-3 leading-relaxed font-medium">
                 {app.description}
               </p>
@@ -63,14 +69,20 @@ const AppCard = ({ app, featured = false }) => {
           <div className="flex gap-4 relative z-10">
             <div className="relative">
               <div className="absolute inset-0 bg-accent-neon blur-xl opacity-0 group-hover:opacity-30 dark:group-hover:opacity-40 transition-opacity duration-500 rounded-full" />
-              <img src={app.icon} alt={app.title} className="w-16 h-16 rounded-2xl object-cover border border-white/50 dark:border-white/10 shadow-glass relative z-10 bg-white dark:bg-dark-800" />
+              <img 
+                src={app.icon} 
+                alt={app.title} 
+                className="w-16 h-16 rounded-2xl object-cover border border-white/50 dark:border-white/10 shadow-glass relative z-10 bg-white dark:bg-dark-800" 
+                onError={(e) => { e.target.src = 'https://uuoczotaitlitzgijltx.supabase.co/storage/v1/object/public/Baqala/icons/default_app_icon.png'; }}
+              />
             </div>
             
             <div className="flex-1 min-w-0 flex flex-col justify-center">
               <h3 className="text-lg font-bold text-dark-900 dark:text-white tracking-tight truncate group-hover:text-accent-violet dark:group-hover:text-accent-neon transition-colors">
                 {app.title}
               </h3>
-              <p className="text-sm text-dark-500 dark:text-gray-400 font-semibold truncate">{app.developer?.name || 'Unknown'}</p>
+              {app.tagline && <p className="text-xs text-dark-600 dark:text-gray-400 font-semibold truncate">{app.tagline}</p>}
+              <p className="text-sm text-dark-500 dark:text-gray-400 font-semibold truncate">{app.developerName || app.developer?.name || 'Unknown'}</p>
             </div>
           </div>
 

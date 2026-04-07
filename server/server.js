@@ -29,7 +29,7 @@ app.use(generalLimiter);
 
 // Body parsers
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Static files - serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -51,14 +51,43 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Route not found.' });
 });
 
-// Global error handler
+// Global error handler with Local File Logging
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({ message: 'Internal server error.' });
+  const statusCode = err.statusCode || 500;
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
+  // LOG TO FILE FOR ANTIGRAVITY TO DIAGNOSE
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const logPath = path.join(__dirname, 'CRASH_REPORT.txt');
+    const logEntry = `[${new Date().toISOString()}] ${req.method} ${req.path}\nError: ${err.message}\nStack: ${err.stack}\n---\n`;
+    fs.appendFileSync(logPath, logEntry);
+  } catch (logErr) {
+    console.error('Failed to write to CRASH_REPORT.txt', logErr);
+  }
+
+  console.error('SERVER CRASH:', err.message);
+  
+  res.status(statusCode).json({
+    message: isDevelopment ? err.message : 'Internal server error.',
+    error: err.message,
+    ...(isDevelopment && { stack: err.stack })
+  });
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`API: http://localhost:${PORT}/api`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
 });
