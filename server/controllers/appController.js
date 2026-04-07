@@ -265,7 +265,7 @@ exports.deleteApp = async (req, res) => {
       if (fileUrl.includes('.backblazeb2.com/')) {
         try {
           const urlParts = fileUrl.split('.backblazeb2.com/');
-          if (urlParts.length === 2) {
+          if (urlParts?.length === 2) {
             const b2Path = urlParts[1];
             // If the URL has the bucket name prepended to the subdomain, handle it
             // e.g. https://bucket.s3.region.backblazeb2.com/path
@@ -281,7 +281,7 @@ exports.deleteApp = async (req, res) => {
       else if (fileUrl.includes('/uploads/')) {
         try {
           const urlParts = fileUrl.split('/uploads/');
-          if (urlParts.length === 2) {
+          if (urlParts?.length === 2) {
             const localPath = path.join(__dirname, '..', 'uploads', urlParts[1]);
             if (fs.existsSync(localPath)) {
               fs.unlinkSync(localPath);
