@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/axios';
 import AppCard from '../components/AppCard';
 import HeroCarousel from '../components/HeroCarousel';
-import { HiSearch, HiX, HiAdjustments, HiFire, HiTrendingUp } from 'react-icons/hi';
+import { HiSearch, HiX, HiAdjustments, HiFire, HiTrendingUp, HiCollection } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 
 const Home = () => {
   const [apps, setApps] = useState([]);
+  const [myApps, setMyApps] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -37,14 +38,23 @@ const Home = () => {
   }, [debouncedSearch, category, sort]);
 
   const fetchData = async () => {
-    setLoading(true);
     try {
-      const [appsRes, catRes] = await Promise.all([
+      const token = localStorage.getItem('token');
+      const fetchPromises = [
         api.get('/apps', { params: { search: debouncedSearch, category, sort } }),
         api.get('/apps/categories')
-      ]);
-      setApps(appsRes.data.apps);
-      setCategories(catRes.data);
+      ];
+
+      if (token) {
+        fetchPromises.push(api.get('/apps/my'));
+      }
+
+      const results = await Promise.all(fetchPromises);
+      setApps(results[0].data.apps);
+      setCategories(results[1].data.categories || []);
+      if (token && results[2]) {
+        setMyApps(results[2].data.apps);
+      }
     } catch (error) {
       toast.error('Failed to load experience');
     } finally {
@@ -154,10 +164,29 @@ const Home = () => {
             >
               {/* Grid Content */}
               <section>
+                {myApps.length > 0 && !search && !category && (
+                  <div className="mb-12">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-2">
+                        <HiCollection className="w-6 h-6 text-accent-neon" />
+                        <h2 className="text-2xl font-bold text-white">Your Uploaded Projects</h2>
+                      </div>
+                      <Link to="/developer" className="text-accent-neon text-sm hover:underline font-medium">Manage All</Link>
+                    </div>
+                    <div className="flex gap-6 overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 hide-scrollbar">
+                      {myApps.map((app) => (
+                        <motion.div key={app._id} className="min-w-[280px]">
+                          <AppCard app={app} />
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {(!search && !category && sort === '-createdAt') && (
                   <div className="flex items-center gap-2 mb-6">
                     <HiTrendingUp className="w-6 h-6 text-accent-emerald" />
-                    <h2 className="text-2xl font-bold text-dark-900 dark:text-white">Trending Now</h2>
+                    <h2 className="text-2xl font-bold text-white">Trending Now</h2>
                   </div>
                 )}
                 

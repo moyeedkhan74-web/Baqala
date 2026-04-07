@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../api/axios';
+import { signInWithGoogle, firebaseEmailLogin, firebaseEmailRegister, firebaseSignOut, getFirebaseIdToken } from '../firebase';
 
 const AuthContext = createContext(null);
 
@@ -27,31 +28,53 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
+  // Email/Password login via Firebase, then verify with backend
   const login = async (email, password) => {
-    const { data } = await api.post('/auth/login', { email, password });
+    // Sign in with Firebase first
+    const firebaseCred = await firebaseEmailLogin(email, password);
+    const idToken = await firebaseCred.user.getIdToken();
+    
+    // Send Firebase ID token to backend for verification
+    const { data } = await api.post('/auth/firebase-login', { idToken });
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
     setUser(data.user);
     return data;
   };
 
-  const loginWithGoogle = async (googleToken, role = 'user') => {
-    const { data } = await api.post('/auth/google', { token: googleToken, role });
+  // Google Sign-In via Firebase popup, then verify with backend
+  const loginWithGoogle = async (role = 'user') => {
+    const result = await signInWithGoogle();
+    const idToken = await result.user.getIdToken();
+    
+    // Send Firebase ID token to backend
+    const { data } = await api.post('/auth/firebase-login', { idToken, role });
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
     setUser(data.user);
     return data;
   };
 
+  // Register via Firebase Email/Password, then create user in backend
   const register = async (name, email, password, role) => {
-    const { data } = await api.post('/auth/register', { name, email, password, role });
+    // Create Firebase user first
+    const firebaseCred = await firebaseEmailRegister(email, password);
+    const idToken = await firebaseCred.user.getIdToken();
+    
+    // Send to backend to create MongoDB user
+    const { data } = await api.post('/auth/firebase-register', { idToken, name, role });
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
     setUser(data.user);
     return data;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await firebaseSignOut();
+    } catch (e) {
+      // Silently ignore Firebase sign-out errors
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);

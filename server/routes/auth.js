@@ -1,6 +1,6 @@
 const express = require('express');
 const { body } = require('express-validator');
-const { register, login, getProfile, updateProfile, googleLogin } = require('../controllers/authController');
+const { register, login, getProfile, updateProfile, googleLogin, firebaseLogin, firebaseRegister } = require('../controllers/authController');
 const { auth } = require('../middleware/auth');
 const { authLimiter } = require('../middleware/rateLimiter');
 
@@ -20,5 +20,9 @@ router.post('/login', authLimiter, [
 router.get('/profile', auth, getProfile);
 router.put('/profile', auth, updateProfile);
 router.post('/google', authLimiter, googleLogin);
+
+// Firebase Auth routes
+router.post('/firebase-login', authLimiter, firebaseLogin);
+router.post('/firebase-register', authLimiter, firebaseRegister);
 
 module.exports = router;

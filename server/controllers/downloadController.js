@@ -10,8 +10,9 @@ exports.downloadApp = async (req, res) => {
       return res.status(404).json({ message: 'App not found.' });
     }
 
-    if (app.status !== 'approved') {
-      return res.status(400).json({ message: 'This app is not available for download.' });
+    // Allow downloading even if pending (requested for testing visibility)
+    if (app.status === 'rejected') {
+      return res.status(400).json({ message: 'This app has been rejected and is not available for download.' });
     }
 
     // Record download
@@ -24,13 +25,12 @@ exports.downloadApp = async (req, res) => {
     // Increment download counter
     await App.findByIdAndUpdate(app._id, { $inc: { totalDownloads: 1 } });
 
-    // Check if file exists
-    const filePath = path.resolve(app.filePath);
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ message: 'File not found on server.' });
+    // Return the external file URL so the client can download it directly
+    if (!app.fileUrl) {
+      return res.status(404).json({ message: 'File URL not found.' });
     }
 
-    res.download(filePath, app.fileName);
+    res.json({ downloadUrl: app.fileUrl, message: 'Download initiated' });
   } catch (error) {
     console.error('Download error:', error);
     res.status(500).json({ message: 'Server error during download.' });

@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { GoogleLogin } from '@react-oauth/google';
 import { HiUser, HiMail, HiLockClosed, HiOutlineSparkles, HiCode, HiUserGroup } from 'react-icons/hi';
+import { FcGoogle } from 'react-icons/fc';
 import toast from 'react-hot-toast';
 
 const Register = () => {
@@ -20,20 +20,24 @@ const Register = () => {
       toast.success('Identity initialized. Welcome to the network.');
       navigate('/');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Registration failed');
+      const msg = err.response?.data?.message || err.message || 'Registration failed';
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleSuccess = async (credentialResponse) => {
+  const handleGoogleRegister = async () => {
     setLoading(true);
     try {
-      await loginWithGoogle(credentialResponse.credential, formData.role);
+      await loginWithGoogle(formData.role);
       toast.success('Google Identity Verified. Welcome to the network.');
       navigate('/');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Google Auth failed');
+      const msg = err.response?.data?.message || err.message || 'Google Auth failed';
+      if (err.code !== 'auth/popup-closed-by-user') {
+        toast.error(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -127,11 +131,16 @@ const Register = () => {
           </div>
 
           <div className="flex justify-center w-full relative z-20">
-             <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => toast.error('Google Access Denied')}
-                shape="pill" size="large" theme="filled_black" width="300"
-              />
+            <button
+              onClick={handleGoogleRegister}
+              disabled={loading}
+              className="flex items-center justify-center gap-3 w-full max-w-[300px] py-3.5 px-6 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 group"
+            >
+              <FcGoogle className="w-5 h-5" />
+              <span className="text-white/90 font-semibold text-sm group-hover:text-white transition-colors">
+                Sign up with Google
+              </span>
+            </button>
           </div>
 
           <p className="mt-8 text-center text-gray-400 text-sm relative z-10">

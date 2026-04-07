@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    allowedHosts: true, // Allow localtunnel and other secure proxies to connect
     proxy: {
       '/api': {
         target: 'http://localhost:5000',

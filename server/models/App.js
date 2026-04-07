@@ -17,6 +17,11 @@ const appSchema = new mongoose.Schema({
     maxlength: [200, 'Short description cannot exceed 200 characters'],
     default: ''
   },
+  tagline: {
+    type: String,
+    maxlength: [100, 'Tagline cannot exceed 100 characters'],
+    default: ''
+  },
   category: {
     type: String,
     required: [true, 'Category is required'],
@@ -32,17 +37,21 @@ const appSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  filePath: {
+  developerName: {
     type: String,
-    required: [true, 'App file is required']
+    default: ''
+  },
+  fileUrl: {
+    type: String,
+    required: [true, 'App file URL is required']
   },
   fileName: {
     type: String,
-    required: true
+    default: 'app_file'
   },
   fileSize: {
     type: Number,
-    required: true
+    default: 0
   },
   icon: {
     type: String,
@@ -77,7 +86,7 @@ const appSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['pending', 'approved', 'rejected'],
-    default: 'pending'
+    default: 'approved'
   },
   rejectionReason: {
     type: String,

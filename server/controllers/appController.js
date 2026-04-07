@@ -1,26 +1,61 @@
 const App = require('../models/App');
 const fs = require('fs');
 const path = require('path');
+const { uploadToB2 } = require('../utils/b2Storage');
 
-exports.createApp = async (req, res) => {
+exports.createApp = async (req, res, next) => {
   try {
-    if (!req.file) {
+    // Ensure we have strings for description to prevent .substring() crashes
+    const title = String(req.body.title || '').trim();
+    const description = String(req.body.description || '').trim();
+    const shortDescription = req.body.shortDescription 
+      ? String(req.body.shortDescription).substring(0, 200) 
+      : description.substring(0, 200);
+      
+    const category = req.body.category || 'Other';
+    const version = req.body.version || '1.0.0';
+    const platform = req.body.platform || 'Cross-platform';
+    const developerName = req.body.developerName || (req.user ? req.user.name : 'Unknown');
+    const tags = req.body.tags;
+    const tagline = req.body.tagline ? String(req.body.tagline).substring(0, 100) : '';
+
+    const serverUrl = req.protocol + '://' + req.get('host');
+    const appFile = req.files && req.files.appFile ? req.files.appFile[0] : null;
+    const fileUrl = req.body.fileUrl || (appFile ? `${serverUrl}/uploads/apps/${appFile.filename}` : null);
+    const fileName = req.body.fileName || (appFile ? appFile.originalname : 'unknown');
+    const fileSize = req.body.fileSize || (appFile ? appFile.size : 0);
+
+    if (!fileUrl) {
       return res.status(400).json({ message: 'App file is required.' });
     }
 
-    const { title, description, shortDescription, category, version, platform, tags } = req.body;
+    let icon = req.body.icon || '';
+    if (req.files && req.files.icon) {
+      icon = `${serverUrl}/uploads/icons/${req.files.icon[0].filename}`;
+    }
+
+    const screenshots = req.body.screenshots || [];
+    if (req.files && req.files.screenshots) {
+      req.files.screenshots.forEach(f => {
+        screenshots.push(`${serverUrl}/uploads/screenshots/${f.filename}`);
+      });
+    }
 
     const app = await App.create({
       title,
       description,
-      shortDescription: shortDescription || description.substring(0, 200),
+      shortDescription,
+      tagline,
       category,
       developer: req.user._id,
-      filePath: req.file.path,
-      fileName: req.file.originalname,
-      fileSize: req.file.size,
-      version: version || '1.0.0',
-      platform: platform || 'Cross-platform',
+      developerName,
+      fileUrl,
+      fileName,
+      fileSize,
+      icon,
+      screenshots,
+      version,
+      platform,
       tags: tags ? (typeof tags === 'string' ? tags.split(',').map(t => t.trim()) : tags) : []
     });
 
@@ -28,15 +63,11 @@ exports.createApp = async (req, res) => {
 
     res.status(201).json({ app });
   } catch (error) {
-    console.error('Create app error:', error);
-    if (req.file) {
-      fs.unlink(req.file.path, () => {});
-    }
-    res.status(500).json({ message: 'Server error while creating app.' });
+    next(error);
   }
 };
 
-exports.uploadAppImages = async (req, res) => {
+exports.uploadAppImages = async (req, res, next) => {
   try {
     const app = await App.findById(req.params.id);
     if (!app) {
@@ -49,10 +80,22 @@ exports.uploadAppImages = async (req, res) => {
 
     const updates = {};
     if (req.files && req.files.icon && req.files.icon[0]) {
-      updates.icon = '/uploads/icons/' + req.files.icon[0].filename;
+      const iconFile = req.files.icon[0];
+      const iconBuffer = fs.readFileSync(iconFile.path);
+      const iconRes = await uploadToB2(`icons/${Date.now()}_${iconFile.filename}`, iconBuffer, iconFile.mimetype);
+      if (iconRes.success) updates.icon = iconRes.url;
+      fs.unlinkSync(iconFile.path);
     }
+
     if (req.files && req.files.screenshots) {
-      updates.screenshots = req.files.screenshots.map(f => '/uploads/screenshots/' + f.filename);
+      const screenshotUrls = [];
+      for (const f of req.files.screenshots) {
+        const buf = fs.readFileSync(f.path);
+        const res = await uploadToB2(`screenshots/${Date.now()}_${f.filename}`, buf, f.mimetype);
+        if (res.success) screenshotUrls.push(res.url);
+        fs.unlinkSync(f.path);
+      }
+      updates.screenshots = screenshotUrls;
     }
 
     const updatedApp = await App.findByIdAndUpdate(req.params.id, updates, { new: true })
@@ -60,8 +103,34 @@ exports.uploadAppImages = async (req, res) => {
 
     res.json({ app: updatedApp });
   } catch (error) {
-    console.error('Upload images error:', error);
-    res.status(500).json({ message: 'Server error while uploading images.' });
+    next(error);
+  }
+};
+
+exports.uploadPlaceholderImages = async (req, res, next) => {
+  try {
+    const result = { icon: '', screenshots: [] };
+
+    if (req.files && req.files.icon && req.files.icon[0]) {
+      const f = req.files.icon[0];
+      const buf = fs.readFileSync(f.path);
+      const sup = await uploadToB2(`icons/${Date.now()}_${f.filename}`, buf, f.mimetype);
+      if (sup.success) result.icon = sup.url;
+      fs.unlinkSync(f.path);
+    }
+
+    if (req.files && req.files.screenshots) {
+      for (const f of req.files.screenshots) {
+        const buf = fs.readFileSync(f.path);
+        const sup = await uploadToB2(`screenshots/${Date.now()}_${f.filename}`, buf, f.mimetype);
+        if (sup.success) result.screenshots.push(sup.url);
+        fs.unlinkSync(f.path);
+      }
+    }
+
+    res.json(result);
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -76,7 +145,7 @@ exports.getApps = async (req, res) => {
       limit = 12
     } = req.query;
 
-    const query = { status: 'approved' };
+    const query = { status: { $in: ['approved', 'pending'] } };
 
     if (search) {
       query.$text = { $search: search };
@@ -189,9 +258,48 @@ exports.deleteApp = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to delete this app.' });
     }
 
-    // Delete file from disk
-    if (app.filePath && fs.existsSync(app.filePath)) {
-      fs.unlinkSync(app.filePath);
+    const deleteFile = async (fileUrl) => {
+      if (!fileUrl || typeof fileUrl !== 'string') return;
+      
+      // If B2 URL
+      if (fileUrl.includes('.backblazeb2.com/')) {
+        try {
+          const urlParts = fileUrl.split('.backblazeb2.com/');
+          if (urlParts.length === 2) {
+            const b2Path = urlParts[1];
+            // If the URL has the bucket name prepended to the subdomain, handle it
+            // e.g. https://bucket.s3.region.backblazeb2.com/path
+            const cleanPath = b2Path.startsWith('/') ? b2Path.substring(1) : b2Path;
+            const { deleteFromB2 } = require('../utils/b2Storage');
+            await deleteFromB2(cleanPath);
+          }
+        } catch (err) {
+          console.error('Error deleting B2 file:', fileUrl, err);
+        }
+      } 
+      // If Local URL
+      else if (fileUrl.includes('/uploads/')) {
+        try {
+          const urlParts = fileUrl.split('/uploads/');
+          if (urlParts.length === 2) {
+            const localPath = path.join(__dirname, '..', 'uploads', urlParts[1]);
+            if (fs.existsSync(localPath)) {
+              fs.unlinkSync(localPath);
+            }
+          }
+        } catch (err) {
+          console.error('Error deleting local file:', fileUrl, err);
+        }
+      }
+    };
+
+    // Delete app payload, icon, and all screenshots
+    await deleteFile(app.fileUrl);
+    await deleteFile(app.icon);
+    if (app.screenshots && Array.isArray(app.screenshots)) {
+      for (const screenUrl of app.screenshots) {
+        await deleteFile(screenUrl);
+      }
     }
 
     await App.findByIdAndDelete(req.params.id);

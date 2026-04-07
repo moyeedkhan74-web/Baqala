@@ -72,7 +72,7 @@ const Navbar = () => {
             <Link to="/" className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${isActive('/') ? 'bg-white dark:bg-white/10 text-accent-violet dark:text-white shadow-[0_8px_32px_rgba(0,0,0,0.05)] dark:shadow-glass cursor-default' : 'text-dark-500 dark:text-gray-400 hover:text-dark-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'}`}>
               Explore
             </Link>
-            {user && (user.role === 'developer' || user.role === 'admin') && (
+            {user && (
               <>
                 <Link to="/developer" className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 flex items-center gap-2 ${isActive('/developer') ? 'bg-white dark:bg-white/10 text-accent-violet dark:text-white shadow-[0_8px_32px_rgba(0,0,0,0.05)] dark:shadow-glass cursor-default' : 'text-dark-500 dark:text-gray-400 hover:text-dark-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'}`}>
                   <HiViewGrid className="w-4 h-4" /> Dashboard
@@ -173,7 +173,7 @@ const Navbar = () => {
                 </button>
               </div>
               <Link to="/" onClick={() => setMenuOpen(false)} className="p-3 bg-white/50 dark:bg-white/5 rounded-xl text-dark-800 dark:text-gray-300 font-medium">Explore</Link>
-              {user && (user.role === 'developer' || user.role === 'admin') && (
+              {user && (
                 <>
                   <Link to="/developer" onClick={() => setMenuOpen(false)} className="p-3 bg-white/50 dark:bg-white/5 rounded-xl text-dark-800 dark:text-gray-300 font-medium flex items-center gap-2"><HiViewGrid /> Dashboard</Link>
                   <Link to="/upload" onClick={() => setMenuOpen(false)} className="p-3 bg-cyan-100 dark:bg-accent-neon/10 text-cyan-600 dark:text-accent-neon rounded-xl font-medium flex items-center gap-2 border border-cyan-200 dark:border-accent-neon/20"><HiUpload /> Upload App</Link>
