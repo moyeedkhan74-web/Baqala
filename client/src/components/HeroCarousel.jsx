@@ -9,7 +9,7 @@ const HeroCarousel = ({ apps }) => {
 
   // Create an array of featured apps (e.g. top 4 by rating, or just fallback to newest)
   const featuredApps = apps && apps.length > 0 
-    ? [...apps].sort((a, b) => b.averageRating - a.averageRating).slice(0, 4)
+    ? [...apps].sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0)).slice(0, 4)
     : [];
 
   useEffect(() => {
@@ -41,7 +41,7 @@ const HeroCarousel = ({ apps }) => {
           <div className="absolute inset-0 z-0 overflow-hidden">
             <div 
               className="absolute inset-0 bg-cover bg-center blur-3xl opacity-30 dark:opacity-20 scale-150"
-              style={{ backgroundImage: `url(${currentApp.iconUrl || 'https://via.placeholder.com/150'})` }}
+              style={{ backgroundImage: `url(${currentApp?.iconUrl || currentApp?.icon || 'https://via.placeholder.com/150'})` }}
             />
             {/* Overlay Gradient to ensure text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-background-light dark:from-background-dark via-transparent to-transparent opacity-90" />
@@ -59,7 +59,7 @@ const HeroCarousel = ({ apps }) => {
               onClick={() => navigate(`/app/${currentApp._id}`)}
             >
               <img 
-                src={currentApp.iconUrl} 
+                src={currentApp?.iconUrl || currentApp?.icon} 
                 className="w-full h-full object-cover rounded-3xl shadow-glow-violet md:shadow-[0_0_40px_-10px_rgba(139,92,246,0.6)] border border-white/20 cursor-pointer transform hover:scale-105 transition-transform" 
                 alt={currentApp.title} 
               />
@@ -73,7 +73,7 @@ const HeroCarousel = ({ apps }) => {
               >
                 <span className="badge-neon py-1 px-3 text-sm">{currentApp.category}</span>
                 <div className="flex items-center gap-1 text-yellow-500 font-bold bg-white/50 dark:bg-dark-900/50 px-3 py-1 rounded-full text-sm">
-                  <HiStar /> {currentApp.averageRating.toFixed(1)}
+                  <HiStar /> {(currentApp?.averageRating || 0).toFixed(1)}
                 </div>
               </motion.div>
 

@@ -16,7 +16,7 @@ const DeveloperDashboard = () => {
   const loadApps = async () => {
     try {
       const { data } = await api.get('/apps/my');
-      setApps(data.apps);
+      setApps(data?.apps || []);
     } catch (error) { toast.error('Failed to load your portfolio'); }
     finally { setLoading(false); }
   };
@@ -30,8 +30,8 @@ const DeveloperDashboard = () => {
     } catch (error) { toast.error('Erasure failed'); }
   };
 
-  const totalDownloads = apps.reduce((sum, app) => sum + app.totalDownloads, 0);
-  const avgRating = apps.length > 0 ? (apps.reduce((sum, app) => sum + app.averageRating, 0) / apps.length).toFixed(1) : '0.0';
+  const totalDownloads = apps.reduce((sum, app) => sum + (app.totalDownloads || 0), 0);
+  const avgRating = apps.length > 0 ? (apps.reduce((sum, app) => sum + (app.averageRating || 0), 0) / apps.length).toFixed(1) : '0.0';
 
   return (
     <div className="min-h-screen pt-24 pb-20">
@@ -147,7 +147,7 @@ const DeveloperDashboard = () => {
                       </td>
                       <td className="p-6 text-center">
                         <div className="flex flex-col items-center">
-                          <p className="text-lg font-bold text-white">{app.totalDownloads.toLocaleString()}</p>
+                          <p className="text-lg font-bold text-white">{(app.totalDownloads || 0).toLocaleString()}</p>
                           <p className="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">Transfers</p>
                         </div>
                       </td>
@@ -155,7 +155,7 @@ const DeveloperDashboard = () => {
                         <div className="flex flex-col items-center">
                           <div className="flex items-center gap-1.5">
                             <HiStar className="text-yellow-400 w-4 h-4 shadow-glow-yellow" />
-                            <span className="text-lg font-bold text-white">{app.averageRating.toFixed(1)}</span>
+                            <span className="text-lg font-bold text-white">{(app.averageRating || 0).toFixed(1)}</span>
                           </div>
                           <p className="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">Rating Index</p>
                         </div>

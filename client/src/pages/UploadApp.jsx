@@ -46,13 +46,14 @@ const UploadApp = () => {
 
       // 3. Upload Screenshots Direct to Cloud
       const screenshotUrls = [];
-      for (let i = 0; i < files.screenshots.length; i++) {
-        const s = files.screenshots[i];
+      const screenshots = files.screenshots || [];
+      for (let i = 0; i < screenshots.length; i++) {
+        const s = screenshots[i];
         const safeScreenshotName = s.name.replace(/\s+/g, '_');
         const sPath = `screenshots/${timestamp}_${i}_${safeScreenshotName}`;
         const sUrl = await uploadFileDirectly(bucket, sPath, s);
         screenshotUrls.push(sUrl);
-        setUploadProgress(60 + ((i + 1) / files.screenshots.length) * 20);
+        setUploadProgress(60 + ((i + 1) / screenshots.length) * 20);
       }
 
       // 4. Final Metadata Registration to Local Backend
@@ -202,7 +203,7 @@ const UploadApp = () => {
                 <div className="glass-panel p-6 rounded-2xl text-left bg-dark-900/50 border-white/5 max-w-md mx-auto mb-8 transition-all">
                   <p className="text-sm text-gray-400 flex justify-between mb-2"><span>Category:</span> <span className="text-white font-medium">{formData.category}</span></p>
                   <p className="text-sm text-gray-400 flex justify-between mb-2"><span>Platform:</span> <span className="text-white font-medium">{formData.platform}</span></p>
-                  <p className="text-sm text-gray-400 flex justify-between mb-6"><span>Files:</span> <span className="text-white font-medium">Binary + {1 + files.screenshots.length} Images</span></p>
+                  <p className="text-sm text-gray-400 flex justify-between mb-6"><span>Files:</span> <span className="text-white font-medium">Binary + {1 + (files.screenshots || []).length} Images</span></p>
                   
                   {/* Real-time Progress Bar */}
                   {loading && (
