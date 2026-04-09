@@ -50,10 +50,10 @@ const Home = () => {
       }
 
       const results = await Promise.all(fetchPromises);
-      setApps(results[0].data.apps);
-      setCategories(results[1].data.categories || []);
+      setApps(results[0]?.data?.apps || []);
+      setCategories(results[1]?.data?.categories || []);
       if (token && results[2]) {
-        setMyApps(results[2].data.apps);
+        setMyApps(results[2]?.data?.apps || []);
       }
     } catch (error) {
       toast.error('Failed to load experience');

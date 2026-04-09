@@ -29,8 +29,8 @@ const AppDetail = () => {
         api.get(`/apps/${id}`),
         api.get(`/reviews/${id}`)
       ]);
-      setApp(appRes.data.app);
-      setReviews(revRes.data.reviews);
+      setApp(appRes.data?.app || null);
+      setReviews(revRes.data?.reviews || []);
     } catch (error) { toast.error('Failed to load application data'); }
     finally { setLoading(false); }
   };
@@ -136,7 +136,7 @@ const AppDetail = () => {
               <div className="flex flex-wrap gap-6 mb-8 text-sm font-semibold">
                 <div className="flex items-center gap-2"><HiStar className="text-yellow-400 w-5 h-5"/> <span className="text-white text-lg">{app.averageRating?.toFixed(1) || '0.0'}</span> <span className="text-gray-500">({app.ratings?.length || 0})</span></div>
                 <div className="flex items-center gap-2 text-gray-300"><HiFolder className="w-5 h-5 text-accent-violet"/> {app.category}</div>
-                <div className="flex items-center gap-2 text-gray-300"><HiDownload className="w-5 h-5 text-accent-emerald"/> {(app.totalDownloads / 1000).toFixed(1)}k+</div>
+                <div className="flex items-center gap-2 text-gray-300"><HiDownload className="w-5 h-5 text-accent-emerald"/> {((app.totalDownloads || 0) / 1000).toFixed(1)}k+</div>
                 <div className="flex items-center gap-2 text-gray-300"><HiDeviceMobile className="w-5 h-5 text-rose-400"/> {app.platform || 'Cross-Platform'}</div>
               </div>
 
@@ -155,7 +155,7 @@ const AppDetail = () => {
           <div className="lg:col-span-2 space-y-8">
             
             {/* Screenshots Gallery */}
-            {app.screenshots?.length > 0 && (
+            {Array.isArray(app.screenshots) && app.screenshots.length > 0 && (
               <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
                 <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">Visuals <span className="w-2 h-2 rounded-full bg-accent-neon animate-pulse" /></h2>
                 <div className="flex overflow-x-auto gap-4 pb-4 hide-scrollbar snap-x">
@@ -257,11 +257,11 @@ const AppDetail = () => {
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-2xl"
             onKeyDown={(e) => {
               if (e.key === 'Escape') setSelectedImage(null);
-              if (e.key === 'ArrowRight' && app.screenshots.includes(selectedImage)) {
+              if (e.key === 'ArrowRight' && (app.screenshots || []).includes(selectedImage)) {
                 const idx = app.screenshots.indexOf(selectedImage);
                 if (idx < app.screenshots.length - 1) setSelectedImage(app.screenshots[idx+1]);
               }
-              if (e.key === 'ArrowLeft' && app.screenshots.includes(selectedImage)) {
+              if (e.key === 'ArrowLeft' && (app.screenshots || []).includes(selectedImage)) {
                 const idx = app.screenshots.indexOf(selectedImage);
                 if (idx > 0) setSelectedImage(app.screenshots[idx-1]);
               }
@@ -277,7 +277,7 @@ const AppDetail = () => {
             </motion.button>
 
             {/* Navigation Arrows (Only for Screenshots) */}
-            {app.screenshots.includes(selectedImage) && (
+            {(app.screenshots || []).includes(selectedImage) && (
               <>
                 {app.screenshots.indexOf(selectedImage) > 0 && (
                   <button 
@@ -322,9 +322,9 @@ const AppDetail = () => {
             </motion.div>
 
             {/* Pagination Dots (Only for Screenshots) */}
-            {app.screenshots.includes(selectedImage) && (
+            {(app.screenshots || []).includes(selectedImage) && (
               <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-3 z-[110]">
-                {app.screenshots.map((_, idx) => (
+                {(app.screenshots || []).map((_, idx) => (
                   <button 
                     key={idx} 
                     onClick={(e) => { e.stopPropagation(); setSelectedImage(app.screenshots[idx]); setZoomScale(1); }}

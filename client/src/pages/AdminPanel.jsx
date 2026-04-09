@@ -21,10 +21,10 @@ const AdminPanel = () => {
         setStats(data);
       } else if (tab === 'pending') {
         const { data } = await api.get('/admin/apps/pending');
-        setPendingApps(data.apps);
+        setPendingApps(data?.apps || []);
       } else if (tab === 'users') {
         const { data } = await api.get('/admin/users');
-        setUsers(data.users);
+        setUsers(data?.users || []);
       }
     } catch (e) { toast.error('System access denied'); }
     finally { setLoading(false); }
@@ -81,10 +81,10 @@ const AdminPanel = () => {
               <div className="space-y-8">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {[
-                    { label:'Total Identities', val:stats.stats.totalUsers, icon:HiUsers, color:'from-blue-600 to-cyan-400' },
-                    { label:'Architects', val:stats.stats.totalDevelopers, icon:HiUsers, color:'from-violet-600 to-purple-400' },
-                    { label:'Active Projects', val:stats.stats.totalApps, icon:HiCollection, color:'from-emerald-600 to-teal-400' },
-                    { label:'Queue Length', val:stats.stats.pendingApps, icon:HiShieldCheck, color:'from-rose-600 to-orange-400' },
+                    { label:'Total Identities', val:stats?.stats?.totalUsers ?? 0, icon:HiUsers, color:'from-blue-600 to-cyan-400' },
+                    { label:'Architects', val:stats?.stats?.totalDevelopers ?? 0, icon:HiUsers, color:'from-violet-600 to-purple-400' },
+                    { label:'Active Projects', val:stats?.stats?.totalApps ?? 0, icon:HiCollection, color:'from-emerald-600 to-teal-400' },
+                    { label:'Queue Length', val:stats?.stats?.pendingApps ?? 0, icon:HiShieldCheck, color:'from-rose-600 to-orange-400' },
                   ].map((s,i) => (
                     <div key={i} className="glass-panel p-6 rounded-[2rem] relative overflow-hidden group">
                       <div className={`absolute -right-10 -bottom-10 w-32 h-32 bg-gradient-to-tl ${s.color} opacity-20 blur-2xl group-hover:opacity-40 transition-opacity`} />

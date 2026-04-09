@@ -43,7 +43,7 @@ const AppCard = ({ app, featured = false }) => {
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mb-8">
                 <span className="badge-primary text-sm px-4 py-1.5"><HiStar className="inline mr-1 text-yellow-500" /> {app.averageRating?.toFixed(1) || '0.0'}</span>
                 <span className="badge-neon text-sm px-4 py-1.5">{app.category}</span>
-                <span className="badge-success text-sm px-4 py-1.5"><HiDownload className="inline mr-1" /> {(app.totalDownloads / 1000).toFixed(1)}k+</span>
+                <span className="badge-success text-sm px-4 py-1.5"><HiDownload className="inline mr-1" /> {((app.totalDownloads || 0) / 1000).toFixed(1)}k+</span>
               </div>
               
               <Link to={`/app/${app._id}`} className="btn-primary inline-flex items-center gap-2 text-lg px-8 py-4 w-full md:w-auto justify-center">
