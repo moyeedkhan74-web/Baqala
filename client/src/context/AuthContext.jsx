@@ -2,7 +2,15 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../api/axios';
 import { signInWithGoogle, firebaseEmailLogin, firebaseEmailRegister, firebaseSignOut, getFirebaseIdToken } from '../firebase';
 
-const AuthContext = createContext(null);
+const AuthContext = createContext({
+  user: null,
+  loading: false,
+  login: async () => {},
+  loginWithGoogle: async () => {},
+  register: async () => {},
+  logout: async () => {},
+  updateUser: () => {},
+});
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
