@@ -1,5 +1,4 @@
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { getDatabase, ref, set, get, push, update, remove } from "firebase/database";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject, uploadBytesResumable } from "firebase/storage";
@@ -18,7 +17,9 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+
+
+
 const auth = getAuth(app);
 const database = getDatabase(app);
 const storage = getStorage(app);
@@ -150,4 +151,4 @@ export const deleteFile = async (path) => {
   }
 };
 
-export { app, analytics, auth, database, storage, googleProvider };
+export { app, auth, database, storage, googleProvider };
