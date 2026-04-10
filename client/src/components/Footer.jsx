@@ -7,11 +7,8 @@ const Footer = ({ className = '' }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8 pb-8 border-b border-white/5">
           <div className="md:col-span-1">
-            <Link to="/" className="flex items-center gap-3 mb-4">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-accent-violet to-accent-neon shadow-glow-violet">
-                <HiOutlineSparkles className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-xl font-extrabold text-white">Baqala</span>
+            <Link to="/" className="flex items-center gap-3 mb-4 group">
+              <img src="/logo.png" alt="Baqala Logo" className="h-8 w-auto object-contain transition-transform duration-500 group-hover:scale-105" />
             </Link>
             <p className="text-sm text-gray-500 leading-relaxed">
               The premium destination to discover, download, and share the most innovative digital experiences.

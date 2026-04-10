@@ -43,12 +43,7 @@ const Navbar = () => {
           
           {/* Brand */}
           <Link to="/" className="flex items-center gap-3 group shrink-0">
-            <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-accent-violet to-accent-neon shadow-[0_0_20px_-5px_rgba(139,92,246,0.5)] group-hover:shadow-[0_0_20px_-5px_rgba(34,211,238,0.5)] transition-shadow duration-500">
-              <HiOutlineSparkles className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-2xl font-extrabold tracking-tight text-dark-900 dark:text-white group-hover:text-accent-violet dark:group-hover:text-accent-neon transition-colors duration-300 hidden xl:block">
-              Baqala
-            </span>
+            <img src="/logo.png" alt="Baqala Logo" className="h-8 sm:h-10 w-auto object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-[0_0_15px_rgba(34,211,238,0.3)]" />
           </Link>
 
           {/* Global Search Bar (Desktop) */}
