@@ -55,10 +55,8 @@ const Register = () => {
         <div className="glass-panel p-10 md:p-12 rounded-[2.5rem] relative overflow-hidden border-white/20">
           <div className="absolute top-0 right-0 w-64 h-64 bg-accent-emerald/10 blur-3xl rounded-full" />
           
-          <div className="text-center mb-10 relative z-10">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-emerald to-accent-neon shadow-glow-emerald mb-4">
-              <HiOutlineSparkles className="w-8 h-8 text-background-dark" />
-            </div>
+          <div className="text-center mb-10 relative z-10 flex flex-col items-center">
+            <img src="/logo.png" alt="Baqala Logo" className="h-14 sm:h-16 w-auto object-contain mb-4 drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]" />
             <h2 className="text-3xl font-extrabold text-white tracking-tight">Join the Network</h2>
             <p className="text-gray-400 mt-2">Initialize your digital identity</p>
           </div>
