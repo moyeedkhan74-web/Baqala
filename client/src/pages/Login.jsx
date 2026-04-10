@@ -59,9 +59,9 @@ const Login = () => {
         <div className="glass-panel p-10 rounded-[2.5rem] relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent-violet via-accent-neon to-accent-emerald" />
           
-          <div className="text-center mb-10 flex flex-col items-center">
-            <img src="/logo.png" alt="Baqala Logo" className="h-14 sm:h-16 w-auto object-contain mb-4 drop-shadow-[0_0_15px_rgba(139,92,246,0.3)]" />
-            <h2 className="text-3xl font-extrabold text-white tracking-tight">Welcome Back</h2>
+          <div className="text-center mb-6 flex flex-col items-center">
+            <img src="/logo.png" alt="Baqala Logo" className="h-24 sm:h-32 w-auto object-contain mb-4 drop-shadow-[0_0_15px_rgba(139,92,246,0.3)] scale-125" />
+            <h2 className="text-3xl font-extrabold text-white tracking-tight mt-2">Welcome Back</h2>
             <p className="text-gray-400 mt-2">Access your digital ecosystem</p>
           </div>
 
