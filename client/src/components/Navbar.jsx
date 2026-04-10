@@ -43,7 +43,7 @@ const Navbar = () => {
           
           {/* Brand */}
           <Link to="/" className="flex items-center gap-3 group shrink-0">
-            <img src="/logo.png" alt="Baqala Logo" className="h-8 sm:h-10 w-auto object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-[0_0_15px_rgba(34,211,238,0.3)]" />
+            <img src="/logo.png" alt="Baqala Logo" className="h-16 sm:h-20 w-auto object-contain transition-transform duration-500 group-hover:scale-[1.3] drop-shadow-[0_0_15px_rgba(34,211,238,0.3)] scale-125 origin-left" />
           </Link>
 
           {/* Global Search Bar (Desktop) */}
