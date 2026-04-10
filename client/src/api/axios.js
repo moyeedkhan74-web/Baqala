@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api'
+  baseURL: import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://baqala-kwt6.onrender.com/api' : '/api')
 });
 
 // Request interceptor to attach JWT
