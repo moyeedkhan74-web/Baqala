@@ -62,42 +62,43 @@ const AppCard = ({ app, featured = false }) => {
         <motion.div 
           whileHover={{ y: -8, scale: 1.02 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          className="relative p-5 rounded-2xl glass-panel overflow-hidden group h-full flex flex-col hover:shadow-[0_8px_32px_rgba(139,92,246,0.15)] dark:hover:shadow-[0_8px_32px_rgba(139,92,246,0.2)]"
+          className="relative p-3 sm:p-5 rounded-2xl glass-panel overflow-hidden group h-full flex flex-col hover:shadow-[0_8px_32px_rgba(139,92,246,0.15)] dark:hover:shadow-[0_8px_32px_rgba(139,92,246,0.2)]"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-accent-violet/5 to-accent-emerald/5 dark:from-accent-violet/10 dark:to-accent-emerald/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0" />
           
-          <div className="flex gap-4 relative z-10">
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 relative z-10 items-center sm:items-start text-center sm:text-left">
+            <div className="relative flex-shrink-0">
               <div className="absolute inset-0 bg-accent-neon blur-xl opacity-0 group-hover:opacity-30 dark:group-hover:opacity-40 transition-opacity duration-500 rounded-full" />
               <img 
                 src={app.icon} 
                 alt={app.title} 
-                className="w-16 h-16 rounded-2xl object-cover border border-white/50 dark:border-white/10 shadow-glass relative z-10 bg-white dark:bg-dark-800" 
+                className="w-12 h-12 sm:w-16 sm:h-16 rounded-[12px] sm:rounded-2xl object-cover border border-white/50 dark:border-white/10 shadow-glass relative z-10 bg-white dark:bg-dark-800" 
                 onError={(e) => { e.target.src = 'https://uuoczotaitlitzgijltx.supabase.co/storage/v1/object/public/Baqala/icons/default_app_icon.png'; }}
               />
             </div>
             
-            <div className="flex-1 min-w-0 flex flex-col justify-center">
-              <h3 className="text-lg font-bold text-dark-900 dark:text-white tracking-tight truncate group-hover:text-accent-violet dark:group-hover:text-accent-neon transition-colors">
+            <div className="flex-1 min-w-0 flex flex-col w-full justify-center">
+              <h3 className="text-[13px] sm:text-lg leading-tight sm:leading-normal font-bold text-dark-900 dark:text-white tracking-tight truncate group-hover:text-accent-violet dark:group-hover:text-accent-neon transition-colors">
                 {app.title}
               </h3>
-              {app.tagline && <p className="text-xs text-dark-600 dark:text-gray-400 font-semibold truncate">{app.tagline}</p>}
-              <p className="text-sm text-dark-500 dark:text-gray-400 font-semibold truncate">{app.developerName || app.developer?.name || 'Unknown'}</p>
+              {app.tagline && <p className="hidden sm:block text-xs text-dark-600 dark:text-gray-400 font-semibold truncate">{app.tagline}</p>}
+              <p className="text-[11px] sm:text-sm text-dark-500 dark:text-gray-400 font-semibold truncate mt-0.5 sm:mt-0">{app.developerName || app.developer?.name || 'Unknown'}</p>
             </div>
           </div>
 
-          <div className="mt-auto pt-5 relative z-10">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1">
-                  <HiStar className="text-yellow-500 w-4 h-4" />
-                  <span className="text-sm font-bold text-dark-800 dark:text-white">{app.averageRating?.toFixed(1) || '0.0'}</span>
+          <div className="mt-auto pt-3 sm:pt-5 relative z-10">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
+              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center sm:justify-start">
+                <div className="flex items-center gap-0.5 sm:gap-1">
+                  <HiStar className="text-yellow-500 w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="text-[11px] sm:text-sm font-bold text-dark-800 dark:text-white">{app.averageRating?.toFixed(1) || '0.0'}</span>
                 </div>
-                <span className="text-xs uppercase tracking-wider font-bold text-dark-400 dark:text-gray-500">
+                <div className="h-3 w-[1px] bg-dark-200 dark:bg-white/10 sm:hidden"></div>
+                <span className="text-[9px] sm:text-xs uppercase tracking-wider font-bold text-dark-400 dark:text-gray-500 truncate max-w-[70px] sm:max-w-none">
                   {app.category}
                 </span>
               </div>
-              <button className="bg-dark-100 dark:bg-white/5 hover:bg-dark-200 dark:hover:bg-white/15 text-dark-700 dark:text-white px-4 py-2 rounded-full text-xs font-bold transition-colors flex items-center gap-1 border border-dark-200 dark:border-white/10 group-hover:border-accent-violet/30 dark:group-hover:border-accent-neon/50">
+              <button className="w-full sm:w-auto justify-center bg-dark-100 dark:bg-white/5 hover:bg-dark-200 dark:hover:bg-white/15 text-dark-700 dark:text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-bold transition-colors flex items-center gap-1 border border-dark-200 dark:border-white/10 group-hover:border-accent-violet/30 dark:group-hover:border-accent-neon/50">
                 Get
               </button>
             </div>
