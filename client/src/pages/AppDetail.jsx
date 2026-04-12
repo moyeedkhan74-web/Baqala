@@ -187,8 +187,12 @@ const AppDetail = () => {
               {user ? (
                 <form onSubmit={submitReview} className="glass-panel p-6 rounded-3xl mb-8 border border-accent-violet/30 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-accent-violet/10 blur-3xl pointer-events-none" />
-                  <h3 className="text-lg font-semibold text-white mb-4">Transmit your feedback</h3>
-                  <div className="mb-4"><StarRating rating={userRating} setRating={setUserRating} interactive /></div>
+                  <div className="mb-4 flex flex-col gap-2">
+                    <label className="text-sm text-gray-400 font-medium">Your Rating:</label>
+                    <StarRating rating={userRating} onRate={(val) => {
+                      setUserRating(val);
+                    }} interactive size="lg" />
+                  </div>
                   <textarea
                     value={userComment} onChange={e => setUserComment(e.target.value)}
                     placeholder="Describe your experience in the matrix..." required
