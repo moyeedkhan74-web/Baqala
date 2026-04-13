@@ -122,6 +122,20 @@ const EditApp = () => {
     }
   };
 
+  const removeAllScreenshots = async () => {
+    if (!window.confirm('Wipe the entire visual gallery from the cloud? This cannot be undone.')) return;
+    setSaving(true);
+    try {
+      await api.delete(`/apps/${id}/screenshots`);
+      setApp(prev => ({ ...prev, screenshots: [] }));
+      toast.success('Gallery wiped clean!');
+    } catch (error) {
+      toast.error('Wipe operation failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleAppFileReplacement = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -296,7 +310,17 @@ const EditApp = () => {
               </div>
 
               <div>
-                <h3 className="text-xl font-bold text-white mb-6">Gallery Matrix</h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-white">Gallery Matrix</h3>
+                  {app.screenshots.length > 0 && (
+                    <button 
+                      onClick={removeAllScreenshots}
+                      className="text-xs font-bold text-rose-400 hover:text-rose-300 flex items-center gap-1.5 transition-colors"
+                    >
+                      <HiTrash className="w-3.5 h-3.5" /> Clear Entire Gallery
+                    </button>
+                  )}
+                </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                   {app.screenshots.map((ss, idx) => (
                     <div key={idx} className="relative aspect-video rounded-2xl overflow-hidden border border-white/10 group shadow-glass">

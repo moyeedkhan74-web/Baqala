@@ -1,7 +1,5 @@
-const {
-  createApp, getApps, getApp, updateApp, deleteApp, getAppDownloadLink,
   getMyApps, uploadAppImages, getCategories, uploadPlaceholderImages,
-  removeScreenshot
+  removeScreenshot, removeAllScreenshots
 } = require('../controllers/appController');
 const { initUpload, uploadChunk, combineChunks } = require('../controllers/chunkController');
 const { auth } = require('../middleware/auth');
@@ -24,5 +22,6 @@ router.post('/:id/images', auth, uploadImages, uploadAppImages);
 router.put('/:id', auth, updateApp);
 router.delete('/:id', auth, deleteApp);
 router.delete('/:id/screenshot', auth, removeScreenshot);
+router.delete('/:id/screenshots', auth, removeAllScreenshots);
 
 module.exports = router;
