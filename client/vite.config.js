@@ -8,10 +8,16 @@ export default defineConfig({
     cssCodeSplit: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-ui': ['framer-motion', 'react-icons', 'react-hot-toast'],
-          'vendor-utils': ['axios']
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+              return 'vendor-react';
+            }
+            if (id.includes('framer-motion') || id.includes('react-icons') || id.includes('react-hot-toast')) {
+              return 'vendor-ui';
+            }
+            return 'vendor-utils';
+          }
         }
       }
     }

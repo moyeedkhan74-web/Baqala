@@ -1,5 +1,5 @@
 const App = require('../models/App');
-const { uploadToB2, deleteFromB2 } = require('../utils/b2Storage');
+const { uploadToB2, deleteFromB2, getDownloadUrl } = require('../utils/b2Storage');
 const sharp = require('sharp');
 
 // Helper to optimize and upload images directly to cloud
@@ -15,11 +15,40 @@ const optimizeAndUpload = async (file, folder = 'icons') => {
       .webp({ quality: 80 })
       .toBuffer();
 
-    const result = await uploadToB2(filePath, buffer, 'image/webp');
+    // Default to Public bucket for photos
+    const result = await uploadToB2(filePath, buffer, 'image/webp', false);
     return result.success ? result.url : null;
   } catch (err) {
     console.error(`Optimization error [${folder}]:`, err);
     return null;
+  }
+};
+
+exports.getAppDownloadLink = async (req, res, next) => {
+  try {
+    const app = await App.findById(req.params.id);
+    if (!app) return res.status(404).json({ message: 'App not found.' });
+    
+    // Extract path from B2 URL
+    // e.g. https://baqalaaa.s3.us-east-005.backblazeb2.com/apps/123_app.zip
+    const urlParts = app.fileUrl.split('.backblazeb2.com/');
+    if (urlParts.length !== 2) {
+      return res.status(400).json({ message: 'Invalid file URL format.' });
+    }
+    const b2Path = urlParts[1].startsWith('/') ? urlParts[1].substring(1) : urlParts[1];
+    
+    const result = await getDownloadUrl(b2Path);
+    if (!result.success) {
+      return res.status(500).json({ message: 'Failed to generate download link.' });
+    }
+
+    // Increment download count
+    app.totalDownloads += 1;
+    await app.save();
+
+    res.json({ downloadUrl: result.url });
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -41,12 +70,12 @@ exports.createApp = async (req, res, next) => {
     let fileName = req.body.fileName || 'unknown';
     let fileSize = req.body.fileSize || 0;
 
-    // If appFile is uploaded (non-chunked), upload to B2 directly from memory
+    // If appFile is uploaded (non-chunked), upload to PRIVATE B2 directly from memory
     const appFile = req.files && req.files.appFile ? req.files.appFile[0] : null;
     if (appFile && !fileUrl) {
       const timestamp = Date.now();
       const path = `apps/${timestamp}_${appFile.originalname.replace(/\s+/g, '_')}`;
-      const result = await uploadToB2(path, appFile.buffer, appFile.mimetype);
+      const result = await uploadToB2(path, appFile.buffer, appFile.mimetype, true); // isPrivate = true
       if (result.success) {
         fileUrl = result.url;
         fileName = appFile.originalname;
@@ -58,13 +87,13 @@ exports.createApp = async (req, res, next) => {
       return res.status(400).json({ message: 'App file is required.' });
     }
 
-    // Optimization for Icon
+    // Optimization for Icon (Public)
     let iconUrl = req.body.icon || '';
     if (req.files && req.files.icon) {
       iconUrl = await optimizeAndUpload(req.files.icon[0], 'icons');
     }
 
-    // Optimization for Screenshots
+    // Optimization for Screenshots (Public)
     const screenshots = req.body.screenshots || [];
     if (req.files && req.files.screenshots) {
       for (const f of req.files.screenshots) {
@@ -254,7 +283,11 @@ exports.deleteApp = async (req, res) => {
           const urlParts = fileUrl.split('.backblazeb2.com/');
           if (urlParts?.length === 2) {
             const b2Path = urlParts[1].startsWith('/') ? urlParts[1].substring(1) : urlParts[1];
-            await deleteFromB2(b2Path);
+            
+            // Detect which bucket based on the subdomain (bucket name)
+            // Public: baqala | Private: baqalaaa
+            const isPrivate = fileUrl.includes('baqalaaa.');
+            await deleteFromB2(b2Path, isPrivate);
           }
         } catch (err) {
           console.error('B2 Delete Error:', err);

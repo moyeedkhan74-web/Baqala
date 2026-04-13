@@ -1,5 +1,6 @@
+const express = require('express');
 const {
-  createApp, getApps, getApp, updateApp, deleteApp,
+  createApp, getApps, getApp, updateApp, deleteApp, getAppDownloadLink,
   getMyApps, uploadAppImages, getCategories, uploadPlaceholderImages
 } = require('../controllers/appController');
 const { initUpload, uploadChunk, combineChunks } = require('../controllers/chunkController');
@@ -13,6 +14,7 @@ router.get('/categories', getCategories);
 router.get('/', getApps);
 router.get('/my', auth, getMyApps);
 router.get('/:id', getApp);
+router.get('/:id/download', getAppDownloadLink);
 router.post('/', auth, uploadAll, createApp);
 router.post('/init-upload', auth, initUpload);
 router.post('/upload-chunk', auth, uploadApp, uploadChunk);
