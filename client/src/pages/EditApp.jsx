@@ -273,7 +273,7 @@ const EditApp = () => {
             <div className="space-y-10">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2"><HiPencilSquare className="text-accent-violet" /> Neural Identity (Icon)</h3>
+                  <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2"><HiPencil className="text-accent-violet" /> Neural Identity (Icon)</h3>
                   <div className="flex items-center gap-6 p-6 glass-panel rounded-3xl bg-white/5 border-dashed border-2 border-white/10">
                     <img src={app.icon} className="w-20 h-20 rounded-2xl object-cover shadow-2xl border border-white/20" />
                     <div className="flex-1">
