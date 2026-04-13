@@ -1,3 +1,5 @@
+const {
+  createApp, getApps, getApp, updateApp, deleteApp, getAppDownloadLink,
   getMyApps, uploadAppImages, getCategories, uploadPlaceholderImages,
   removeScreenshot, removeAllScreenshots
 } = require('../controllers/appController');
