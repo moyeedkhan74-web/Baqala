@@ -22,6 +22,7 @@ router.post('/:id/images', auth, uploadImages, uploadAppImages);
 router.put('/:id', auth, updateApp);
 router.delete('/:id', auth, deleteApp);
 router.delete('/:id/screenshot', auth, removeScreenshot);
+router.post('/:id/remove-screenshot', auth, removeScreenshot);
 router.delete('/:id/screenshots', auth, removeAllScreenshots);
 
 module.exports = router;

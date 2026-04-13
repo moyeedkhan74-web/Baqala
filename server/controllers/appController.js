@@ -190,27 +190,47 @@ exports.uploadAppImages = async (req, res, next) => {
 exports.removeScreenshot = async (req, res, next) => {
   try {
     const { screenshotUrl } = req.body;
-    const app = await App.findById(req.params.id);
-    if (!app) return res.status(404).json({ message: 'App not found.' });
-    if (app.developer.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized.' });
+    const appId = req.params.id;
+    
+    if (!screenshotUrl) {
+      return res.status(400).json({ message: 'Target asset URL is missing in request.' });
     }
 
-    // Surgical match: strip query params from the incoming URL and the array URLs
+    const app = await App.findById(appId);
+    if (!app) return res.status(404).json({ message: 'Project synchronization lost: App not found.' });
+
+    // Authorization: Must be developer OR Admin
+    const isDeveloper = app.developer.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isDeveloper && !isAdmin) {
+      console.warn(`[AUTH REJECTION] User ${req.user._id} attempted to delete asset for App ${appId} (Developer: ${app.developer})`);
+      return res.status(403).json({ message: `Access Denied: You are not authorized to manage this project. (Role: ${req.user.role})` });
+    }
+
+    // Surgical match: strip query params
     const cleanTarget = screenshotUrl.split('?')[0].split('#')[0];
     
+    console.log(`[ASSET REMOVAL] Initiating for: ${cleanTarget}`);
     await deleteFileFromB2(screenshotUrl);
     
+    const originalCount = app.screenshots.length;
     app.screenshots = app.screenshots.filter(s => {
       const cleanS = s.split('?')[0].split('#')[0];
       return cleanS !== cleanTarget;
     });
     
+    if (app.screenshots.length === originalCount) {
+      console.warn(`[SYNC WARNING] Target URL not found in gallery array: ${cleanTarget}`);
+    }
+
     await app.save();
+    console.log(`[ASSET REMOVAL] Success. Remaining: ${app.screenshots.length}`);
 
     res.json({ success: true, screenshots: app.screenshots });
   } catch (error) {
-    next(error);
+    console.error('[ASSET REMOVAL ERROR]:', error);
+    res.status(500).json({ message: `Internal Removal Error: ${error.message}` });
   }
 };
 
@@ -218,12 +238,16 @@ exports.removeAllScreenshots = async (req, res, next) => {
   try {
     const app = await App.findById(req.params.id);
     if (!app) return res.status(404).json({ message: 'App not found.' });
-    if (app.developer.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized.' });
+    
+    const isDeveloper = app.developer.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isDeveloper && !isAdmin) {
+      return res.status(403).json({ message: 'Not authorized to clear this gallery.' });
     }
 
-    // Wipe all from cloud
     if (app.screenshots && app.screenshots.length > 0) {
+      console.log(`[GALLERY WIPE] Clearing ${app.screenshots.length} assets for App: ${app._id}`);
       for (const url of app.screenshots) {
         await deleteFileFromB2(url);
       }
@@ -234,7 +258,8 @@ exports.removeAllScreenshots = async (req, res, next) => {
 
     res.json({ success: true, screenshots: [] });
   } catch (error) {
-    next(error);
+    console.error('[GALLERY WIPE ERROR]:', error);
+    res.status(500).json({ message: 'Mass removal failed.' });
   }
 };
 
