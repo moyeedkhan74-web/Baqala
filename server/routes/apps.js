@@ -1,7 +1,7 @@
-const express = require('express');
 const {
   createApp, getApps, getApp, updateApp, deleteApp, getAppDownloadLink,
-  getMyApps, uploadAppImages, getCategories, uploadPlaceholderImages
+  getMyApps, uploadAppImages, getCategories, uploadPlaceholderImages,
+  removeScreenshot
 } = require('../controllers/appController');
 const { initUpload, uploadChunk, combineChunks } = require('../controllers/chunkController');
 const { auth } = require('../middleware/auth');
@@ -23,5 +23,6 @@ router.post('/placeholder-images', auth, uploadImages, uploadPlaceholderImages);
 router.post('/:id/images', auth, uploadImages, uploadAppImages);
 router.put('/:id', auth, updateApp);
 router.delete('/:id', auth, deleteApp);
+router.delete('/:id/screenshot', auth, removeScreenshot);
 
 module.exports = router;

@@ -24,13 +24,31 @@ const optimizeAndUpload = async (file, folder = 'icons') => {
   }
 };
 
+// Helper to delete any file from B2 (detects bucket automatically)
+const deleteFileFromB2 = async (fileUrl) => {
+  if (!fileUrl || typeof fileUrl !== 'string') return;
+  if (fileUrl.includes('.backblazeb2.com/')) {
+    try {
+      const urlParts = fileUrl.split('.backblazeb2.com/');
+      if (urlParts?.length === 2) {
+        const b2Path = urlParts[1].startsWith('/') ? urlParts[1].substring(1) : urlParts[1];
+        
+        // Detect which bucket based on the subdomain (bucket name)
+        // Public: baqala | Private: baqalaaa
+        const isPrivate = fileUrl.includes('baqalaaa.');
+        await deleteFromB2(b2Path, isPrivate);
+      }
+    } catch (err) {
+      console.error('B2 Delete Error:', err);
+    }
+  } 
+};
+
 exports.getAppDownloadLink = async (req, res, next) => {
   try {
     const app = await App.findById(req.params.id);
     if (!app) return res.status(404).json({ message: 'App not found.' });
     
-    // Extract path from B2 URL
-    // e.g. https://baqalaaa.s3.us-east-005.backblazeb2.com/apps/123_app.zip
     const urlParts = app.fileUrl.split('.backblazeb2.com/');
     if (urlParts.length !== 2) {
       return res.status(400).json({ message: 'Invalid file URL format.' });
@@ -42,7 +60,6 @@ exports.getAppDownloadLink = async (req, res, next) => {
       return res.status(500).json({ message: 'Failed to generate download link.' });
     }
 
-    // Increment download count
     app.totalDownloads += 1;
     await app.save();
 
@@ -70,12 +87,11 @@ exports.createApp = async (req, res, next) => {
     let fileName = req.body.fileName || 'unknown';
     let fileSize = req.body.fileSize || 0;
 
-    // If appFile is uploaded (non-chunked), upload to PRIVATE B2 directly from memory
     const appFile = req.files && req.files.appFile ? req.files.appFile[0] : null;
     if (appFile && !fileUrl) {
       const timestamp = Date.now();
       const path = `apps/${timestamp}_${appFile.originalname.replace(/\s+/g, '_')}`;
-      const result = await uploadToB2(path, appFile.buffer, appFile.mimetype, true); // isPrivate = true
+      const result = await uploadToB2(path, appFile.buffer, appFile.mimetype, true);
       if (result.success) {
         fileUrl = result.url;
         fileName = appFile.originalname;
@@ -87,13 +103,11 @@ exports.createApp = async (req, res, next) => {
       return res.status(400).json({ message: 'App file is required.' });
     }
 
-    // Optimization for Icon (Public)
     let iconUrl = req.body.icon || '';
     if (req.files && req.files.icon) {
       iconUrl = await optimizeAndUpload(req.files.icon[0], 'icons');
     }
 
-    // Optimization for Screenshots (Public)
     const screenshots = req.body.screenshots || [];
     if (req.files && req.files.screenshots) {
       for (const f of req.files.screenshots) {
@@ -135,25 +149,42 @@ exports.uploadAppImages = async (req, res, next) => {
       return res.status(403).json({ message: 'Not authorized.' });
     }
 
-    const updates = {};
     if (req.files && req.files.icon && req.files.icon[0]) {
+      // Delete old icon
+      if (app.icon) await deleteFileFromB2(app.icon);
       const url = await optimizeAndUpload(req.files.icon[0], 'icons');
-      if (url) updates.icon = url;
+      if (url) app.icon = url;
     }
 
     if (req.files && req.files.screenshots) {
-      const screenshotUrls = [];
       for (const f of req.files.screenshots) {
         const url = await optimizeAndUpload(f, 'screenshots');
-        if (url) screenshotUrls.push(url);
+        if (url) app.screenshots.push(url);
       }
-      updates.screenshots = screenshotUrls;
     }
 
-    const updatedApp = await App.findByIdAndUpdate(req.params.id, updates, { new: true })
-      .populate('developer', 'name email avatar');
-
+    await app.save();
+    const updatedApp = await App.findById(app._id).populate('developer', 'name email avatar');
     res.json({ app: updatedApp });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.removeScreenshot = async (req, res, next) => {
+  try {
+    const { screenshotUrl } = req.body;
+    const app = await App.findById(req.params.id);
+    if (!app) return res.status(404).json({ message: 'App not found.' });
+    if (app.developer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized.' });
+    }
+
+    await deleteFileFromB2(screenshotUrl);
+    app.screenshots = app.screenshots.filter(s => s !== screenshotUrl);
+    await app.save();
+
+    res.json({ success: true, screenshots: app.screenshots });
   } catch (error) {
     next(error);
   }
@@ -247,23 +278,36 @@ exports.updateApp = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized.' });
     }
 
-    const { title, description, shortDescription, category, version, platform, tags } = req.body;
-    const updates = {};
-    if (title) updates.title = title;
-    if (description) updates.description = description;
-    if (shortDescription) updates.shortDescription = shortDescription;
-    if (category) updates.category = category;
-    if (version) updates.version = version;
-    if (platform) updates.platform = platform;
-    if (tags) updates.tags = typeof tags === 'string' ? tags.split(',').map(t => t.trim()) : tags;
+    const { 
+      title, description, shortDescription, category, 
+      version, platform, tags, fileUrl, fileName, fileSize,
+      developerName, tagline
+    } = req.body;
 
-    const updatedApp = await App.findByIdAndUpdate(req.params.id, updates, {
-      new: true,
-      runValidators: true
-    }).populate('developer', 'name email avatar');
+    // Handle binary replacement cleanup
+    if (fileUrl && fileUrl !== app.fileUrl) {
+      await deleteFileFromB2(app.fileUrl);
+      app.fileUrl = fileUrl;
+      app.fileName = fileName || 'updated_file';
+      app.fileSize = fileSize || 0;
+    }
+
+    if (title) app.title = title;
+    if (description) app.description = description;
+    if (shortDescription !== undefined) app.shortDescription = shortDescription;
+    if (tagline !== undefined) app.tagline = tagline;
+    if (category) app.category = category;
+    if (version) app.version = version;
+    if (platform) app.platform = platform;
+    if (developerName) app.developerName = developerName;
+    if (tags) app.tags = typeof tags === 'string' ? tags.split(',').map(t => t.trim()) : tags;
+
+    await app.save();
+    const updatedApp = await App.findById(app._id).populate('developer', 'name email avatar');
 
     res.json({ app: updatedApp });
   } catch (error) {
+    console.error('Update App Error:', error);
     res.status(500).json({ message: 'Server error.' });
   }
 };
@@ -276,29 +320,10 @@ exports.deleteApp = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized.' });
     }
 
-    const deleteFile = async (fileUrl) => {
-      if (!fileUrl || typeof fileUrl !== 'string') return;
-      if (fileUrl.includes('.backblazeb2.com/')) {
-        try {
-          const urlParts = fileUrl.split('.backblazeb2.com/');
-          if (urlParts?.length === 2) {
-            const b2Path = urlParts[1].startsWith('/') ? urlParts[1].substring(1) : urlParts[1];
-            
-            // Detect which bucket based on the subdomain (bucket name)
-            // Public: baqala | Private: baqalaaa
-            const isPrivate = fileUrl.includes('baqalaaa.');
-            await deleteFromB2(b2Path, isPrivate);
-          }
-        } catch (err) {
-          console.error('B2 Delete Error:', err);
-        }
-      } 
-    };
-
-    await deleteFile(app.fileUrl);
-    await deleteFile(app.icon);
+    await deleteFileFromB2(app.fileUrl);
+    await deleteFileFromB2(app.icon);
     if (app.screenshots) {
-      for (const screenUrl of app.screenshots) await deleteFile(screenUrl);
+      for (const screenUrl of app.screenshots) await deleteFileFromB2(screenUrl);
     }
 
     await App.findByIdAndDelete(req.params.id);

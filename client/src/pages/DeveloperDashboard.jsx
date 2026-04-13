@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
@@ -7,6 +6,7 @@ import toast from 'react-hot-toast';
 import { HiPlus, HiCollection, HiDownload, HiStar, HiTrash, HiCog, HiChartBar } from 'react-icons/hi';
 
 const DeveloperDashboard = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -162,7 +162,10 @@ const DeveloperDashboard = () => {
                       </td>
                       <td className="p-6 text-right">
                         <div className="flex items-center justify-end gap-3 translate-x-2 group-hover:translate-x-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all duration-300">
-                          <button className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white text-xs font-bold rounded-xl border border-white/10 transition-all">
+                          <button 
+                            onClick={() => navigate(`/edit/${app._id}`)}
+                            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white text-xs font-bold rounded-xl border border-white/10 transition-all"
+                          >
                             <HiCog className="w-4 h-4" /> Edit
                           </button>
                           <button 
