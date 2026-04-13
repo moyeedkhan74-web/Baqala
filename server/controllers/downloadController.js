@@ -1,7 +1,6 @@
 const Download = require('../models/Download');
 const App = require('../models/App');
-const path = require('path');
-const fs = require('fs');
+const { getDownloadUrl } = require('../utils/b2Storage');
 
 exports.downloadApp = async (req, res) => {
   try {
@@ -30,7 +29,21 @@ exports.downloadApp = async (req, res) => {
       return res.status(404).json({ message: 'File URL not found.' });
     }
 
-    res.json({ downloadUrl: app.fileUrl, message: 'Download initiated' });
+    let downloadUrl = app.fileUrl;
+
+    // If it's in the private bucket, we must sign it
+    if (app.fileUrl.includes('baqalaaa.')) {
+      const urlParts = app.fileUrl.split('.backblazeb2.com/');
+      if (urlParts.length === 2) {
+        const b2Path = urlParts[1].startsWith('/') ? urlParts[1].substring(1) : urlParts[1];
+        const result = await getDownloadUrl(b2Path);
+        if (result.success) {
+          downloadUrl = result.url;
+        }
+      }
+    }
+
+    res.json({ downloadUrl, message: 'Download initiated' });
   } catch (error) {
     console.error('Download error:', error);
     res.status(500).json({ message: 'Server error during download.' });

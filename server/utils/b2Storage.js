@@ -5,12 +5,16 @@ const {
   CreateMultipartUploadCommand,
   UploadPartCommand,
   CompleteMultipartUploadCommand,
-  AbortMultipartUploadCommand
+  AbortMultipartUploadCommand,
+  GetObjectCommand
 } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
-// Backblaze B2 S3-Compatible Client
-const s3 = new S3Client({
-  endpoint: `https://${process.env.B2_ENDPOINT}`, // e.g. s3.us-east-005.backblazeb2.com
+// --- CLIENTS ---
+
+// Public Client (Old Account - For Photos)
+const publicS3 = new S3Client({
+  endpoint: `https://${process.env.B2_ENDPOINT}`,
   region: process.env.B2_REGION || 'us-east-005',
   credentials: {
     accessKeyId: process.env.B2_APPLICATION_KEY_ID,
@@ -19,52 +23,103 @@ const s3 = new S3Client({
   forcePathStyle: true, 
 });
 
-const bucketName = process.env.B2_BUCKET_NAME;
+// Private Client (New Account - For Apps)
+const privateS3 = new S3Client({
+  endpoint: `https://${process.env.B2_PRIVATE_ENDPOINT}`,
+  region: process.env.B2_PRIVATE_REGION || 'us-east-005',
+  credentials: {
+    accessKeyId: process.env.B2_PRIVATE_KEY_ID,
+    secretAccessKey: process.env.B2_PRIVATE_APP_KEY,
+  },
+  forcePathStyle: true, 
+});
 
-exports.uploadToB2 = async (filePath, fileBuffer, contentType) => {
+// --- HELPERS ---
+
+const getClient = (isPrivate) => isPrivate ? privateS3 : publicS3;
+const getBucket = (isPrivate) => isPrivate ? process.env.B2_PRIVATE_BUCKET : process.env.B2_BUCKET_NAME;
+const getEndpoint = (isPrivate) => isPrivate ? process.env.B2_PRIVATE_ENDPOINT : process.env.B2_ENDPOINT;
+
+// --- ACTIONS ---
+
+exports.uploadToB2 = async (filePath, fileBuffer, contentType, isPrivate = false) => {
   try {
-    if (!bucketName || !process.env.B2_ENDPOINT) {
-      throw new Error('B2 configuration missing in environment variables');
+    const s3 = getClient(isPrivate);
+    const bucket = getBucket(isPrivate);
+    const endpoint = getEndpoint(isPrivate);
+
+    if (!bucket || !endpoint) {
+      throw new Error(`B2 ${isPrivate ? 'Private' : 'Public'} configuration missing`);
     }
 
     const command = new PutObjectCommand({
-      Bucket: bucketName,
+      Bucket: bucket,
       Key: filePath,
       Body: fileBuffer,
       ContentType: contentType,
     });
 
     await s3.send(command);
-    const publicUrl = `https://${bucketName}.${process.env.B2_ENDPOINT}/${filePath}`;
+    
+    // For Private bucket, the URL is technically the same but won't be accessible without a signature
+    const url = `https://${bucket}.${endpoint}/${filePath}`;
 
-    return { success: true, url: publicUrl, path: filePath };
+    return { success: true, url, path: filePath };
   } catch (error) {
-    console.error('B2 Upload Error:', error.message);
+    console.error(`B2 ${isPrivate ? 'Private' : 'Public'} Upload Error:`, error.message);
     return { success: false, error: error.message };
   }
 };
 
-exports.deleteFromB2 = async (filePath) => {
+exports.deleteFromB2 = async (filePath, isPrivate = false) => {
   try {
+    const s3 = getClient(isPrivate);
+    const bucket = getBucket(isPrivate);
+
     const command = new DeleteObjectCommand({
-      Bucket: bucketName,
+      Bucket: bucket,
       Key: filePath,
     });
 
     await s3.send(command);
     return { success: true };
   } catch (error) {
-    console.error('B2 Delete Error:', error.message);
+    console.error(`B2 ${isPrivate ? 'Private' : 'Public'} Delete Error:`, error.message);
     return { success: false, error: error.message };
   }
 };
 
-// --- Multipart Upload Support (Direct to Cloud, Zero Local Storage) ---
+// --- Secure Download Support (For Private Bucket) ---
 
-exports.startMultipartUpload = async (filePath, contentType) => {
+exports.getDownloadUrl = async (filePath) => {
   try {
+    // Downloads always target the Private bucket in this architecture
+    const s3 = privateS3;
+    const bucket = process.env.B2_PRIVATE_BUCKET;
+
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: filePath,
+    });
+
+    // Generate a signed URL valid for 1 hour (3600 seconds)
+    const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    return { success: true, url: signedUrl };
+  } catch (error) {
+    console.error('B2 Signed URL Error:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+// --- Multipart Upload Support (Always Private for Apps) ---
+
+exports.startMultipartUpload = async (filePath, contentType, isPrivate = true) => {
+  try {
+    const s3 = getClient(isPrivate);
+    const bucket = getBucket(isPrivate);
+
     const command = new CreateMultipartUploadCommand({
-      Bucket: bucketName,
+      Bucket: bucket,
       Key: filePath,
       ContentType: contentType,
     });
@@ -76,10 +131,13 @@ exports.startMultipartUpload = async (filePath, contentType) => {
   }
 };
 
-exports.uploadPart = async (filePath, uploadId, partNumber, body) => {
+exports.uploadPart = async (filePath, uploadId, partNumber, body, isPrivate = true) => {
   try {
+    const s3 = getClient(isPrivate);
+    const bucket = getBucket(isPrivate);
+
     const command = new UploadPartCommand({
-      Bucket: bucketName,
+      Bucket: bucket,
       Key: filePath,
       UploadId: uploadId,
       PartNumber: partNumber,
@@ -93,11 +151,14 @@ exports.uploadPart = async (filePath, uploadId, partNumber, body) => {
   }
 };
 
-exports.completeMultipartUpload = async (filePath, uploadId, parts) => {
+exports.completeMultipartUpload = async (filePath, uploadId, parts, isPrivate = true) => {
   try {
-    // parts should be [{ ETag: '...', PartNumber: 1 }, ...]
+    const s3 = getClient(isPrivate);
+    const bucket = getBucket(isPrivate);
+    const endpoint = getEndpoint(isPrivate);
+
     const command = new CompleteMultipartUploadCommand({
-      Bucket: bucketName,
+      Bucket: bucket,
       Key: filePath,
       UploadId: uploadId,
       MultipartUpload: {
@@ -105,18 +166,21 @@ exports.completeMultipartUpload = async (filePath, uploadId, parts) => {
       },
     });
     await s3.send(command);
-    const publicUrl = `https://${bucketName}.${process.env.B2_ENDPOINT}/${filePath}`;
-    return { success: true, url: publicUrl };
+    const url = `https://${bucket}.${endpoint}/${filePath}`;
+    return { success: true, url };
   } catch (error) {
     console.error('B2 Multipart Complete Error:', error.message);
     return { success: false, error: error.message };
   }
 };
 
-exports.abortMultipartUpload = async (filePath, uploadId) => {
+exports.abortMultipartUpload = async (filePath, uploadId, isPrivate = true) => {
   try {
+    const s3 = getClient(isPrivate);
+    const bucket = getBucket(isPrivate);
+
     const command = new AbortMultipartUploadCommand({
-      Bucket: bucketName,
+      Bucket: bucket,
       Key: filePath,
       UploadId: uploadId,
     });
