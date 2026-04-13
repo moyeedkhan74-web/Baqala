@@ -113,7 +113,9 @@ const EditApp = () => {
     setSaving(true);
     try {
       // Use POST fallback for better compatibility
-      await api.post(`/apps/${id}/remove-screenshot`, { screenshotUrl: url });
+      const targetUrl = `/apps/${id}/remove-screenshot`;
+      console.log(`[DIAGNOSTIC] Dispatching removal to: ${targetUrl}`);
+      await api.post(targetUrl, { screenshotUrl: url });
       setApp(prev => ({ ...prev, screenshots: prev.screenshots.filter(s => s !== url) }));
       toast.success('Asset removed from cloud');
     } catch (error) {
