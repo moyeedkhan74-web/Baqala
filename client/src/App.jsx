@@ -14,6 +14,7 @@ import Register from './pages/Register';
 import AppDetail from './pages/AppDetail';
 import DeveloperDashboard from './pages/DeveloperDashboard';
 import UploadApp from './pages/UploadApp';
+import EditApp from './pages/EditApp';
 import AdminPanel from './pages/AdminPanel';
 
 function App() {
@@ -77,6 +78,11 @@ function App() {
                 <Route path="/upload" element={
                   <ProtectedRoute>
                     <AnimatedLayout><UploadApp /></AnimatedLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/edit/:id" element={
+                  <ProtectedRoute>
+                    <AnimatedLayout><EditApp /></AnimatedLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/admin" element={
