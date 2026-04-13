@@ -25,58 +25,83 @@ const UploadApp = () => {
     
     setLoading(true);
     setUploadProgress(0);
+    const toastId = 'upload';
+    
     try {
-      const { uploadFileDirectly } = await import('../supabase');
-      const timestamp = Date.now();
-      const bucket = 'Baqala'; // Case-sensitive bucket name
-
-      // 1. Upload App Binary Direct to Cloud
-      toast.loading('Deploying Project Binary to Global Cloud...', { id: 'upload' });
-      const safeAppName = files.appFile.name.replace(/\s+/g, '_');
-      const appPath = `apps/${timestamp}_${safeAppName}`;
-      const appUrl = await uploadFileDirectly(bucket, appPath, files.appFile);
-      setUploadProgress(40);
-
-      // 2. Upload Icon Direct to Cloud
-      toast.loading('Synchronizing Visual Assets...', { id: 'upload' });
-      const safeIconName = files.icon.name.replace(/\s+/g, '_');
-      const iconPath = `icons/${timestamp}_${safeIconName}`;
-      const iconUrl = await uploadFileDirectly(bucket, iconPath, files.icon);
-      setUploadProgress(60);
-
-      // 3. Upload Screenshots Direct to Cloud
-      const screenshotUrls = [];
-      const screenshots = files.screenshots || [];
-      for (let i = 0; i < screenshots.length; i++) {
-        const s = screenshots[i];
-        const safeScreenshotName = s.name.replace(/\s+/g, '_');
-        const sPath = `screenshots/${timestamp}_${i}_${safeScreenshotName}`;
-        const sUrl = await uploadFileDirectly(bucket, sPath, s);
-        screenshotUrls.push(sUrl);
-        setUploadProgress(60 + ((i + 1) / screenshots.length) * 20);
+      // --- PHASE 1: CHUNKED PAYLOAD TRANSMISSION ---
+      toast.loading('Initializing Neural Link (Cloud Upload)...', { id: toastId });
+      
+      const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
+      const file = files.appFile;
+      const totalPartCount = Math.ceil(file.size / CHUNK_SIZE);
+      
+      // 1. Initialize Upload
+      const initRes = await api.post('/apps/init-upload', { 
+        fileName: file.name,
+        contentType: file.type || 'application/octet-stream'
+      });
+      const { uploadId, filePath } = initRes.data;
+      
+      // 2. Upload Chunks
+      const parts = [];
+      for (let i = 0; i < totalPartCount; i++) {
+        const start = i * CHUNK_SIZE;
+        const end = Math.min(file.size, start + CHUNK_SIZE);
+        const chunk = file.slice(start, end);
+        
+        const chunkFormData = new FormData();
+        chunkFormData.append('appFile', chunk);
+        chunkFormData.append('chunkIndex', i);
+        chunkFormData.append('uploadId', uploadId);
+        chunkFormData.append('filePath', filePath);
+        
+        toast.loading(`Transmitting Payload Part ${i + 1}/${totalPartCount}...`, { id: toastId });
+        
+        const chunkRes = await api.post('/apps/upload-chunk', chunkFormData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        
+        parts.push({ ETag: chunkRes.data.etag, PartNumber: chunkRes.data.partNumber });
+        setUploadProgress((i + 1) / totalPartCount * 70); // Up to 70% for binary
       }
+      
+      // 3. Finalize Binary
+      toast.loading('Synchronizing Cloud State...', { id: toastId });
+      const combineRes = await api.post('/apps/combine-chunks', {
+        uploadId,
+        filePath,
+        parts,
+        fileName: file.name
+      });
+      const finalBinaryUrl = combineRes.data.url;
+      setUploadProgress(80);
 
-      // 4. Final Metadata Registration to Local Backend
-      toast.loading('Finalizing Metadata Sync...', { id: 'upload' });
-      const submissionData = {
-        ...formData,
-        fileUrl: appUrl,
-        fileName: files.appFile.name,
-        fileSize: files.appFile.size,
-        icon: iconUrl,
-        screenshots: screenshotUrls
-      };
+      // --- PHASE 2: VISUAL ASSETS & METADATA ---
+      toast.loading('Optimizing Visual Assets...', { id: toastId });
+      
+      const finalFormData = new FormData();
+      // Form fields
+      Object.keys(formData).forEach(key => finalFormData.append(key, formData[key]));
+      
+      // Metadata from chunked upload
+      finalFormData.append('fileUrl', finalBinaryUrl);
+      finalFormData.append('fileName', file.name);
+      finalFormData.append('fileSize', file.size);
+      
+      // Raw files (icon & screenshots) to be processed by 'sharp' on server memory
+      finalFormData.append('icon', files.icon);
+      files.screenshots.forEach(ss => finalFormData.append('screenshots', ss));
 
-      await api.post('/apps', submissionData);
+      await api.post('/apps', finalFormData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
 
       setUploadProgress(100);
-      toast.success('Project deployed PERFECTLY! Verified on Global Cloud.', { id: 'upload' });
+      toast.success('Project deployed PERFECTLY! Verified on Global Cloud.', { id: toastId });
       navigate('/developer');
     } catch (e) {
       console.error('Deployment Crash:', e);
-      // If it fails here, it is likely a Supabase Permission issue
-      const errorMsg = e.message || 'Direct cloud upload failed. Check your Supabase bucket permissions.';
-      toast.error(errorMsg, { id: 'upload' });
+      toast.error(e.response?.data?.message || 'Deployment failed. Check connection or file formats.', { id: toastId });
     } finally {
       setLoading(false);
     }

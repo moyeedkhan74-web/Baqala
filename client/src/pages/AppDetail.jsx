@@ -5,7 +5,7 @@ import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import StarRating from '../components/StarRating';
 import toast from 'react-hot-toast';
-import { HiDownload, HiStar, HiFolder, HiClock, HiDeviceMobile } from 'react-icons/hi';
+import { HiDownload, HiStar, HiFolder, HiClock, HiDeviceMobile, HiArrowLeft, HiArrowRight } from 'react-icons/hi';
 
 const AppDetail = () => {
   const { id } = useParams();

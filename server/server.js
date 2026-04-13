@@ -16,10 +16,13 @@ const adminRoutes = require('./routes/admin');
 
 const app = express();
 
+const compression = require('compression');
+
 // Connect to MongoDB
 connectDB();
 
-// Security middleware
+// Performance and Security middleware
+app.use(compression()); // Compress all responses
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
@@ -30,9 +33,6 @@ app.use(generalLimiter);
 // Body parsers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Static files - serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -51,23 +51,13 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Route not found.' });
 });
 
-// Global error handler with Local File Logging
+// Global error handler
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   const isDevelopment = process.env.NODE_ENV === 'development';
   
-  // LOG TO FILE FOR ANTIGRAVITY TO DIAGNOSE
-  try {
-    const fs = require('fs');
-    const path = require('path');
-    const logPath = path.join(__dirname, 'CRASH_REPORT.txt');
-    const logEntry = `[${new Date().toISOString()}] ${req.method} ${req.path}\nError: ${err.message}\nStack: ${err.stack}\n---\n`;
-    fs.appendFileSync(logPath, logEntry);
-  } catch (logErr) {
-    console.error('Failed to write to CRASH_REPORT.txt', logErr);
-  }
-
-  console.error('SERVER CRASH:', err.message);
+  console.error(`[SERVER ERROR] ${req.method} ${req.path}:`, err.message);
+  if (isDevelopment) console.error(err.stack);
   
   res.status(statusCode).json({
     message: isDevelopment ? err.message : 'Internal server error.',

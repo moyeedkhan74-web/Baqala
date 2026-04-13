@@ -1,4 +1,12 @@
-const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { 
+  S3Client, 
+  PutObjectCommand, 
+  DeleteObjectCommand,
+  CreateMultipartUploadCommand,
+  UploadPartCommand,
+  CompleteMultipartUploadCommand,
+  AbortMultipartUploadCommand
+} = require('@aws-sdk/client-s3');
 
 // Backblaze B2 S3-Compatible Client
 const s3 = new S3Client({
@@ -8,17 +16,11 @@ const s3 = new S3Client({
     accessKeyId: process.env.B2_APPLICATION_KEY_ID,
     secretAccessKey: process.env.B2_APPLICATION_KEY,
   },
-  forcePathStyle: true, // Recommended for many S3-compatible providers
+  forcePathStyle: true, 
 });
 
 const bucketName = process.env.B2_BUCKET_NAME;
 
-/**
- * Uploads a file buffer to Backblaze B2 via S3 API
- * @param {string} filePath - Target path in the bucket (e.g. 'apps/my-app.apk')
- * @param {Buffer} fileBuffer - The file content
- * @param {string} contentType - MIME type
- */
 exports.uploadToB2 = async (filePath, fileBuffer, contentType) => {
   try {
     if (!bucketName || !process.env.B2_ENDPOINT) {
@@ -30,30 +32,18 @@ exports.uploadToB2 = async (filePath, fileBuffer, contentType) => {
       Key: filePath,
       Body: fileBuffer,
       ContentType: contentType,
-      // No ACL needed if the bucket is already set to Public in B2 Dashboard
     });
 
     await s3.send(command);
-
-    // Return the public URL for the file
-    // Format: https://<bucket>.<endpoint>/<path>
     const publicUrl = `https://${bucketName}.${process.env.B2_ENDPOINT}/${filePath}`;
 
-    return { 
-      success: true, 
-      url: publicUrl,
-      path: filePath 
-    };
+    return { success: true, url: publicUrl, path: filePath };
   } catch (error) {
     console.error('B2 Upload Error:', error.message);
     return { success: false, error: error.message };
   }
 };
 
-/**
- * Deletes a file from Backblaze B2
- * @param {string} filePath - Path in the bucket
- */
 exports.deleteFromB2 = async (filePath) => {
   try {
     const command = new DeleteObjectCommand({
@@ -65,6 +55,75 @@ exports.deleteFromB2 = async (filePath) => {
     return { success: true };
   } catch (error) {
     console.error('B2 Delete Error:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+// --- Multipart Upload Support (Direct to Cloud, Zero Local Storage) ---
+
+exports.startMultipartUpload = async (filePath, contentType) => {
+  try {
+    const command = new CreateMultipartUploadCommand({
+      Bucket: bucketName,
+      Key: filePath,
+      ContentType: contentType,
+    });
+    const { UploadId } = await s3.send(command);
+    return { success: true, uploadId: UploadId };
+  } catch (error) {
+    console.error('B2 Multipart Start Error:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+exports.uploadPart = async (filePath, uploadId, partNumber, body) => {
+  try {
+    const command = new UploadPartCommand({
+      Bucket: bucketName,
+      Key: filePath,
+      UploadId: uploadId,
+      PartNumber: partNumber,
+      Body: body,
+    });
+    const { ETag } = await s3.send(command);
+    return { success: true, etag: ETag };
+  } catch (error) {
+    console.error(`B2 Part ${partNumber} Upload Error:`, error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+exports.completeMultipartUpload = async (filePath, uploadId, parts) => {
+  try {
+    // parts should be [{ ETag: '...', PartNumber: 1 }, ...]
+    const command = new CompleteMultipartUploadCommand({
+      Bucket: bucketName,
+      Key: filePath,
+      UploadId: uploadId,
+      MultipartUpload: {
+        Parts: parts.sort((a, b) => a.PartNumber - b.PartNumber),
+      },
+    });
+    await s3.send(command);
+    const publicUrl = `https://${bucketName}.${process.env.B2_ENDPOINT}/${filePath}`;
+    return { success: true, url: publicUrl };
+  } catch (error) {
+    console.error('B2 Multipart Complete Error:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+exports.abortMultipartUpload = async (filePath, uploadId) => {
+  try {
+    const command = new AbortMultipartUploadCommand({
+      Bucket: bucketName,
+      Key: filePath,
+      UploadId: uploadId,
+    });
+    await s3.send(command);
+    return { success: true };
+  } catch (error) {
+    console.error('B2 Multipart Abort Error:', error.message);
     return { success: false, error: error.message };
   }
 };
