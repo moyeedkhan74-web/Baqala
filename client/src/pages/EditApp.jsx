@@ -112,11 +112,14 @@ const EditApp = () => {
     if (!window.confirm('Delete this visual asset?')) return;
     setSaving(true);
     try {
-      const { data } = await api.delete(`/apps/${id}/screenshot`, { data: { screenshotUrl: url } });
-      setApp(prev => ({ ...prev, screenshots: data.screenshots }));
+      // Send as DELETE but with body
+      await api.delete(`/apps/${id}/screenshot`, { data: { screenshotUrl: url } });
+      setApp(prev => ({ ...prev, screenshots: prev.screenshots.filter(s => s !== url) }));
       toast.success('Asset removed from cloud');
     } catch (error) {
-      toast.error('Removal failed');
+      const msg = error.response?.data?.message || 'Removal failed';
+      toast.error(msg, { duration: 5000 });
+      console.error('Removal error detail:', error.response?.data);
     } finally {
       setSaving(false);
     }
@@ -130,7 +133,8 @@ const EditApp = () => {
       setApp(prev => ({ ...prev, screenshots: [] }));
       toast.success('Gallery wiped clean!');
     } catch (error) {
-      toast.error('Wipe operation failed');
+      const msg = error.response?.data?.message || 'Wipe operation failed';
+      toast.error(msg, { duration: 5000 });
     } finally {
       setSaving(false);
     }
