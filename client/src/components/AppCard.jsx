@@ -1,9 +1,13 @@
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { HiDownload, HiStar } from 'react-icons/hi';
 import MagneticHover from './MagneticHover';
 
-const AppCard = ({ app, featured = false }) => {
+const AppCard = memo(({ app, featured = false }) => {
+  // ... (content same as before)
+  const fallbackIcon = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(app.title) + '&background=random';
+  
   if (featured) {
     return (
       <motion.div 
@@ -26,7 +30,7 @@ const AppCard = ({ app, featured = false }) => {
                 src={app.icon} 
                 alt={app.title} 
                 className="w-full h-full object-cover rounded-3xl shadow-glass relative z-10 border border-white/50 dark:border-white/20 bg-white dark:bg-dark-800" 
-                onError={(e) => { e.target.src = 'https://uuoczotaitlitzgijltx.supabase.co/storage/v1/object/public/Baqala/icons/default_app_icon.png'; }}
+                onError={(e) => { e.target.src = fallbackIcon; }}
               />
             </motion.div>
             
@@ -73,7 +77,7 @@ const AppCard = ({ app, featured = false }) => {
                 src={app.icon} 
                 alt={app.title} 
                 className="w-12 h-12 sm:w-16 sm:h-16 rounded-[12px] sm:rounded-2xl object-cover border border-white/50 dark:border-white/10 shadow-glass relative z-10 bg-white dark:bg-dark-800" 
-                onError={(e) => { e.target.src = 'https://uuoczotaitlitzgijltx.supabase.co/storage/v1/object/public/Baqala/icons/default_app_icon.png'; }}
+                onError={(e) => { e.target.src = fallbackIcon; }}
               />
             </div>
             
@@ -107,6 +111,6 @@ const AppCard = ({ app, featured = false }) => {
       </Link>
     </MagneticHover>
   );
-};
+});
 
 export default AppCard;

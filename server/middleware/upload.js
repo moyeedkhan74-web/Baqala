@@ -1,36 +1,8 @@
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 
-// Ensure upload directories exist
-const dirs = ['uploads/apps', 'uploads/icons', 'uploads/screenshots'];
-dirs.forEach(dir => {
-  const fullPath = path.join(__dirname, '..', dir);
-  if (!fs.existsSync(fullPath)) {
-    fs.mkdirSync(fullPath, { recursive: true });
-  }
-});
-
-const appFileStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '..', 'uploads/apps'));
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const imageStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const folder = file.fieldname === 'icon' ? 'uploads/icons' : 'uploads/screenshots';
-    cb(null, path.join(__dirname, '..', folder));
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Storage in memory to ensure "NOTHING ON PC" requirement
+const storage = multer.memoryStorage();
 
 const allowedAppExtensions = ['.apk', '.zip', '.rar', '.tar', '.gz', '.exe', '.msi', '.dmg', '.deb', '.rpm', '.appimage'];
 const allowedImageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'];
@@ -55,7 +27,7 @@ const appFileFilter = (req, file, cb) => {
 };
 
 const uploadApp = multer({
-  storage: appFileStorage,
+  storage: storage,
   fileFilter: appFileFilter,
   limits: {
     fileSize: parseInt(process.env.MAX_FILE_SIZE) || 209715200 // 200MB
@@ -63,7 +35,7 @@ const uploadApp = multer({
 }).single('appFile');
 
 const uploadImages = multer({
-  storage: imageStorage,
+  storage: storage,
   fileFilter: appFileFilter,
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB for images
@@ -74,18 +46,7 @@ const uploadImages = multer({
 ]);
 
 const uploadAll = multer({
-  storage: multer.diskStorage({
-    destination: (req, file, cb) => {
-      let folder = 'uploads/apps';
-      if (file.fieldname === 'icon') folder = 'uploads/icons';
-      if (file.fieldname === 'screenshots') folder = 'uploads/screenshots';
-      cb(null, path.join(__dirname, '..', folder));
-    },
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-      cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
-  }),
+  storage: storage,
   fileFilter: appFileFilter,
   limits: {
     fileSize: parseInt(process.env.MAX_FILE_SIZE) || 209715200 // 200MB

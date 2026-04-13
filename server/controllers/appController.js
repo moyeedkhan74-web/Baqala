@@ -1,11 +1,30 @@
 const App = require('../models/App');
-const fs = require('fs');
-const path = require('path');
-const { uploadToB2 } = require('../utils/b2Storage');
+const { uploadToB2, deleteFromB2 } = require('../utils/b2Storage');
+const sharp = require('sharp');
+
+// Helper to optimize and upload images directly to cloud
+const optimizeAndUpload = async (file, folder = 'icons') => {
+  try {
+    const timestamp = Date.now();
+    const fileName = `${timestamp}_${file.originalname.replace(/\s+/g, '_')}.webp`;
+    const filePath = `${folder}/${fileName}`;
+
+    // Optimization: WebP, 80% quality, max 1080p width
+    const buffer = await sharp(file.buffer)
+      .resize({ width: 1080, withoutEnlargement: true })
+      .webp({ quality: 80 })
+      .toBuffer();
+
+    const result = await uploadToB2(filePath, buffer, 'image/webp');
+    return result.success ? result.url : null;
+  } catch (err) {
+    console.error(`Optimization error [${folder}]:`, err);
+    return null;
+  }
+};
 
 exports.createApp = async (req, res, next) => {
   try {
-    // Ensure we have strings for description to prevent .substring() crashes
     const title = String(req.body.title || '').trim();
     const description = String(req.body.description || '').trim();
     const shortDescription = req.body.shortDescription 
@@ -16,29 +35,42 @@ exports.createApp = async (req, res, next) => {
     const version = req.body.version || '1.0.0';
     const platform = req.body.platform || 'Cross-platform';
     const developerName = req.body.developerName || (req.user ? req.user.name : 'Unknown');
-    const tags = req.body.tags;
     const tagline = req.body.tagline ? String(req.body.tagline).substring(0, 100) : '';
 
-    const serverUrl = req.protocol + '://' + req.get('host');
+    let fileUrl = req.body.fileUrl;
+    let fileName = req.body.fileName || 'unknown';
+    let fileSize = req.body.fileSize || 0;
+
+    // If appFile is uploaded (non-chunked), upload to B2 directly from memory
     const appFile = req.files && req.files.appFile ? req.files.appFile[0] : null;
-    const fileUrl = req.body.fileUrl || (appFile ? `${serverUrl}/uploads/apps/${appFile.filename}` : null);
-    const fileName = req.body.fileName || (appFile ? appFile.originalname : 'unknown');
-    const fileSize = req.body.fileSize || (appFile ? appFile.size : 0);
+    if (appFile && !fileUrl) {
+      const timestamp = Date.now();
+      const path = `apps/${timestamp}_${appFile.originalname.replace(/\s+/g, '_')}`;
+      const result = await uploadToB2(path, appFile.buffer, appFile.mimetype);
+      if (result.success) {
+        fileUrl = result.url;
+        fileName = appFile.originalname;
+        fileSize = appFile.size;
+      }
+    }
 
     if (!fileUrl) {
       return res.status(400).json({ message: 'App file is required.' });
     }
 
-    let icon = req.body.icon || '';
+    // Optimization for Icon
+    let iconUrl = req.body.icon || '';
     if (req.files && req.files.icon) {
-      icon = `${serverUrl}/uploads/icons/${req.files.icon[0].filename}`;
+      iconUrl = await optimizeAndUpload(req.files.icon[0], 'icons');
     }
 
+    // Optimization for Screenshots
     const screenshots = req.body.screenshots || [];
     if (req.files && req.files.screenshots) {
-      req.files.screenshots.forEach(f => {
-        screenshots.push(`${serverUrl}/uploads/screenshots/${f.filename}`);
-      });
+      for (const f of req.files.screenshots) {
+        const url = await optimizeAndUpload(f, 'screenshots');
+        if (url) screenshots.push(url);
+      }
     }
 
     const app = await App.create({
@@ -52,15 +84,14 @@ exports.createApp = async (req, res, next) => {
       fileUrl,
       fileName,
       fileSize,
-      icon,
+      icon: iconUrl,
       screenshots,
       version,
       platform,
-      tags: tags ? (typeof tags === 'string' ? tags.split(',').map(t => t.trim()) : tags) : []
+      tags: req.body.tags ? (typeof req.body.tags === 'string' ? req.body.tags.split(',').map(t => t.trim()) : req.body.tags) : []
     });
 
     await app.populate('developer', 'name email avatar');
-
     res.status(201).json({ app });
   } catch (error) {
     next(error);
@@ -70,30 +101,22 @@ exports.createApp = async (req, res, next) => {
 exports.uploadAppImages = async (req, res, next) => {
   try {
     const app = await App.findById(req.params.id);
-    if (!app) {
-      return res.status(404).json({ message: 'App not found.' });
-    }
-
+    if (!app) return res.status(404).json({ message: 'App not found.' });
     if (app.developer.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized to update this app.' });
+      return res.status(403).json({ message: 'Not authorized.' });
     }
 
     const updates = {};
     if (req.files && req.files.icon && req.files.icon[0]) {
-      const iconFile = req.files.icon[0];
-      const iconBuffer = fs.readFileSync(iconFile.path);
-      const iconRes = await uploadToB2(`icons/${Date.now()}_${iconFile.filename}`, iconBuffer, iconFile.mimetype);
-      if (iconRes.success) updates.icon = iconRes.url;
-      fs.unlinkSync(iconFile.path);
+      const url = await optimizeAndUpload(req.files.icon[0], 'icons');
+      if (url) updates.icon = url;
     }
 
     if (req.files && req.files.screenshots) {
       const screenshotUrls = [];
       for (const f of req.files.screenshots) {
-        const buf = fs.readFileSync(f.path);
-        const res = await uploadToB2(`screenshots/${Date.now()}_${f.filename}`, buf, f.mimetype);
-        if (res.success) screenshotUrls.push(res.url);
-        fs.unlinkSync(f.path);
+        const url = await optimizeAndUpload(f, 'screenshots');
+        if (url) screenshotUrls.push(url);
       }
       updates.screenshots = screenshotUrls;
     }
@@ -112,19 +135,13 @@ exports.uploadPlaceholderImages = async (req, res, next) => {
     const result = { icon: '', screenshots: [] };
 
     if (req.files && req.files.icon && req.files.icon[0]) {
-      const f = req.files.icon[0];
-      const buf = fs.readFileSync(f.path);
-      const sup = await uploadToB2(`icons/${Date.now()}_${f.filename}`, buf, f.mimetype);
-      if (sup.success) result.icon = sup.url;
-      fs.unlinkSync(f.path);
+      result.icon = await optimizeAndUpload(req.files.icon[0], 'icons');
     }
 
     if (req.files && req.files.screenshots) {
       for (const f of req.files.screenshots) {
-        const buf = fs.readFileSync(f.path);
-        const sup = await uploadToB2(`screenshots/${Date.now()}_${f.filename}`, buf, f.mimetype);
-        if (sup.success) result.screenshots.push(sup.url);
-        fs.unlinkSync(f.path);
+        const url = await optimizeAndUpload(f, 'screenshots');
+        if (url) result.screenshots.push(url);
       }
     }
 
@@ -146,35 +163,20 @@ exports.getApps = async (req, res) => {
     } = req.query;
 
     const query = { status: { $in: ['approved', 'pending'] } };
-
-    if (search) {
-      query.$text = { $search: search };
-    }
-    if (category) {
-      query.category = category;
-    }
-    if (platform) {
-      query.platform = platform;
-    }
+    if (search) query.$text = { $search: search };
+    if (category) query.category = category;
+    if (platform) query.platform = platform;
 
     let sortOption = {};
     switch (sort) {
-      case 'rating':
-        sortOption = { averageRating: -1 };
-        break;
-      case 'downloads':
-        sortOption = { totalDownloads: -1 };
-        break;
-      case 'oldest':
-        sortOption = { createdAt: 1 };
-        break;
-      case 'newest':
-      default:
-        sortOption = { createdAt: -1 };
+      case 'rating': sortOption = { averageRating: -1 }; break;
+      case 'downloads': sortOption = { totalDownloads: -1 }; break;
+      case 'oldest': sortOption = { createdAt: 1 }; break;
+      case 'newest': 
+      default: sortOption = { createdAt: -1 };
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
-
     const [apps, total] = await Promise.all([
       App.find(query)
         .populate('developer', 'name avatar')
@@ -193,7 +195,6 @@ exports.getApps = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Get apps error:', error);
     res.status(500).json({ message: 'Server error.' });
   }
 };
@@ -202,14 +203,9 @@ exports.getApp = async (req, res) => {
   try {
     const app = await App.findById(req.params.id)
       .populate('developer', 'name email avatar bio');
-
-    if (!app) {
-      return res.status(404).json({ message: 'App not found.' });
-    }
-
+    if (!app) return res.status(404).json({ message: 'App not found.' });
     res.json({ app });
   } catch (error) {
-    console.error('Get app error:', error);
     res.status(500).json({ message: 'Server error.' });
   }
 };
@@ -217,12 +213,9 @@ exports.getApp = async (req, res) => {
 exports.updateApp = async (req, res) => {
   try {
     const app = await App.findById(req.params.id);
-    if (!app) {
-      return res.status(404).json({ message: 'App not found.' });
-    }
-
+    if (!app) return res.status(404).json({ message: 'App not found.' });
     if (app.developer.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized to update this app.' });
+      return res.status(403).json({ message: 'Not authorized.' });
     }
 
     const { title, description, shortDescription, category, version, platform, tags } = req.body;
@@ -242,7 +235,6 @@ exports.updateApp = async (req, res) => {
 
     res.json({ app: updatedApp });
   } catch (error) {
-    console.error('Update app error:', error);
     res.status(500).json({ message: 'Server error.' });
   }
 };
@@ -250,73 +242,44 @@ exports.updateApp = async (req, res) => {
 exports.deleteApp = async (req, res) => {
   try {
     const app = await App.findById(req.params.id);
-    if (!app) {
-      return res.status(404).json({ message: 'App not found.' });
-    }
-
+    if (!app) return res.status(404).json({ message: 'App not found.' });
     if (app.developer.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Not authorized to delete this app.' });
+      return res.status(403).json({ message: 'Not authorized.' });
     }
 
     const deleteFile = async (fileUrl) => {
       if (!fileUrl || typeof fileUrl !== 'string') return;
-      
-      // If B2 URL
       if (fileUrl.includes('.backblazeb2.com/')) {
         try {
           const urlParts = fileUrl.split('.backblazeb2.com/');
           if (urlParts?.length === 2) {
-            const b2Path = urlParts[1];
-            // If the URL has the bucket name prepended to the subdomain, handle it
-            // e.g. https://bucket.s3.region.backblazeb2.com/path
-            const cleanPath = b2Path.startsWith('/') ? b2Path.substring(1) : b2Path;
-            const { deleteFromB2 } = require('../utils/b2Storage');
-            await deleteFromB2(cleanPath);
+            const b2Path = urlParts[1].startsWith('/') ? urlParts[1].substring(1) : urlParts[1];
+            await deleteFromB2(b2Path);
           }
         } catch (err) {
-          console.error('Error deleting B2 file:', fileUrl, err);
+          console.error('B2 Delete Error:', err);
         }
       } 
-      // If Local URL
-      else if (fileUrl.includes('/uploads/')) {
-        try {
-          const urlParts = fileUrl.split('/uploads/');
-          if (urlParts?.length === 2) {
-            const localPath = path.join(__dirname, '..', 'uploads', urlParts[1]);
-            if (fs.existsSync(localPath)) {
-              fs.unlinkSync(localPath);
-            }
-          }
-        } catch (err) {
-          console.error('Error deleting local file:', fileUrl, err);
-        }
-      }
     };
 
-    // Delete app payload, icon, and all screenshots
     await deleteFile(app.fileUrl);
     await deleteFile(app.icon);
-    if (app.screenshots && Array.isArray(app.screenshots)) {
-      for (const screenUrl of app.screenshots) {
-        await deleteFile(screenUrl);
-      }
+    if (app.screenshots) {
+      for (const screenUrl of app.screenshots) await deleteFile(screenUrl);
     }
 
     await App.findByIdAndDelete(req.params.id);
     res.json({ message: 'App deleted successfully.' });
   } catch (error) {
-    console.error('Delete app error:', error);
     res.status(500).json({ message: 'Server error.' });
   }
 };
 
 exports.getMyApps = async (req, res) => {
   try {
-    const apps = await App.find({ developer: req.user._id })
-      .sort({ createdAt: -1 });
+    const apps = await App.find({ developer: req.user._id }).sort({ createdAt: -1 });
     res.json({ apps });
   } catch (error) {
-    console.error('Get my apps error:', error);
     res.status(500).json({ message: 'Server error.' });
   }
 };

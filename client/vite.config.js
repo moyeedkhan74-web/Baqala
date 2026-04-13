@@ -4,17 +4,23 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   build: {
-    chunkSizeWarningLimit: 2000,
+    chunkSizeWarningLimit: 1000,
+    cssCodeSplit: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': ['framer-motion', 'react-icons', 'react-hot-toast'],
+          'vendor-utils': ['axios']
+        }
+      }
+    }
   },
   server: {
     port: 5173,
-    allowedHosts: true, // Allow localtunnel and other secure proxies to connect
+    allowedHosts: true, 
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-      },
-      '/uploads': {
         target: 'http://localhost:5000',
         changeOrigin: true,
       }
