@@ -5,8 +5,8 @@ import api from '../api/axios';
 import toast from 'react-hot-toast';
 import { 
   HiCog, HiPhotograph, HiUpload, HiTrash, HiCheckCircle, 
-  HiArrowLeft, HiDeviceMobile, HiPencilSquare, HiArrowUpTray 
-} from 'react-icons/hi2';
+  HiArrowLeft, HiDeviceMobile, HiPencil, HiCloudUpload as HiArrowUpTray 
+} from 'react-icons/hi';
 
 const EditApp = () => {
   const { id } = useParams();

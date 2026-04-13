@@ -134,7 +134,7 @@ const AppDetail = () => {
               <p className="text-xl text-accent-neon font-medium mb-6">{app.developerName || app.developer?.name}</p>
               
               <div className="flex flex-wrap gap-6 mb-8 text-sm font-semibold">
-                <div className="flex items-center gap-2"><HiStar className="text-yellow-400 w-5 h-5"/> <span className="text-white text-lg">{app.averageRating?.toFixed(1) || '0.0'}</span> <span className="text-gray-500">({app.ratings?.length || 0})</span></div>
+                <div className="flex items-center gap-2"><HiStar className="text-yellow-400 w-5 h-5"/> <span className="text-white text-lg">{app.averageRating?.toFixed(1) || '0.0'}</span> <span className="text-gray-500">({app.totalReviews || 0})</span></div>
                 <div className="flex items-center gap-2 text-gray-300"><HiFolder className="w-5 h-5 text-accent-violet"/> {app.category}</div>
                 <div className="flex items-center gap-2 text-gray-300"><HiDownload className="w-5 h-5 text-accent-emerald"/> {((app.totalDownloads || 0) / 1000).toFixed(1)}k+</div>
                 <div className="flex items-center gap-2 text-gray-300"><HiDeviceMobile className="w-5 h-5 text-rose-400"/> {app.platform || 'Cross-Platform'}</div>
