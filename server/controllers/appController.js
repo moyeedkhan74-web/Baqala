@@ -25,23 +25,39 @@ const optimizeAndUpload = async (file, folder = 'icons') => {
 };
 
 // Helper to delete any file from B2 (detects bucket automatically)
-const deleteFileFromB2 = async (fileUrl) => {
-  if (!fileUrl || typeof fileUrl !== 'string') return;
-  if (fileUrl.includes('.backblazeb2.com/')) {
-    try {
-      const urlParts = fileUrl.split('.backblazeb2.com/');
+const deleteFileFromB2 = async (rawUrl) => {
+  if (!rawUrl || typeof rawUrl !== 'string') return;
+  
+  try {
+    // 1. Strip query params and fragments (presigned URLs support)
+    const cleanUrl = rawUrl.split('?')[0].split('#')[0];
+    
+    if (cleanUrl.includes('.backblazeb2.com/')) {
+      const urlParts = cleanUrl.split('.backblazeb2.com/');
       if (urlParts?.length === 2) {
-        const b2Path = urlParts[1].startsWith('/') ? urlParts[1].substring(1) : urlParts[1];
+        let b2Path = urlParts[1];
         
-        // Detect which bucket based on the subdomain (bucket name)
-        // Public: baqala | Private: baqalaaa
-        const isPrivate = fileUrl.includes('baqalaaa.');
+        // Handle Friendly URLs (file/bucketName/path) vs S3 URLs (path)
+        if (b2Path.startsWith('file/')) {
+          const pathParts = b2Path.split('/');
+          // index 0: file, index 1: bucketName, rest: path
+          b2Path = pathParts.slice(2).join('/');
+        }
+        
+        // Remove leading slash if present
+        b2Path = b2Path.startsWith('/') ? b2Path.substring(1) : b2Path;
+        
+        // Detect which bucket based on the subdomain or path (bucket name)
+        const isPrivate = cleanUrl.includes('baqalaaa');
+        
+        console.log(`[B2 DELETE] Path: ${b2Path} | Private: ${isPrivate}`);
         await deleteFromB2(b2Path, isPrivate);
       }
-    } catch (err) {
-      console.error('B2 Delete Error:', err);
     }
-  } 
+  } catch (err) {
+    console.error('B2 Surgical Delete Error:', err);
+    // We don't throw here to ensure the main flow (like DB update) continues
+  }
 };
 
 exports.getAppDownloadLink = async (req, res, next) => {
@@ -180,11 +196,43 @@ exports.removeScreenshot = async (req, res, next) => {
       return res.status(403).json({ message: 'Not authorized.' });
     }
 
+    // Surgical match: strip query params from the incoming URL and the array URLs
+    const cleanTarget = screenshotUrl.split('?')[0].split('#')[0];
+    
     await deleteFileFromB2(screenshotUrl);
-    app.screenshots = app.screenshots.filter(s => s !== screenshotUrl);
+    
+    app.screenshots = app.screenshots.filter(s => {
+      const cleanS = s.split('?')[0].split('#')[0];
+      return cleanS !== cleanTarget;
+    });
+    
     await app.save();
 
     res.json({ success: true, screenshots: app.screenshots });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.removeAllScreenshots = async (req, res, next) => {
+  try {
+    const app = await App.findById(req.params.id);
+    if (!app) return res.status(404).json({ message: 'App not found.' });
+    if (app.developer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized.' });
+    }
+
+    // Wipe all from cloud
+    if (app.screenshots && app.screenshots.length > 0) {
+      for (const url of app.screenshots) {
+        await deleteFileFromB2(url);
+      }
+    }
+
+    app.screenshots = [];
+    await app.save();
+
+    res.json({ success: true, screenshots: [] });
   } catch (error) {
     next(error);
   }
