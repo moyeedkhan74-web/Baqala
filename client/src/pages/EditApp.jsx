@@ -112,8 +112,8 @@ const EditApp = () => {
     if (!window.confirm('Delete this visual asset?')) return;
     setSaving(true);
     try {
-      // Send as DELETE but with body
-      await api.delete(`/apps/${id}/screenshot`, { data: { screenshotUrl: url } });
+      // Use POST fallback for better compatibility
+      await api.post(`/apps/${id}/remove-screenshot`, { screenshotUrl: url });
       setApp(prev => ({ ...prev, screenshots: prev.screenshots.filter(s => s !== url) }));
       toast.success('Asset removed from cloud');
     } catch (error) {
