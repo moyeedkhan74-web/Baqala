@@ -54,8 +54,8 @@ app.use(cors({
 // Helmet Configuration
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
-  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
-  contentSecurityPolicy: false, // Disabling CSP for now to resolve GA and other resource blocking issues, can be configured specifically later
+  crossOriginOpenerPolicy: { policy: 'unsafe-none' }, // Most relaxed setting for Firebase Auth compatibility
+  contentSecurityPolicy: false,
 }));
 app.use(generalLimiter);
 
