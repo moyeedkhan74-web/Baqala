@@ -14,12 +14,12 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
   
-  const [search, setSearch] = useState([searchParams].get('search') || '');
+  const [search, setSearch] = useState(searchParams.get('search') || '');
   const [category, setCategory] = useState('');
   const [sort, setSort] = useState('-createdAt');
   
   // Debounce search
-  const [debouncedSearch, setDebouncedSearch] = useState([search]);
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
 
   useEffect(() => {
     const querySearch = searchParams.get('search');
