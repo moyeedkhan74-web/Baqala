@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { HiSearch, HiX } from 'react-icons/hi';
 
 const SearchBar = ({ onSearch, placeholder = 'Search apps...' }) => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(['']);
 
   useEffect(() => {
     const timer = setTimeout(() => {

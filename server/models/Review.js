@@ -41,7 +41,7 @@ reviewSchema.statics.calculateAverageRating = async function (appId) {
   ]);
 
   const App = mongoose.model('App');
-  if (result.length > 0) {
+  if (result?.length > 0) {
     await App.findByIdAndUpdate(appId, {
       averageRating: Math.round(result[0].averageRating * 10) / 10,
       totalReviews: result[0].totalReviews

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 const MagneticHover = ({ children, className = '', damping = 15, stiffness = 150 }) => {
   const ref = useRef(null);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [position, setPosition] = useState([{ x: 0, y: 0 }]);
 
   const handleMouse = (e) => {
     const { clientX, clientY } = e;
