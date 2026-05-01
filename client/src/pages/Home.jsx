@@ -14,12 +14,12 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
   
-  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [search, setSearch] = useState([searchParams].get('search') || '');
   const [category, setCategory] = useState('');
   const [sort, setSort] = useState('-createdAt');
   
   // Debounce search
-  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  const [debouncedSearch, setDebouncedSearch] = useState([search]);
 
   useEffect(() => {
     const querySearch = searchParams.get('search');
@@ -50,10 +50,10 @@ const Home = () => {
       }
 
       const results = await Promise.all(fetchPromises);
-      setApps(results[0]?.data?.apps || []);
-      setCategories(results[1]?.data?.categories || []);
+      setApps(results[0].data.apps);
+      setCategories(results[1].data.categories || []);
       if (token && results[2]) {
-        setMyApps(results[2]?.data?.apps || []);
+        setMyApps(results[2].data.apps);
       }
     } catch (error) {
       toast.error('Failed to load experience');
@@ -62,8 +62,8 @@ const Home = () => {
     }
   };
 
-  const featuredApp = apps.length > 0 ? apps[0] : null;
-  const standardApps = apps.length > 0 ? apps.slice(1) : [];
+  const featuredApp = apps?.length > 0 ? apps[0] : null;
+  const standardApps = apps?.length > 0 ? apps.slice(1) : [];
 
   return (
     <div className="min-h-screen pb-24 text-white">
@@ -99,7 +99,7 @@ const Home = () => {
         </div>
 
         {/* Carousel Banners - Only show when no active search/category filter */}
-        {!search && !category && sort === '-createdAt' && apps.length > 0 && (
+        {!search && !category && sort === '-createdAt' && apps?.length > 0 && (
           <HeroCarousel apps={apps} />
         )}
 
@@ -139,12 +139,12 @@ const Home = () => {
         
         {/* Main Content Area */}
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 pt-10">
-            {[1,2,3,4,5,6,7,8].map(i => (
-              <div key={i} className="glass-panel p-5 rounded-2xl h-36 sm:h-40 animate-pulse bg-white/5" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-10">
+            {[1,2,3,4,5,6].map(i => (
+              <div key={i} className="glass-panel p-5 rounded-2xl h-40 animate-pulse bg-white/5" />
             ))}
           </div>
-        ) : apps.length === 0 ? (
+        ) : apps?.length === 0 ? (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             className="py-32 flex flex-col items-center justify-center text-center glass-panel rounded-3xl"
@@ -164,7 +164,7 @@ const Home = () => {
             >
               {/* Grid Content */}
               <section>
-                {myApps.length > 0 && !search && !category && (
+                {myApps?.length > 0 && !search && !category && (
                   <div className="mb-12">
                     <div className="flex items-center justify-between mb-6">
                       <div className="flex items-center gap-2">
@@ -190,7 +190,7 @@ const Home = () => {
                   </div>
                 )}
                 
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {((!search && !category && sort === '-createdAt') ? standardApps : apps).map((app, index) => (
                     <motion.div
                       key={app._id}

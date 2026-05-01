@@ -5,21 +5,21 @@ import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import StarRating from '../components/StarRating';
 import toast from 'react-hot-toast';
-import { HiDownload, HiStar, HiFolder, HiClock, HiDeviceMobile, HiArrowLeft, HiArrowRight } from 'react-icons/hi';
+import { HiDownload, HiStar, HiFolder, HiClock, HiDeviceMobile } from 'react-icons/hi';
 
 const AppDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
-  const [app, setApp] = useState(null);
+  const [app, setApp] = useState([null]);
   const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [zoomScale, setZoomScale] = useState(1);
+  const [loading, setLoading] = useState([true]);
+  const [selectedImage, setSelectedImage] = useState([null]);
+  const [zoomScale, setZoomScale] = useState([1]);
   
-  const [userRating, setUserRating] = useState(0);
-  const [userComment, setUserComment] = useState('');
-  const [submittingReview, setSubmittingReview] = useState(false);
-  const [downloading, setDownloading] = useState(false);
+  const [userRating, setUserRating] = useState([0]);
+  const [userComment, setUserComment] = useState(['']);
+  const [submittingReview, setSubmittingReview] = useState([false]);
+  const [downloading, setDownloading] = useState([false]);
 
   useEffect(() => { loadData(); }, [id]);
 
@@ -29,8 +29,8 @@ const AppDetail = () => {
         api.get(`/apps/${id}`),
         api.get(`/reviews/${id}`)
       ]);
-      setApp(appRes.data?.app || null);
-      setReviews(revRes.data?.reviews || []);
+      setApp(appRes.data.app);
+      setReviews(revRes.data.reviews);
     } catch (error) { toast.error('Failed to load application data'); }
     finally { setLoading(false); }
   };
@@ -134,9 +134,9 @@ const AppDetail = () => {
               <p className="text-xl text-accent-neon font-medium mb-6">{app.developerName || app.developer?.name}</p>
               
               <div className="flex flex-wrap gap-6 mb-8 text-sm font-semibold">
-                <div className="flex items-center gap-2"><HiStar className="text-yellow-400 w-5 h-5"/> <span className="text-white text-lg">{app.averageRating?.toFixed(1) || '0.0'}</span> <span className="text-gray-500">({app.totalReviews || 0})</span></div>
+                <div className="flex items-center gap-2"><HiStar className="text-yellow-400 w-5 h-5"/> <span className="text-white text-lg">{app.averageRating?.toFixed(1) || '0.0'}</span> <span className="text-gray-500">({app.ratings?.length || 0})</span></div>
                 <div className="flex items-center gap-2 text-gray-300"><HiFolder className="w-5 h-5 text-accent-violet"/> {app.category}</div>
-                <div className="flex items-center gap-2 text-gray-300"><HiDownload className="w-5 h-5 text-accent-emerald"/> {((app.totalDownloads || 0) / 1000).toFixed(1)}k+</div>
+                <div className="flex items-center gap-2 text-gray-300"><HiDownload className="w-5 h-5 text-accent-emerald"/> {(app.totalDownloads / 1000).toFixed(1)}k+</div>
                 <div className="flex items-center gap-2 text-gray-300"><HiDeviceMobile className="w-5 h-5 text-rose-400"/> {app.platform || 'Cross-Platform'}</div>
               </div>
 
@@ -155,7 +155,7 @@ const AppDetail = () => {
           <div className="lg:col-span-2 space-y-8">
             
             {/* Screenshots Gallery */}
-            {Array.isArray(app.screenshots) && app.screenshots.length > 0 && (
+            {app.screenshots?.length > 0 && (
               <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
                 <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">Visuals <span className="w-2 h-2 rounded-full bg-accent-neon animate-pulse" /></h2>
                 <div className="flex overflow-x-auto gap-4 pb-4 hide-scrollbar snap-x">
@@ -182,17 +182,13 @@ const AppDetail = () => {
 
             {/* Reviews System */}
             <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
-              <h2 className="text-2xl font-bold text-white mb-6">User Telemetry [{reviews.length}]</h2>
+              <h2 className="text-2xl font-bold text-white mb-6">User Telemetry [{reviews?.length}]</h2>
               
               {user ? (
                 <form onSubmit={submitReview} className="glass-panel p-6 rounded-3xl mb-8 border border-accent-violet/30 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-accent-violet/10 blur-3xl pointer-events-none" />
-                  <div className="mb-4 flex flex-col gap-2">
-                    <label className="text-sm text-gray-400 font-medium">Your Rating:</label>
-                    <StarRating rating={userRating} onRate={(val) => {
-                      setUserRating(val);
-                    }} interactive size="lg" />
-                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-4">Transmit your feedback</h3>
+                  <div className="mb-4"><StarRating rating={userRating} setRating={setUserRating} interactive /></div>
                   <textarea
                     value={userComment} onChange={e => setUserComment(e.target.value)}
                     placeholder="Describe your experience in the matrix..." required
@@ -261,11 +257,11 @@ const AppDetail = () => {
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-2xl"
             onKeyDown={(e) => {
               if (e.key === 'Escape') setSelectedImage(null);
-              if (e.key === 'ArrowRight' && (app.screenshots || []).includes(selectedImage)) {
+              if (e.key === 'ArrowRight' && app.screenshots.includes(selectedImage)) {
                 const idx = app.screenshots.indexOf(selectedImage);
-                if (idx < app.screenshots.length - 1) setSelectedImage(app.screenshots[idx+1]);
+                if (idx < app.screenshots?.length - 1) setSelectedImage(app.screenshots[idx+1]);
               }
-              if (e.key === 'ArrowLeft' && (app.screenshots || []).includes(selectedImage)) {
+              if (e.key === 'ArrowLeft' && app.screenshots.includes(selectedImage)) {
                 const idx = app.screenshots.indexOf(selectedImage);
                 if (idx > 0) setSelectedImage(app.screenshots[idx-1]);
               }
@@ -281,7 +277,7 @@ const AppDetail = () => {
             </motion.button>
 
             {/* Navigation Arrows (Only for Screenshots) */}
-            {(app.screenshots || []).includes(selectedImage) && (
+            {app.screenshots.includes(selectedImage) && (
               <>
                 {app.screenshots.indexOf(selectedImage) > 0 && (
                   <button 
@@ -291,7 +287,7 @@ const AppDetail = () => {
                     <HiArrowLeft className="w-8 h-8" />
                   </button>
                 )}
-                {app.screenshots.indexOf(selectedImage) < app.screenshots.length - 1 && (
+                {app.screenshots.indexOf(selectedImage) < app.screenshots?.length - 1 && (
                   <button 
                     className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-[110] p-3 rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all border border-white/10"
                     onClick={(e) => { e.stopPropagation(); setSelectedImage(app.screenshots[app.screenshots.indexOf(selectedImage) + 1]); setZoomScale(1); }}
@@ -326,9 +322,9 @@ const AppDetail = () => {
             </motion.div>
 
             {/* Pagination Dots (Only for Screenshots) */}
-            {(app.screenshots || []).includes(selectedImage) && (
+            {app.screenshots.includes(selectedImage) && (
               <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-3 z-[110]">
-                {(app.screenshots || []).map((_, idx) => (
+                {app.screenshots.map((_, idx) => (
                   <button 
                     key={idx} 
                     onClick={(e) => { e.stopPropagation(); setSelectedImage(app.screenshots[idx]); setZoomScale(1); }}
