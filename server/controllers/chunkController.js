@@ -11,15 +11,18 @@ exports.initUpload = async (req, res, next) => {
     const { fileName, contentType } = req.body;
     const filePath = `apps/${Date.now()}_${fileName}`;
     
+    console.log(`[B2_INIT] Initializing upload for: ${fileName}`);
     const result = await startMultipartUpload(filePath, contentType || 'application/octet-stream');
     
     if (result.success) {
+      console.log(`[B2_INIT] Success. UploadID: ${result.uploadId}`);
       res.json({ 
         success: true, 
         uploadId: result.uploadId, 
         filePath 
       });
     } else {
+      console.error(`[B2_INIT] Failed:`, result.error);
       res.status(500).json({ message: 'Failed to initialize cloud upload', error: result.error });
     }
   } catch (error) {
@@ -38,11 +41,14 @@ exports.uploadChunk = async (req, res, next) => {
 
     // chunk.buffer is available because we use memoryStorage
     const partNumber = parseInt(chunkIndex) + 1;
+    console.log(`[B2_CHUNK] Uploading Part ${partNumber} for ${uploadId}`);
     const result = await uploadPart(filePath, uploadId, partNumber, chunk.buffer);
-
+    
     if (result.success) {
+      console.log(`[B2_CHUNK] Part ${partNumber} complete. ETag: ${result.etag}`);
       res.json({ success: true, etag: result.etag, partNumber });
     } else {
+      console.error(`[B2_CHUNK] Part ${partNumber} failed:`, result.error);
       res.status(500).json({ message: `Failed to upload part ${partNumber}`, error: result.error });
     }
   } catch (error) {
