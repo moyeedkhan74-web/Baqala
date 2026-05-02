@@ -4,7 +4,7 @@ const path = require('path');
 // Storage in memory to ensure "NOTHING ON PC" requirement
 const storage = multer.memoryStorage();
 
-const allowedAppExtensions = ['.apk', '.zip', '.rar', '.tar', '.gz', '.exe', '.msi', '.dmg', '.deb', '.rpm', '.appimage'];
+const allowedAppExtensions = ['.apk', '.zip', '.rar', '.tar', '.gz', '.exe', '.msi', '.dmg', '.deb', '.rpm', '.appimage', '.ipa', '.7z'];
 const allowedImageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'];
 
 const appFileFilter = (req, file, cb) => {
