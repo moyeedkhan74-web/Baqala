@@ -6,7 +6,7 @@ const {
 } = require('../controllers/appController');
 const { initUpload, uploadChunk, combineChunks } = require('../controllers/chunkController');
 const { auth } = require('../middleware/auth');
-const { uploadApp, uploadImages, uploadAll } = require('../middleware/upload');
+const { uploadApp, uploadChunked, uploadImages, uploadAll } = require('../middleware/upload');
 
 const router = express.Router();
 
