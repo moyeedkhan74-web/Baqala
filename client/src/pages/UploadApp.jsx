@@ -57,12 +57,24 @@ const UploadApp = () => {
         
         toast.loading(`Transmitting Payload Part ${i + 1}/${totalPartCount}...`, { id: toastId });
         
-        const chunkRes = await api.post('/apps/upload-chunk', chunkFormData, {
-          onUploadProgress: (progressEvent) => {
-            const chunkProgress = (progressEvent.loaded / progressEvent.total) * (1 / totalPartCount) * 70;
-            setUploadProgress(prev => Math.min(prev + chunkProgress, 99));
+        let chunkRes;
+        let retries = 3;
+        while (retries > 0) {
+          try {
+            chunkRes = await api.post('/apps/upload-chunk', chunkFormData, {
+              onUploadProgress: (progressEvent) => {
+                const chunkProgress = (progressEvent.loaded / progressEvent.total) * (1 / totalPartCount) * 70;
+                setUploadProgress(prev => Math.min(prev + chunkProgress, 99));
+              }
+            });
+            break; // Success!
+          } catch (err) {
+            retries--;
+            if (retries === 0) throw err;
+            console.warn(`Chunk ${i+1} failed, retrying... (${retries} left)`);
+            await new Promise(r => setTimeout(r, 2000)); // Wait before retry
           }
-        });
+        }
         
         parts.push({ ETag: chunkRes.data.etag, PartNumber: chunkRes.data.partNumber });
         setUploadProgress((i + 1) / totalPartCount * 70); // Up to 70% for binary

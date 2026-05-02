@@ -9,8 +9,10 @@ const allowedImageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'
 
 const appFileFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
-  if (file.fieldname === 'appFile') {
-    if (allowedAppExtensions.includes(ext)) {
+  
+  if (file.fieldname === 'appFile' || file.fieldname === 'chunk') {
+    // For chunks, we're more lenient as they might be named 'blob' or have no extension
+    if (file.fieldname === 'chunk' || allowedAppExtensions.includes(ext)) {
       cb(null, true);
     } else {
       cb(new Error(`Invalid file type. Allowed: ${allowedAppExtensions.join(', ')}`), false);
@@ -33,6 +35,14 @@ const uploadApp = multer({
     fileSize: parseInt(process.env.MAX_FILE_SIZE) || 209715200 // 200MB
   }
 }).single('appFile');
+
+const uploadChunked = multer({
+  storage: storage,
+  fileFilter: appFileFilter,
+  limits: {
+    fileSize: 20 * 1024 * 1024 // 20MB max per chunk
+  }
+}).single('chunk');
 
 const uploadImages = multer({
   storage: storage,
@@ -74,6 +84,7 @@ const handleUploadError = (uploadFn) => (req, res, next) => {
 
 module.exports = {
   uploadApp: handleUploadError(uploadApp),
+  uploadChunked: handleUploadError(uploadChunked),
   uploadImages: handleUploadError(uploadImages),
   uploadAll: handleUploadError(uploadAll)
 };
