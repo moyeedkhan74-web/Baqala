@@ -57,9 +57,7 @@ const UploadApp = () => {
         
         toast.loading(`Transmitting Payload Part ${i + 1}/${totalPartCount}...`, { id: toastId });
         
-        const chunkRes = await api.post('/apps/upload-chunk', chunkFormData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        const chunkRes = await api.post('/apps/upload-chunk', chunkFormData);
         
         parts.push({ ETag: chunkRes.data.etag, PartNumber: chunkRes.data.partNumber });
         setUploadProgress((i + 1) / totalPartCount * 70); // Up to 70% for binary
@@ -92,9 +90,7 @@ const UploadApp = () => {
       finalFormData.append('icon', files.icon);
       files.screenshots.forEach(ss => finalFormData.append('screenshots', ss));
 
-      await api.post('/apps', finalFormData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      await api.post('/apps', finalFormData);
 
       setUploadProgress(100);
       toast.success('Project deployed PERFECTLY! Verified on Global Cloud.', { id: toastId });

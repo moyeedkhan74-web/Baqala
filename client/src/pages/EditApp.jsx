@@ -75,9 +75,7 @@ const EditApp = () => {
     
     setSaving(true);
     try {
-      const { data } = await api.post(`/apps/${id}/images`, iconFormData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const { data } = await api.post(`/apps/${id}/images`, iconFormData);
       setApp(data.app);
       toast.success('Neural Icon Updated!');
     } catch (error) {
@@ -96,9 +94,7 @@ const EditApp = () => {
     
     setSaving(true);
     try {
-      const { data } = await api.post(`/apps/${id}/images`, ssFormData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const { data } = await api.post(`/apps/${id}/images`, ssFormData);
       setApp(data.app);
       toast.success('Visual telemetry added!');
     } catch (error) {
@@ -167,7 +163,7 @@ const EditApp = () => {
         const chunk = file.slice(start, end);
         
         const chunkFormData = new FormData();
-        chunkFormData.append('appFile', chunk);
+        chunkFormData.append('chunk', chunk);
         chunkFormData.append('chunkIndex', i);
         chunkFormData.append('uploadId', uploadId);
         chunkFormData.append('filePath', filePath);
