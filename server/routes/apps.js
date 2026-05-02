@@ -14,6 +14,7 @@ const router = express.Router();
 router.get('/categories', getCategories);
 router.get('/my', auth, getMyApps);
 router.get('/', getApps);
+router.post('/', auth, uploadAll, createApp);
 
 // --- Action Routes (Specific) ---
 router.post('/init-upload', auth, initUpload);
