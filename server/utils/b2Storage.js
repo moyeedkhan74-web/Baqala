@@ -61,8 +61,8 @@ exports.uploadToB2 = async (filePath, fileBuffer, contentType, isPrivate = false
 
     await s3.send(command);
     
-    // For Private bucket, the URL is technically the same but won't be accessible without a signature
-    const url = `https://${bucket}.${endpoint}/${filePath}`;
+    // Use Path-Style URL (more reliable for B2)
+    const url = `https://${endpoint}/${bucket}/${filePath}`;
 
     return { success: true, url, path: filePath };
   } catch (error) {
@@ -166,7 +166,7 @@ exports.completeMultipartUpload = async (filePath, uploadId, parts, isPrivate = 
       },
     });
     await s3.send(command);
-    const url = `https://${bucket}.${endpoint}/${filePath}`;
+    const url = `https://${endpoint}/${bucket}/${filePath}`;
     return { success: true, url };
   } catch (error) {
     console.error('B2 Multipart Complete Error:', error.message);
