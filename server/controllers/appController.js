@@ -65,10 +65,15 @@ exports.getAppDownloadLink = async (req, res, next) => {
     const app = await App.findById(req.params.id);
     if (!app) return res.status(404).json({ message: 'App not found.' });
     
-    const urlParts = app.fileUrl.split('.backblazeb2.com/');
-    if (urlParts.length !== 2) {
-      return res.status(400).json({ message: 'Invalid file URL format.' });
+    // Support both B2 and legacy (Supabase) URLs
+    if (!app.fileUrl.includes('.backblazeb2.com/')) {
+      console.log(`[DOWNLOAD] Serving legacy URL: ${app.fileUrl}`);
+      app.totalDownloads += 1;
+      await app.save();
+      return res.json({ downloadUrl: app.fileUrl });
     }
+
+    const urlParts = app.fileUrl.split('.backblazeb2.com/');
     const b2Path = urlParts[1].startsWith('/') ? urlParts[1].substring(1) : urlParts[1];
     
     const result = await getDownloadUrl(b2Path);
