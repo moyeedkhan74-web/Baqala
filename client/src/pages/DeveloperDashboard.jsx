@@ -124,11 +124,11 @@ const DeveloperDashboard = () => {
                         <Link to={`/app/${app._id}`} className="flex items-center gap-5">
                           <div className="relative">
                             <div className="absolute -inset-1 bg-gradient-to-r from-accent-violet to-accent-neon rounded-2xl opacity-20 group-hover:opacity-40 blur transition-opacity" />
-                            <img 
-                              src={app.icon} 
-                              className="w-14 h-14 rounded-xl object-cover relative z-10 border border-white/10 shadow-2xl" 
-                              onError={(e) => { e.target.src = 'https://uuoczotaitlitzgijltx.supabase.co/storage/v1/object/public/Baqala/icons/default_app_icon.png'; }}
-                            />
+                              <img 
+                                src={app.icon} 
+                                className="w-14 h-14 rounded-xl object-cover relative z-10 border border-white/10 shadow-2xl" 
+                                onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(app.title)}&background=random&size=128`; }}
+                              />
                           </div>
                           <div>
                             <p className="text-lg font-bold text-white group-hover:text-accent-neon transition-colors leading-tight">{app.title}</p>

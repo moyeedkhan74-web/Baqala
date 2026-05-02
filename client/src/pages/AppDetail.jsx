@@ -124,7 +124,7 @@ const AppDetail = () => {
               <img 
                 src={app.icon} 
                 className="w-full h-full object-cover rounded-[2rem] border-2 border-white/20 shadow-glass relative z-10" 
-                onError={(e) => { e.target.src = 'https://uuoczotaitlitzgijltx.supabase.co/storage/v1/object/public/Baqala/icons/default_app_icon.png'; }}
+                onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(app.title)}&background=random&size=256`; }}
               />
             </motion.div>
             
