@@ -1,3 +1,4 @@
+// Baqala Deployment Trigger: CORS & Upload Final
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
