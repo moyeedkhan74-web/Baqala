@@ -10,16 +10,16 @@ import { HiDownload, HiStar, HiFolder, HiClock, HiDeviceMobile } from 'react-ico
 const AppDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
-  const [app, setApp] = useState([null]);
+  const [app, setApp] = useState(null);
   const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState([true]);
-  const [selectedImage, setSelectedImage] = useState([null]);
-  const [zoomScale, setZoomScale] = useState([1]);
+  const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [zoomScale, setZoomScale] = useState(1);
   
-  const [userRating, setUserRating] = useState([0]);
-  const [userComment, setUserComment] = useState(['']);
-  const [submittingReview, setSubmittingReview] = useState([false]);
-  const [downloading, setDownloading] = useState([false]);
+  const [userRating, setUserRating] = useState(0);
+  const [userComment, setUserComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => { loadData(); }, [id]);
 

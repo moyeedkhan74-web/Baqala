@@ -32,10 +32,17 @@ exports.downloadApp = async (req, res) => {
     let downloadUrl = app.fileUrl;
 
     // If it's in the private bucket, we must sign it
-    if (app.fileUrl.includes('baqalaaa.')) {
+    if (app.fileUrl.includes('.backblazeb2.com/')) {
       const urlParts = app.fileUrl.split('.backblazeb2.com/');
       if (urlParts.length === 2) {
-        const b2Path = urlParts[1].startsWith('/') ? urlParts[1].substring(1) : urlParts[1];
+        let b2Path = urlParts[1].startsWith('/') ? urlParts[1].substring(1) : urlParts[1];
+        
+        // Surgical Fix: Remove the bucket name from the start of the path
+        const pathParts = b2Path.split('/');
+        if (pathParts.length > 1) {
+          b2Path = pathParts.slice(1).join('/');
+        }
+
         const result = await getDownloadUrl(b2Path);
         if (result.success) {
           downloadUrl = result.url;
