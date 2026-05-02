@@ -30,7 +30,7 @@ exports.initUpload = async (req, res, next) => {
 exports.uploadChunk = async (req, res, next) => {
   try {
     const { chunkIndex, uploadId, filePath } = req.body;
-    const chunk = req.files && req.files.appFile ? req.files.appFile[0] : null;
+    const chunk = req.file;
 
     if (!chunk) {
       return res.status(400).json({ message: 'No chunk data received.' });
