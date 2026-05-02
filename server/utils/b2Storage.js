@@ -12,26 +12,32 @@ const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
 // --- CLIENTS ---
 
-// Public Client (Old Account - For Photos)
-const publicS3 = new S3Client({
-  endpoint: `https://${process.env.B2_ENDPOINT}`,
+// Performance and Security middleware
+const s3Config = {
   region: process.env.B2_REGION || 'us-east-005',
+  endpoint: `https://${process.env.B2_ENDPOINT}`,
   credentials: {
     accessKeyId: process.env.B2_APPLICATION_KEY_ID,
     secretAccessKey: process.env.B2_APPLICATION_KEY,
   },
-  forcePathStyle: true, 
-});
+  requestHandler: {
+    connectionTimeout: 5000,
+    requestTimeout: 10000
+  },
+  forcePathStyle: true,
+};
+
+const publicS3 = new S3Client(s3Config);
 
 // Private Client (New Account - For Apps)
 const privateS3 = new S3Client({
-  endpoint: `https://${process.env.B2_PRIVATE_ENDPOINT}`,
+  ...s3Config,
   region: process.env.B2_PRIVATE_REGION || 'us-east-005',
+  endpoint: `https://${process.env.B2_PRIVATE_ENDPOINT}`,
   credentials: {
     accessKeyId: process.env.B2_PRIVATE_KEY_ID,
     secretAccessKey: process.env.B2_PRIVATE_APP_KEY,
   },
-  forcePathStyle: true, 
 });
 
 // --- HELPERS ---
