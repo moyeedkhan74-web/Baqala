@@ -21,8 +21,8 @@ const s3Config = {
     secretAccessKey: process.env.B2_APPLICATION_KEY,
   },
   requestHandler: {
-    connectionTimeout: 5000,
-    requestTimeout: 10000
+    connectionTimeout: 15000,
+    requestTimeout: 60000
   },
   forcePathStyle: true,
 };

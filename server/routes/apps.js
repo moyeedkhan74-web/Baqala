@@ -18,7 +18,7 @@ router.post('/', auth, uploadAll, createApp);
 
 // --- Action Routes (Specific) ---
 router.post('/init-upload', auth, initUpload);
-router.post('/upload-chunk', auth, uploadApp, uploadChunk);
+router.post('/upload-chunk', auth, uploadChunked, uploadChunk);
 router.post('/combine-chunks', auth, combineChunks);
 router.post('/placeholder-images', auth, uploadImages, uploadPlaceholderImages);
 
