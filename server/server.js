@@ -15,6 +15,7 @@ const downloadRoutes = require('./routes/downloads');
 const adminRoutes = require('./routes/admin');
 
 const app = express();
+app.set('trust proxy', 1); // Trust Render's proxy for accurate IP tracking
 
 const compression = require('compression');
 
