@@ -74,8 +74,17 @@ exports.getAppDownloadLink = async (req, res, next) => {
     }
 
     const urlParts = app.fileUrl.split('.backblazeb2.com/');
-    const b2Path = urlParts[1].startsWith('/') ? urlParts[1].substring(1) : urlParts[1];
+    let b2Path = urlParts[1].startsWith('/') ? urlParts[1].substring(1) : urlParts[1];
     
+    // Surgical Fix: Remove the bucket name from the start of the path
+    // S3-style URLs are: bucket/path/to/file
+    const pathParts = b2Path.split('/');
+    if (pathParts.length > 1) {
+      // The first part is the bucket name, remove it
+      b2Path = pathParts.slice(1).join('/');
+    }
+    
+    console.log(`[DOWNLOAD] Generating link for Path: ${b2Path}`);
     const result = await getDownloadUrl(b2Path);
     if (!result.success) {
       return res.status(500).json({ message: 'Failed to generate download link.' });
