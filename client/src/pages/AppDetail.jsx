@@ -5,8 +5,7 @@ import api, { API_BASE_URL } from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import StarRating from '../components/StarRating';
 import toast from 'react-hot-toast';
-import { HiDownload, HiStar, HiFolder, HiClock, HiDeviceMobile, HiCheckCircle, HiTag, HiShieldCheck, HiOutlineSparkles } from 'react-icons/hi';
-import MagneticHover from '../components/MagneticHover';
+import { HiDownload, HiStar, HiFolder, HiClock, HiDeviceMobile, HiArrowLeft, HiArrowRight } from 'react-icons/hi';
 
 const AppDetail = () => {
   const getImageUrl = (url) => {
@@ -23,7 +22,7 @@ const AppDetail = () => {
   const [app, setApp] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [lightboxIndex, setLightboxIndex] = useState(-1); // -1=closed, -2=icon, 0+=screenshot index
   const [zoomScale, setZoomScale] = useState(1);
   
   const [userRating, setUserRating] = useState(0);
@@ -31,7 +30,31 @@ const AppDetail = () => {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
+  const lightboxOpen = lightboxIndex !== -1;
+  const isScreenshot = lightboxIndex >= 0;
+  const lightboxSrc = lightboxIndex === -2 
+    ? getImageUrl(app?.icon) 
+    : (isScreenshot && app?.screenshots?.[lightboxIndex]) 
+      ? getImageUrl(app.screenshots[lightboxIndex]) 
+      : null;
+
   useEffect(() => { loadData(); }, [id]);
+
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const handler = (e) => {
+      if (e.key === 'Escape') { setLightboxIndex(-1); setZoomScale(1); }
+      if (isScreenshot && e.key === 'ArrowRight' && lightboxIndex < (app?.screenshots?.length || 0) - 1) {
+        setLightboxIndex(prev => prev + 1); setZoomScale(1);
+      }
+      if (isScreenshot && e.key === 'ArrowLeft' && lightboxIndex > 0) {
+        setLightboxIndex(prev => prev - 1); setZoomScale(1);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [lightboxOpen, lightboxIndex, isScreenshot, app]);
 
   const loadData = async () => {
     try {
@@ -52,7 +75,6 @@ const AppDetail = () => {
       const downloadUrl = res.data.downloadUrl;
       
       try {
-        // Attempt to fetch as blob to enforce download attribute
         const fileRes = await fetch(downloadUrl);
         const blob = await fileRes.blob();
         const url = window.URL.createObjectURL(blob);
@@ -64,7 +86,6 @@ const AppDetail = () => {
         link.remove();
         window.URL.revokeObjectURL(url);
       } catch (fetchErr) {
-        // Fallback to opening directly if CORS prevents blob fetch
         const link = document.createElement('a');
         link.href = downloadUrl;
         link.target = '_blank';
@@ -127,7 +148,7 @@ const AppDetail = () => {
           <div className="relative z-10 flex flex-col md:flex-row gap-8 items-start md:items-center">
             <motion.div 
               whileHover={{ scale: 1.05, rotate: -2 }} 
-              onClick={() => setSelectedImage(getImageUrl(app.icon))}
+              onClick={() => setLightboxIndex(-2)}
               className="w-32 h-32 md:w-48 md:h-48 flex-shrink-0 relative cursor-zoom-in"
             >
               <div className="absolute inset-0 bg-accent-neon blur-2xl opacity-50 rounded-full" />
@@ -135,7 +156,6 @@ const AppDetail = () => {
                 src={getImageUrl(app.icon)} 
                 className="w-full h-full object-cover rounded-[2rem] border-2 border-white/20 shadow-glass relative z-10" 
                 onError={(e) => { 
-                  console.error('Icon load failed:', app.icon);
                   e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(app.title)}&background=random&size=256`; 
                 }}
               />
@@ -176,10 +196,9 @@ const AppDetail = () => {
                     <motion.img 
                       whileHover={{ scale: 1.02 }} 
                       key={i} src={getImageUrl(s)} 
-                      onClick={() => setSelectedImage(getImageUrl(s))}
+                      onClick={() => setLightboxIndex(i)}
                       className="h-64 md:h-80 w-auto object-cover rounded-2xl border border-white/10 shadow-glass snap-center cursor-zoom-in" 
                       onError={(e) => { 
-                        console.error('Screenshot load failed:', s);
                         e.target.src = 'https://via.placeholder.com/600x400?text=Visual+Telemetry+Lost';
                       }}
                     />
@@ -265,48 +284,38 @@ const AppDetail = () => {
 
       {/* Lightbox Modal / Gallery */}
       <AnimatePresence>
-        {selectedImage !== null && (
+        {lightboxOpen && lightboxSrc && (
           <motion.div 
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-2xl"
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') setSelectedImage(null);
-              if (e.key === 'ArrowRight' && app.screenshots.includes(selectedImage)) {
-                const idx = app.screenshots.indexOf(selectedImage);
-                if (idx < app.screenshots?.length - 1) setSelectedImage(app.screenshots[idx+1]);
-              }
-              if (e.key === 'ArrowLeft' && app.screenshots.includes(selectedImage)) {
-                const idx = app.screenshots.indexOf(selectedImage);
-                if (idx > 0) setSelectedImage(app.screenshots[idx-1]);
-              }
-            }}
+            onClick={() => { setLightboxIndex(-1); setZoomScale(1); }}
           >
             {/* Close Button */}
             <motion.button 
               whileHover={{ scale: 1.1, rotate: 90 }}
               className="absolute top-8 right-8 text-white/40 hover:text-white text-5xl font-thin z-[110] transition-colors"
-              onClick={() => { setSelectedImage(null); setZoomScale(1); }}
+              onClick={(e) => { e.stopPropagation(); setLightboxIndex(-1); setZoomScale(1); }}
             >
               &times;
             </motion.button>
 
             {/* Navigation Arrows (Only for Screenshots) */}
-            {app.screenshots.includes(selectedImage) && (
+            {isScreenshot && (
               <>
-                {app.screenshots.indexOf(selectedImage) > 0 && (
+                {lightboxIndex > 0 && (
                   <button 
                     className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-[110] p-3 rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all border border-white/10"
-                    onClick={(e) => { e.stopPropagation(); setSelectedImage(app.screenshots[app.screenshots.indexOf(selectedImage) - 1]); setZoomScale(1); }}
+                    onClick={(e) => { e.stopPropagation(); setLightboxIndex(prev => prev - 1); setZoomScale(1); }}
                   >
                     <HiArrowLeft className="w-8 h-8" />
                   </button>
                 )}
-                {app.screenshots.indexOf(selectedImage) < app.screenshots?.length - 1 && (
+                {lightboxIndex < (app.screenshots?.length || 0) - 1 && (
                   <button 
                     className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-[110] p-3 rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all border border-white/10"
-                    onClick={(e) => { e.stopPropagation(); setSelectedImage(app.screenshots[app.screenshots.indexOf(selectedImage) + 1]); setZoomScale(1); }}
+                    onClick={(e) => { e.stopPropagation(); setLightboxIndex(prev => prev + 1); setZoomScale(1); }}
                   >
                     <HiArrowRight className="w-8 h-8" />
                   </button>
@@ -319,32 +328,33 @@ const AppDetail = () => {
               animate={{ scale: 1, opacity: 1, y: 0 }} 
               exit={{ scale: 0.8, opacity: 0, y: 20 }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="relative max-w-full max-h-full flex items-center justify-center overflow-auto cursor-pointer"
-              onClick={() => { setSelectedImage(null); setZoomScale(1); }}
+              className="relative max-w-full max-h-full flex items-center justify-center overflow-auto"
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="relative group">
                 <motion.img 
-                  key={selectedImage}
-                  src={selectedImage} 
+                  key={lightboxSrc}
+                  src={lightboxSrc} 
+                  alt="Enlarged visual"
                   animate={{ scale: zoomScale }}
-                  onClick={(e) => { e.stopPropagation(); setZoomScale(prev => prev === 1 ? 2.5 : 1); }}
-                  className={`max-w-[90vw] max-h-[80vh] object-contain rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/5 transition-all duration-500 cursor-zoom-${zoomScale === 1 ? 'in' : 'out'}`}
+                  onClick={() => setZoomScale(prev => prev === 1 ? 2.5 : 1)}
+                  className={`max-w-[90vw] max-h-[80vh] object-contain rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/5 transition-all duration-500 ${zoomScale === 1 ? 'cursor-zoom-in' : 'cursor-zoom-out'}`}
                 />
                 
                 <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-white/10 backdrop-blur-md px-6 py-2 rounded-full border border-white/10 text-white/80 text-sm font-medium">
-                  {zoomScale === 1 ? 'Click center to inspect (Zoom)' : 'Click to reset view'}
+                  {zoomScale === 1 ? 'Click image to zoom in' : 'Click image to zoom out'}
                 </div>
               </div>
             </motion.div>
 
             {/* Pagination Dots (Only for Screenshots) */}
-            {app.screenshots.includes(selectedImage) && (
+            {isScreenshot && app.screenshots?.length > 1 && (
               <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-3 z-[110]">
                 {app.screenshots.map((_, idx) => (
                   <button 
                     key={idx} 
-                    onClick={(e) => { e.stopPropagation(); setSelectedImage(app.screenshots[idx]); setZoomScale(1); }}
-                    className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${app.screenshots.indexOf(selectedImage) === idx ? 'bg-accent-neon w-8 shadow-glow-neon' : 'bg-white/20 hover:bg-white/40'}`}
+                    onClick={(e) => { e.stopPropagation(); setLightboxIndex(idx); setZoomScale(1); }}
+                    className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${lightboxIndex === idx ? 'bg-accent-neon w-8 shadow-glow-neon' : 'bg-white/20 hover:bg-white/40'}`}
                   />
                 ))}
               </div>
