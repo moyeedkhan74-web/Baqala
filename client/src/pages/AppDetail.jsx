@@ -217,29 +217,34 @@ const AppDetail = () => {
 
             {/* Reviews System */}
             <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
-              <h2 className="text-2xl font-bold text-white mb-6">User Telemetry [{reviews?.length}]</h2>
+              <h2 className="text-2xl font-bold text-white mb-6">User Telemetry [{reviews?.filter(r => r.user?.name).length}]</h2>
               
-              {user ? (
+              {user && user._id !== app.developer?._id && user._id !== app.developer?.toString() ? (
                 <form onSubmit={submitReview} className="glass-panel p-6 rounded-3xl mb-8 border border-accent-violet/30 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-accent-violet/10 blur-3xl pointer-events-none" />
                   <h3 className="text-lg font-semibold text-white mb-4">Transmit your feedback</h3>
                   <div className="mb-4"><StarRating rating={userRating} setRating={setUserRating} interactive /></div>
                   <textarea
                     value={userComment} onChange={e => setUserComment(e.target.value)}
-                    placeholder="Describe your experience in the matrix..." required
+                    placeholder="Share your honest experience..." required
                     className="input-field min-h-[100px] mb-4 bg-dark-900/50"
                   />
                   <button type="submit" disabled={submittingReview} className="btn-primary py-2 px-6">Transmit</button>
                 </form>
-              ) : (
+              ) : !user ? (
                 <div className="glass-panel p-6 rounded-3xl mb-8 flex items-center justify-between bg-white/5">
-                  <p className="text-gray-300">Authenticate to transmit feedback.</p>
+                  <p className="text-gray-300">Sign in to leave a review.</p>
                   <Link to="/login" className="btn-secondary py-2 px-6">Sign In</Link>
                 </div>
-              )}
+              ) : null}
 
               <div className="space-y-4">
-                {reviews.map((r, i) => (
+                {reviews.filter(r => r.user && r.user.name).length === 0 && (
+                  <div className="glass-panel p-8 rounded-3xl text-center">
+                    <p className="text-gray-400 text-lg">No reviews yet. Be the first to share your experience!</p>
+                  </div>
+                )}
+                {reviews.filter(r => r.user && r.user.name).map((r, i) => (
                   <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} key={r._id} className="glass-panel p-6 rounded-2xl relative group">
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center gap-3">
