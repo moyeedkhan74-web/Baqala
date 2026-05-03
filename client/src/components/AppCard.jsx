@@ -2,10 +2,20 @@ import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { HiDownload, HiStar } from 'react-icons/hi';
+import { API_BASE_URL } from '../api/axios';
 import MagneticHover from './MagneticHover';
 
 const AppCard = memo(({ app, featured = false }) => {
-  // ... (content same as before)
+  const getImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('/')) {
+      // Remove /api from the end of API_BASE_URL if it exists to match the proxy path
+      const host = API_BASE_URL.replace(/\/api$/, '');
+      return `${host}${url}`;
+    }
+    return url;
+  };
+
   const fallbackIcon = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(app.title) + '&background=random';
   
   if (featured) {
@@ -27,7 +37,7 @@ const AppCard = memo(({ app, featured = false }) => {
             >
               <div className="absolute inset-0 bg-accent-neon blur-2xl opacity-20 dark:opacity-40 group-hover:opacity-50 dark:group-hover:opacity-70 transition-opacity duration-500 rounded-full" />
               <img 
-                src={app.icon} 
+                src={getImageUrl(app.icon)} 
                 alt={app.title} 
                 className="w-full h-full object-cover rounded-3xl shadow-glass relative z-10 border border-white/50 dark:border-white/20 bg-white dark:bg-dark-800" 
                 onError={(e) => { e.target.src = fallbackIcon; }}
@@ -74,7 +84,7 @@ const AppCard = memo(({ app, featured = false }) => {
             <div className="relative flex-shrink-0">
               <div className="absolute inset-0 bg-accent-neon blur-xl opacity-0 group-hover:opacity-30 dark:group-hover:opacity-40 transition-opacity duration-500 rounded-full" />
               <img 
-                src={app.icon} 
+                src={getImageUrl(app.icon)} 
                 alt={app.title} 
                 className="w-12 h-12 sm:w-16 sm:h-16 rounded-[12px] sm:rounded-2xl object-cover border border-white/50 dark:border-white/10 shadow-glass relative z-10 bg-white dark:bg-dark-800" 
                 onError={(e) => { e.target.src = fallbackIcon; }}

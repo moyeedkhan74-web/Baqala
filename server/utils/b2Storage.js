@@ -40,11 +40,14 @@ const privateS3 = new S3Client({
   },
 });
 
-// --- HELPERS ---
+// --- HELPERS (INVERSED AS PER USER REQUEST) ---
+// We swap the roles: 
+// isPrivate=false (Images) -> now uses Private Account variables
+// isPrivate=true (Binaries) -> now uses Public Account variables
 
-const getClient = (isPrivate) => isPrivate ? privateS3 : publicS3;
-const getBucket = (isPrivate) => isPrivate ? process.env.B2_PRIVATE_BUCKET : process.env.B2_BUCKET_NAME;
-const getEndpoint = (isPrivate) => isPrivate ? process.env.B2_PRIVATE_ENDPOINT : process.env.B2_ENDPOINT;
+const getClient = (isPrivate) => isPrivate ? publicS3 : privateS3;
+const getBucket = (isPrivate) => isPrivate ? process.env.B2_BUCKET_NAME : process.env.B2_PRIVATE_BUCKET;
+const getEndpoint = (isPrivate) => isPrivate ? process.env.B2_ENDPOINT : process.env.B2_PRIVATE_ENDPOINT;
 
 // --- ACTIONS ---
 
@@ -63,12 +66,22 @@ exports.uploadToB2 = async (filePath, fileBuffer, contentType, isPrivate = false
       Key: filePath,
       Body: fileBuffer,
       ContentType: contentType,
+      ContentDisposition: isPrivate ? 'attachment' : 'inline',
+      CacheControl: isPrivate ? 'no-cache' : 'public, max-age=31536000'
     });
 
     await s3.send(command);
     
-    // Use Path-Style URL (more reliable for B2)
-    const url = `https://${endpoint}/${bucket}/${filePath}`;
+    // Optimized URL Generation: Server-Side Proxy for maximum reliability
+    let url;
+    if (!isPrivate) {
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://baqala-kwt6.onrender.com' 
+        : `http://localhost:${process.env.PORT || 5000}`;
+      url = `${baseUrl}/api/assets/${filePath}`;
+    } else {
+      url = `https://${endpoint}/${bucket}/${filePath}`;
+    }
 
     return { success: true, url, path: filePath };
   } catch (error) {
@@ -99,9 +112,9 @@ exports.deleteFromB2 = async (filePath, isPrivate = false) => {
 
 exports.getDownloadUrl = async (filePath) => {
   try {
-    // Downloads always target the Private bucket in this architecture
-    const s3 = privateS3;
-    const bucket = process.env.B2_PRIVATE_BUCKET;
+    // With the account swap, binaries now live in the OLD account (publicS3 / B2_BUCKET_NAME)
+    const s3 = publicS3;
+    const bucket = process.env.B2_BUCKET_NAME;
 
     const command = new GetObjectCommand({
       Bucket: bucket,
@@ -128,6 +141,7 @@ exports.startMultipartUpload = async (filePath, contentType, isPrivate = true) =
       Bucket: bucket,
       Key: filePath,
       ContentType: contentType,
+      ContentDisposition: 'attachment',
     });
     const { UploadId } = await s3.send(command);
     return { success: true, uploadId: UploadId };
@@ -172,7 +186,17 @@ exports.completeMultipartUpload = async (filePath, uploadId, parts, isPrivate = 
       },
     });
     await s3.send(command);
-    const url = `https://${endpoint}/${bucket}/${filePath}`;
+    
+    let url;
+    if (endpoint.includes('backblazeb2.com')) {
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://baqala-kwt6.onrender.com' 
+        : `http://localhost:${process.env.PORT || 5000}`;
+      url = `${baseUrl}/api/assets/${filePath}`;
+    } else {
+      url = `https://${endpoint}/${bucket}/${filePath}`;
+    }
+    
     return { success: true, url };
   } catch (error) {
     console.error('B2 Multipart Complete Error:', error.message);

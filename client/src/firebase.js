@@ -11,8 +11,7 @@ const firebaseConfig = {
   projectId: "baqala-fbbe4",
   storageBucket: "baqala-fbbe4.firebasestorage.app",
   messagingSenderId: "852997400807",
-  appId: "1:852997400807:web:bea3406aafd306f4fa1a42",
-  measurementId: "G-4H3WL181BV"
+  appId: "1:852997400807:web:bea3406aafd306f4fa1a42"
 };
 
 // Initialize Firebase

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '../api/axios';
+import api, { API_BASE_URL } from '../api/axios';
 import toast from 'react-hot-toast';
 import { 
   HiCog, HiPhotograph, HiUpload, HiTrash, HiCheckCircle, 
@@ -9,6 +9,15 @@ import {
 } from 'react-icons/hi';
 
 const EditApp = () => {
+  const getImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('/')) {
+      const host = API_BASE_URL.replace(/\/api$/, '');
+      return `${host}${url}`;
+    }
+    return url;
+  };
+
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -54,7 +63,7 @@ const EditApp = () => {
   };
 
   const handleMetadataUpdate = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setSaving(true);
     try {
       await api.put(`/apps/${id}`, formData);
@@ -210,16 +219,28 @@ const EditApp = () => {
           <div className="flex items-center gap-6">
             <div className="relative group">
               <div className="absolute -inset-1 bg-gradient-to-r from-accent-violet to-accent-neon rounded-3xl blur-md opacity-40 group-hover:opacity-60 transition" />
-              <img src={app.icon} className="w-24 h-24 rounded-3xl object-cover relative z-10 border border-white/20 shadow-2xl" />
+              <img 
+                src={getImageUrl(app.icon)} 
+                className="w-24 h-24 rounded-3xl object-cover relative z-10 border border-white/20 shadow-2xl" 
+                onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(app.title)}&background=random&size=128`; }}
+              />
             </div>
             <div>
               <h1 className="text-4xl font-extrabold text-white tracking-tight">{app.title}</h1>
               <p className="text-accent-neon font-mono text-sm tracking-widest mt-1 uppercase">ARCHITECT EDIT MODE</p>
             </div>
           </div>
-          <button onClick={() => navigate('/developer')} className="btn-secondary flex items-center gap-2">
-            <HiArrowLeft /> Back to Dashboard
-          </button>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate(`/app/${id}`)} 
+              className="btn-secondary flex items-center gap-2 border-accent-emerald/30 text-accent-emerald hover:bg-accent-emerald/10"
+            >
+              View Live Page
+            </button>
+            <button onClick={() => navigate('/developer')} className="btn-secondary flex items-center gap-2">
+              <HiArrowLeft /> Back to Dashboard
+            </button>
+          </div>
         </div>
 
         {/* Tab Navigation */}
@@ -277,11 +298,6 @@ const EditApp = () => {
                   <input type="text" value={formData.version} onChange={e => setFormData({...formData, version: e.target.value})} className="input-field shadow-none" />
                 </div>
               </div>
-              <div className="flex justify-end pt-6 border-t border-white/10">
-                <button type="submit" disabled={saving} className="btn-primary flex items-center gap-2 px-10">
-                  {saving ? 'Synchronizing...' : <><HiCheckCircle /> Synchronize Metadata</>}
-                </button>
-              </div>
             </form>
           )}
 
@@ -291,7 +307,11 @@ const EditApp = () => {
                 <div>
                   <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2"><HiPencil className="text-accent-violet" /> Neural Identity (Icon)</h3>
                   <div className="flex items-center gap-6 p-6 glass-panel rounded-3xl bg-white/5 border-dashed border-2 border-white/10">
-                    <img src={app.icon} className="w-20 h-20 rounded-2xl object-cover shadow-2xl border border-white/20" />
+                    <img 
+                      src={getImageUrl(app.icon)} 
+                      className="w-20 h-20 rounded-2xl object-cover shadow-2xl border border-white/20" 
+                      onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=App&background=random`; }}
+                    />
                     <div className="flex-1">
                       <p className="text-sm text-gray-400 mb-3 font-medium">Resolution Optimized @ 80%</p>
                       <label className="btn-secondary text-xs px-4 py-2 cursor-pointer inline-flex items-center gap-2">
@@ -325,8 +345,14 @@ const EditApp = () => {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                   {app.screenshots.map((ss, idx) => (
-                    <div key={idx} className="relative aspect-video rounded-2xl overflow-hidden border border-white/10 group shadow-glass">
-                      <img src={ss} className="w-full h-full object-cover transition duration-500 group-hover:scale-110" />
+                    <div key={idx} className="relative aspect-video rounded-2xl overflow-hidden border border-white/10 group shadow-glass bg-dark-800 flex items-center justify-center">
+                      <img 
+                        src={getImageUrl(ss)} 
+                        className="w-full h-full object-cover transition duration-500 group-hover:scale-110" 
+                        onError={(e) => { 
+                          e.target.src = 'https://via.placeholder.com/400x225?text=Visual+Telemetry+Lost';
+                        }}
+                      />
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <button onClick={() => removeScreenshot(ss)} className="p-3 bg-rose-500/20 text-rose-400 rounded-full hover:bg-rose-500 hover:text-white transition-all transform translate-y-2 group-hover:translate-y-0 shadow-glow-rose">
                           <HiTrash className="w-5 h-5" />
@@ -339,6 +365,16 @@ const EditApp = () => {
                       No visuals currently synchronized in the gallery.
                     </div>
                   )}
+                </div>
+
+                <div className="mt-12 flex justify-center">
+                   <button 
+                    onClick={handleMetadataUpdate} 
+                    disabled={saving}
+                    className="btn-primary flex items-center gap-2 px-12 py-4 shadow-glow-violet"
+                  >
+                    {saving ? 'Synchronizing...' : <><HiCheckCircle className="w-6 h-6" /> Synchronize & Publish Project</>}
+                  </button>
                 </div>
               </div>
             </div>
@@ -364,14 +400,49 @@ const EditApp = () => {
                   </div>
                 )}
 
-                <label className="btn-primary flex items-center justify-center gap-2 cursor-pointer shadow-glow-violet disabled:opacity-50">
-                  <HiArrowUpTray className="w-5 h-5" /> {saving ? 'Neural Link Active...' : 'Upload New Version'}
-                  <input type="file" className="hidden" disabled={saving} onChange={handleAppFileReplacement} />
-                </label>
-              </div>
+                  <label className="btn-primary flex items-center justify-center gap-2 cursor-pointer shadow-glow-violet disabled:opacity-50">
+                    <HiArrowUpTray className="w-5 h-5" /> {saving ? 'Neural Link Active...' : 'Upload New Version'}
+                    <input type="file" className="hidden" disabled={saving} onChange={handleAppFileReplacement} />
+                  </label>
+                </div>
+
+                <div className="mt-12 flex justify-center">
+                   <button 
+                    onClick={handleMetadataUpdate} 
+                    disabled={saving}
+                    className="btn-primary flex items-center gap-2 px-12 py-4 shadow-glow-violet"
+                  >
+                    {saving ? 'Synchronizing...' : <><HiCheckCircle className="w-6 h-6" /> Synchronize & Publish Project</>}
+                  </button>
+                </div>
             </div>
           )}
         </motion.div>
+      </div>
+
+      {/* STICKY DEPLOYMENT FOOTER */}
+      <div className="fixed bottom-0 left-0 w-full z-[90] p-6 pointer-events-none">
+        <div className="max-w-6xl mx-auto flex justify-end">
+          <motion.button 
+            initial={{ y: 100 }} 
+            animate={{ y: 0 }}
+            onClick={handleMetadataUpdate} 
+            disabled={saving}
+            className="pointer-events-auto btn-primary flex items-center gap-3 px-12 py-5 rounded-2xl shadow-[0_20px_50px_rgba(139,92,246,0.5)] border border-white/20 text-lg font-black transition-all hover:scale-105 active:scale-95 group"
+          >
+            {saving ? (
+              <span className="flex items-center gap-3">
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Synchronizing...
+              </span>
+            ) : (
+              <>
+                <HiCheckCircle className="w-7 h-7 group-hover:scale-110 transition-transform text-accent-neon" /> 
+                SYNCHRONIZE & PUBLISH PROJECT
+              </>
+            )}
+          </motion.button>
+        </div>
       </div>
     </div>
   );
