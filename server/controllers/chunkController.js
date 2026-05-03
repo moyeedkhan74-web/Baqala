@@ -9,17 +9,19 @@ const {
 exports.initUpload = async (req, res, next) => {
   try {
     const { fileName, contentType } = req.body;
-    const filePath = `apps/${Date.now()}_${fileName}`;
+    // Sanitize filename: replace spaces and special characters with underscores
+    const sanitizedFileName = fileName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+    const filePath = `apps/${Date.now()}_${sanitizedFileName}`;
     
-    console.log(`[B2_INIT] Initializing upload for: ${fileName}`);
+    console.log(`[B2_INIT] Initializing upload for: ${fileName} as ${filePath}`);
     const result = await startMultipartUpload(filePath, contentType || 'application/octet-stream');
     
     if (result.success) {
-      console.log(`[B2_INIT] Success. UploadID: ${result.uploadId}`);
+      console.log(`[B2_INIT] Success. UploadID: ${result.uploadId} | Path: ${result.filePath}`);
       res.json({ 
         success: true, 
         uploadId: result.uploadId, 
-        filePath 
+        filePath: result.filePath 
       });
     } else {
       console.error(`[B2_INIT] Failed:`, result.error);
@@ -61,7 +63,8 @@ exports.combineChunks = async (req, res, next) => {
     const { uploadId, filePath, parts, fileName } = req.body;
     
     // parts should be array of { ETag, PartNumber }
-    const result = await completeMultipartUpload(filePath, uploadId, parts);
+    // FORCE isPrivate=true for apps
+    const result = await completeMultipartUpload(filePath, uploadId, parts, true);
 
     if (result.success) {
       res.json({ 
