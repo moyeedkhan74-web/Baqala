@@ -15,6 +15,11 @@ exports.createReview = async (req, res) => {
       return res.status(400).json({ message: 'Cannot review an unapproved app.' });
     }
 
+    // Prevent developer from reviewing their own app
+    if (app.developer.toString() === req.user._id.toString()) {
+      return res.status(400).json({ message: 'You cannot review your own app.' });
+    }
+
     // Check if user already reviewed this app
     const existingReview = await Review.findOne({ user: req.user._id, app: appId });
     if (existingReview) {
@@ -43,21 +48,23 @@ exports.getReviews = async (req, res) => {
     const appId = req.params.appId;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const [reviews, total] = await Promise.all([
-      Review.find({ app: appId })
-        .populate('user', 'name avatar')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(parseInt(limit)),
-      Review.countDocuments({ app: appId })
-    ]);
+    const rawReviews = await Review.find({ app: appId })
+      .populate('user', 'name avatar')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    // Filter out reviews from deleted/orphaned users (only show real users)
+    const reviews = rawReviews.filter(r => r.user && r.user.name);
+
+    const total = await Review.countDocuments({ app: appId });
 
     res.json({
       reviews,
       pagination: {
         current: parseInt(page),
         pages: Math.ceil(total / parseInt(limit)),
-        total
+        total: reviews.length
       }
     });
   } catch (error) {
