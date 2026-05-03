@@ -7,12 +7,13 @@ async function dumpApps() {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('Connected to MongoDB');
     
-    const apps = await App.find().limit(5);
+    const apps = await App.find().limit(10);
+    console.log(`Found ${apps.length} apps`);
     console.log('--- Sample Apps Data ---');
     apps.forEach(app => {
       console.log(`Title: ${app.title}`);
       console.log(`Icon: ${app.icon}`);
-      console.log(`Screenshots: ${app.screenshots.join(', ')}`);
+      console.log(`Screenshots: ${(app.screenshots || []).join(', ')}`);
       console.log('---');
     });
     
