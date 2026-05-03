@@ -278,7 +278,7 @@ const AppDetail = () => {
               <ul className="space-y-4 text-sm">
                 <li className="flex justify-between"><span className="text-gray-500">Version</span> <span className="text-white font-medium">{app.version || '1.0.0'}</span></li>
                 <li className="flex justify-between"><span className="text-gray-500">Updated</span> <span className="text-white font-medium">{new Date(app.updatedAt).toLocaleDateString()}</span></li>
-                <li className="flex justify-between"><span className="text-gray-500">Size</span> <span className="text-white font-medium">{app.size ? (app.size / (1024*1024)).toFixed(1) + ' MB' : 'Varies'}</span></li>
+                <li className="flex justify-between"><span className="text-gray-500">Size</span> <span className="text-white font-medium">{app.fileSize ? (app.fileSize / (1024*1024)).toFixed(1) + ' MB' : 'Varies'}</span></li>
                 <li className="flex justify-between"><span className="text-gray-500">Rated</span> <span className="text-white font-medium border border-white/20 px-2 py-0.5 rounded text-xs">{app.contentRating || 'Everyone'}</span></li>
               </ul>
             </div>

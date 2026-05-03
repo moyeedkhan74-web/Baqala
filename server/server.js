@@ -24,7 +24,14 @@ const compression = require('compression');
 connectDB();
 
 // Performance and Security middleware
-app.use(compression()); // Compress all responses
+app.use(compression({
+  filter: (req, res) => {
+    // Skip compression for assets as they are already optimized/compressed image formats
+    if (req.path.startsWith('/api/assets')) return false;
+    // Fallback to standard filter
+    return compression.filter(req, res);
+  }
+})); // Compress other responses
 
 // CORS Configuration
 const allowedOrigins = [

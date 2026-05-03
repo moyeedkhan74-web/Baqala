@@ -27,9 +27,30 @@ const s3Config = {
   forcePathStyle: true,
 };
 
+/**
+ * Global Path Scrubber: Ensures every path sent to B2 is URL-safe and consistent.
+ */
+const sanitizePath = (path) => {
+  if (!path || typeof path !== 'string') return '';
+  
+  // 1. Remove leading/trailing slashes and trim
+  let clean = path.trim().replace(/^\/+|\/+$/g, '');
+  
+  // 2. Process segments
+  return clean
+    .split('/')
+    .filter(segment => segment.length > 0) // Remove empty segments
+    .map(segment => 
+      segment
+        .replace(/\s+/g, '_') // Spaces to underscores
+        .replace(/[^a-zA-Z0-9._-]/g, '') // Remove parentheses, etc.
+    )
+    .join('/');
+};
+
 const publicS3 = new S3Client(s3Config);
 
-// Private Client (New Account - For Apps)
+// Private Client (New Account - NOW FOR IMAGES)
 const privateS3 = new S3Client({
   ...s3Config,
   region: process.env.B2_PRIVATE_REGION || 'us-east-005',
@@ -42,12 +63,65 @@ const privateS3 = new S3Client({
 
 // --- HELPERS (INVERSED AS PER USER REQUEST) ---
 // We swap the roles: 
-// isPrivate=false (Images) -> now uses Private Account variables
-// isPrivate=true (Binaries) -> now uses Public Account variables
+// isPrivate=false (Images) -> now uses Private Account variables (privateS3 / B2_PRIVATE_BUCKET)
+// isPrivate=true (Binaries/Apps) -> now uses Public Account variables (publicS3 / B2_BUCKET_NAME)
 
 const getClient = (isPrivate) => isPrivate ? publicS3 : privateS3;
 const getBucket = (isPrivate) => isPrivate ? process.env.B2_BUCKET_NAME : process.env.B2_PRIVATE_BUCKET;
 const getEndpoint = (isPrivate) => isPrivate ? process.env.B2_ENDPOINT : process.env.B2_PRIVATE_ENDPOINT;
+
+/**
+ * Robustly extracts the B2 Key from any given URL (Direct or Proxy)
+ */
+exports.extractB2Key = (url) => {
+  if (!url || typeof url !== 'string') return null;
+  
+  try {
+    // 1. Remove query params and fragments
+    let cleanUrl = url.split('?')[0].split('#')[0];
+    let path = '';
+
+    if (cleanUrl.includes('.backblazeb2.com/')) {
+      // Direct B2 URL (either S3 or Friendly format)
+      const parts = cleanUrl.split('.backblazeb2.com/');
+      path = parts[1];
+    } else if (cleanUrl.includes('/api/assets/')) {
+      // Proxy URL
+      const parts = cleanUrl.split('/api/assets/');
+      path = parts[1];
+    } else {
+      return null;
+    }
+
+    // 2. Remove leading slash
+    if (path.startsWith('/')) path = path.substring(1);
+
+    // 3. Handle Friendly URLs: strip 'file/' prefix if present
+    if (path.startsWith('file/')) {
+      path = path.substring(5);
+    }
+
+    // 4. Strip bucket name if it's the first segment
+    const bucketName = process.env.B2_BUCKET_NAME;
+    const privateBucketName = process.env.B2_PRIVATE_BUCKET;
+    const pathParts = path.split('/');
+    
+    // Check if the first part is a known bucket name or looks like one
+    if (pathParts.length > 1 && (
+        pathParts[0] === bucketName || 
+        pathParts[0] === privateBucketName || 
+        pathParts[0].startsWith('baqala')
+    )) {
+      path = pathParts.slice(1).join('/');
+    }
+
+    // 5. Final Sanitization & Decoding
+    return decodeURIComponent(path).replace(/^\/+/, '');
+  } catch (err) {
+    console.error('[B2_KEY_EXTRACT] Error:', err);
+    return null;
+  }
+};
 
 // --- ACTIONS ---
 
@@ -56,6 +130,9 @@ exports.uploadToB2 = async (filePath, fileBuffer, contentType, isPrivate = false
     const s3 = getClient(isPrivate);
     const bucket = getBucket(isPrivate);
     const endpoint = getEndpoint(isPrivate);
+    
+    // Scrub the path globally before any operation
+    const scrubbedPath = sanitizePath(filePath);
 
     if (!bucket || !endpoint) {
       throw new Error(`B2 ${isPrivate ? 'Private' : 'Public'} configuration missing`);
@@ -63,27 +140,29 @@ exports.uploadToB2 = async (filePath, fileBuffer, contentType, isPrivate = false
 
     const command = new PutObjectCommand({
       Bucket: bucket,
-      Key: filePath,
+      Key: scrubbedPath,
       Body: fileBuffer,
       ContentType: contentType,
-      ContentDisposition: isPrivate ? 'attachment' : 'inline',
-      CacheControl: isPrivate ? 'no-cache' : 'public, max-age=31536000'
+      ContentDisposition: (isPrivate || scrubbedPath.startsWith('apps/')) ? 'attachment' : 'inline',
+      CacheControl: (isPrivate || scrubbedPath.startsWith('apps/')) ? 'no-cache' : 'public, max-age=31536000'
     });
 
     await s3.send(command);
     
-    // Optimized URL Generation: Server-Side Proxy for maximum reliability
+    // GOD-MODE: Force direct URL for anything in apps/ folder, no exceptions
     let url;
-    if (!isPrivate) {
+    if (scrubbedPath.toLowerCase().includes('apps/')) {
+      url = `https://${process.env.B2_ENDPOINT}/${process.env.B2_BUCKET_NAME}/${scrubbedPath}`;
+    } else if (!isPrivate) {
       const baseUrl = process.env.NODE_ENV === 'production' 
         ? 'https://baqala-kwt6.onrender.com' 
         : `http://localhost:${process.env.PORT || 5000}`;
-      url = `${baseUrl}/api/assets/${filePath}`;
+      url = `${baseUrl}/api/assets/${scrubbedPath}`;
     } else {
-      url = `https://${endpoint}/${bucket}/${filePath}`;
+      url = `https://${endpoint}/${bucket}/${scrubbedPath}`;
     }
 
-    return { success: true, url, path: filePath };
+    return { success: true, url, path: scrubbedPath };
   } catch (error) {
     console.error(`B2 ${isPrivate ? 'Private' : 'Public'} Upload Error:`, error.message);
     return { success: false, error: error.message };
@@ -110,18 +189,26 @@ exports.deleteFromB2 = async (filePath, isPrivate = false) => {
 
 // --- Secure Download Support (For Private Bucket) ---
 
-exports.getDownloadUrl = async (filePath) => {
+exports.getDownloadUrl = async (filePathOrUrl) => {
   try {
+    // If a full URL is passed, extract the key first
+    const key = filePathOrUrl.includes('/') && (filePathOrUrl.includes('http') || filePathOrUrl.includes('.com'))
+      ? exports.extractB2Key(filePathOrUrl)
+      : sanitizePath(filePathOrUrl);
+
+    if (!key) throw new Error('Invalid file path or URL for download');
+
     // With the account swap, binaries now live in the OLD account (publicS3 / B2_BUCKET_NAME)
     const s3 = publicS3;
     const bucket = process.env.B2_BUCKET_NAME;
 
+    console.log(`[B2_SIGN] Signing Key: "${key}" in Bucket: "${bucket}"`);
+
     const command = new GetObjectCommand({
       Bucket: bucket,
-      Key: filePath,
+      Key: key,
     });
 
-    // Generate a signed URL valid for 1 hour (3600 seconds)
     const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
     return { success: true, url: signedUrl };
   } catch (error) {
@@ -136,15 +223,16 @@ exports.startMultipartUpload = async (filePath, contentType, isPrivate = true) =
   try {
     const s3 = getClient(isPrivate);
     const bucket = getBucket(isPrivate);
+    const scrubbedPath = sanitizePath(filePath);
 
     const command = new CreateMultipartUploadCommand({
       Bucket: bucket,
-      Key: filePath,
+      Key: scrubbedPath,
       ContentType: contentType,
       ContentDisposition: 'attachment',
     });
     const { UploadId } = await s3.send(command);
-    return { success: true, uploadId: UploadId };
+    return { success: true, uploadId: UploadId, filePath: scrubbedPath };
   } catch (error) {
     console.error('B2 Multipart Start Error:', error.message);
     return { success: false, error: error.message };
@@ -176,10 +264,11 @@ exports.completeMultipartUpload = async (filePath, uploadId, parts, isPrivate = 
     const s3 = getClient(isPrivate);
     const bucket = getBucket(isPrivate);
     const endpoint = getEndpoint(isPrivate);
+    const scrubbedPath = sanitizePath(filePath);
 
     const command = new CompleteMultipartUploadCommand({
       Bucket: bucket,
-      Key: filePath,
+      Key: scrubbedPath,
       UploadId: uploadId,
       MultipartUpload: {
         Parts: parts.sort((a, b) => a.PartNumber - b.PartNumber),
@@ -187,14 +276,17 @@ exports.completeMultipartUpload = async (filePath, uploadId, parts, isPrivate = 
     });
     await s3.send(command);
     
+    // GOD-MODE: Force direct URL for anything in apps/ folder, no exceptions
     let url;
-    if (endpoint.includes('backblazeb2.com')) {
+    if (scrubbedPath.toLowerCase().includes('apps/')) {
+      url = `https://${process.env.B2_ENDPOINT}/${process.env.B2_BUCKET_NAME}/${scrubbedPath}`;
+    } else if (!isPrivate) {
       const baseUrl = process.env.NODE_ENV === 'production' 
         ? 'https://baqala-kwt6.onrender.com' 
         : `http://localhost:${process.env.PORT || 5000}`;
-      url = `${baseUrl}/api/assets/${filePath}`;
+      url = `${baseUrl}/api/assets/${scrubbedPath}`;
     } else {
-      url = `https://${endpoint}/${bucket}/${filePath}`;
+      url = `https://${endpoint}/${bucket}/${scrubbedPath}`;
     }
     
     return { success: true, url };

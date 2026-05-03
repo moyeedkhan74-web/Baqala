@@ -313,7 +313,7 @@ const EditApp = () => {
                       onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=App&background=random`; }}
                     />
                     <div className="flex-1">
-                      <p className="text-sm text-gray-400 mb-3 font-medium">Resolution Optimized @ 80%</p>
+                      <p className="text-sm text-gray-400 mb-3 font-medium">Original Quality Preserved</p>
                       <label className="btn-secondary text-xs px-4 py-2 cursor-pointer inline-flex items-center gap-2">
                         <HiArrowUpTray /> Replace Icon
                         <input type="file" className="hidden" onChange={handleIconUpdate} accept="image/*" />
