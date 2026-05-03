@@ -1,13 +1,23 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '../api/axios';
+import api, { API_BASE_URL } from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import StarRating from '../components/StarRating';
 import toast from 'react-hot-toast';
-import { HiDownload, HiStar, HiFolder, HiClock, HiDeviceMobile } from 'react-icons/hi';
+import { HiDownload, HiStar, HiFolder, HiClock, HiDeviceMobile, HiCheckCircle, HiTag, HiShieldCheck, HiOutlineSparkles } from 'react-icons/hi';
+import MagneticHover from '../components/MagneticHover';
 
 const AppDetail = () => {
+  const getImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('/')) {
+      const host = API_BASE_URL.replace(/\/api$/, '');
+      return `${host}${url}`;
+    }
+    return url;
+  };
+
   const { id } = useParams();
   const { user } = useAuth();
   const [app, setApp] = useState(null);
@@ -117,14 +127,17 @@ const AppDetail = () => {
           <div className="relative z-10 flex flex-col md:flex-row gap-8 items-start md:items-center">
             <motion.div 
               whileHover={{ scale: 1.05, rotate: -2 }} 
-              onClick={() => setSelectedImage(app.icon)}
+              onClick={() => setSelectedImage(getImageUrl(app.icon))}
               className="w-32 h-32 md:w-48 md:h-48 flex-shrink-0 relative cursor-zoom-in"
             >
               <div className="absolute inset-0 bg-accent-neon blur-2xl opacity-50 rounded-full" />
               <img 
-                src={app.icon} 
+                src={getImageUrl(app.icon)} 
                 className="w-full h-full object-cover rounded-[2rem] border-2 border-white/20 shadow-glass relative z-10" 
-                onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(app.title)}&background=random&size=256`; }}
+                onError={(e) => { 
+                  console.error('Icon load failed:', app.icon);
+                  e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(app.title)}&background=random&size=256`; 
+                }}
               />
             </motion.div>
             
@@ -162,10 +175,13 @@ const AppDetail = () => {
                   {app.screenshots.map((s, i) => (
                     <motion.img 
                       whileHover={{ scale: 1.02 }} 
-                      key={i} src={s} 
-                      onClick={() => setSelectedImage(s)}
+                      key={i} src={getImageUrl(s)} 
+                      onClick={() => setSelectedImage(getImageUrl(s))}
                       className="h-64 md:h-80 w-auto object-cover rounded-2xl border border-white/10 shadow-glass snap-center cursor-zoom-in" 
-                      onError={(e) => { e.target.style.display = 'none'; }}
+                      onError={(e) => { 
+                        console.error('Screenshot load failed:', s);
+                        e.target.src = 'https://via.placeholder.com/600x400?text=Visual+Telemetry+Lost';
+                      }}
                     />
                   ))}
                 </div>

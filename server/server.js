@@ -11,6 +11,7 @@ const { generalLimiter } = require('./middleware/rateLimiter');
 const authRoutes = require('./routes/auth');
 const appRoutes = require('./routes/apps');
 const reviewRoutes = require('./routes/reviews');
+const assetsRoutes = require('./routes/assets');
 const downloadRoutes = require('./routes/downloads');
 const adminRoutes = require('./routes/admin');
 
@@ -58,6 +59,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/apps', appRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/assets', assetsRoutes);
 app.use('/api/downloads', downloadRoutes);
 app.use('/api/admin', adminRoutes);
 
