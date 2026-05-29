@@ -35,6 +35,7 @@ const AppDetail = () => {
   const [userComment, setUserComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [triggerElement, setTriggerElement] = useState(null);
 
   const lightboxOpen = lightboxIndex !== -1;
   const isScreenshot = lightboxIndex >= 0;
@@ -47,24 +48,59 @@ const AppDetail = () => {
   useEffect(() => { loadData(); }, [id]);
 
   useEffect(() => {
-    if (!lightboxOpen) return;
+    if (!lightboxOpen) {
+      if (triggerElement) {
+        triggerElement.focus();
+        setTriggerElement(null);
+      }
+      return;
+    }
+
+    // Capture the element that opened the lightbox to restore focus later
+    if (!triggerElement) {
+      setTriggerElement(document.activeElement);
+    }
+
     const elements = document.querySelectorAll('#lightbox-modal button, #lightbox-modal img');
-    const firstElement = elements[0];
-    const lastElement = elements[elements.length - 1];
+    const focusableElements = document.querySelectorAll('#lightbox-modal button');
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+    
     const handler = (e) => {
-      if (e.key === 'Escape') { setLightboxIndex(-1); setZoomScale(1); }
-      if (isScreenshot && e.key === 'ArrowRight' && lightboxIndex < (app?.screenshots?.length || 0) - 1) {
-        setLightboxIndex(prev => prev + 1); setZoomScale(1);
+      if (e.key === 'Escape') { 
+        setLightboxIndex(-1); 
+        setZoomScale(1); 
       }
-      if (isScreenshot && e.key === 'ArrowLeft' && lightboxIndex > 0) {
-        setLightboxIndex(prev => prev - 1); setZoomScale(1);
+      
+      if (isScreenshot) {
+        if (e.key === 'ArrowRight' && lightboxIndex < (app?.screenshots?.length || 0) - 1) {
+          setLightboxIndex(prev => prev + 1); 
+          setZoomScale(1);
+        }
+        if (e.key === 'ArrowLeft' && lightboxIndex > 0) {
+          setLightboxIndex(prev => prev - 1); 
+          setZoomScale(1);
+        }
       }
+
       if (e.key === 'Tab') {
-        if (e.shiftKey) { if (document.activeElement === firstElement) { lastElement.focus(); e.preventDefault(); } }
-        else { if (document.activeElement === lastElement) { firstElement.focus(); e.preventDefault(); } }
+        if (e.shiftKey) { 
+          if (document.activeElement === firstElement) { 
+            lastElement.focus(); 
+            e.preventDefault(); 
+          } 
+        } else { 
+          if (document.activeElement === lastElement) { 
+            firstElement.focus(); 
+            e.preventDefault(); 
+          } 
+        }
       }
     };
-    firstElement?.focus();
+
+    // Set initial focus
+    setTimeout(() => firstElement?.focus(), 50);
+    
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [lightboxOpen, lightboxIndex, isScreenshot, app]);
@@ -155,28 +191,29 @@ const AppDetail = () => {
         image={getImageUrl(app.icon)}
         url={`https://baqala-lovat.vercel.app/apps/${app._id}`}
       />
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8" role="main" id="main-content">
         
         {/* Hero Section */}
-        <motion.div 
+        <motion.article 
           initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
           className="glass-panel p-8 md:p-12 rounded-[2rem] relative overflow-hidden mb-12"
         >
           <div className="relative z-10 flex flex-col md:flex-row gap-8 items-start md:items-center">
-            <motion.div 
+            <motion.button 
               whileHover={{ scale: 1.05, rotate: -2 }} 
               onClick={() => setLightboxIndex(-2)}
               className="w-32 h-32 md:w-48 md:h-48 flex-shrink-0 relative cursor-zoom-in"
+              aria-label={`View full size icon of ${app.title}`}
             >
               <img 
                 src={getImageUrl(app.icon)} 
-                alt={`${app.title} icon`}
+                alt={`${app.title} app icon`}
                 className="w-full h-full object-cover rounded-[2rem] border-2 border-white/20 shadow-glass relative z-10" 
                 onError={(e) => { 
                   e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(app.title)}&background=random&size=256`; 
                 }}
               />
-            </motion.div>
+            </motion.button>
             
             <div className="flex-1">
               <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 dark:text-white mb-3 tracking-tight">{app.title}</h1>
@@ -184,23 +221,35 @@ const AppDetail = () => {
               <p className="text-xl text-accent-violet dark:text-accent-neon font-medium mb-6">{app.developerName || app.developer?.name}</p>
               
               <div className="flex flex-wrap gap-6 mb-8 text-sm font-semibold">
-                <div className="flex items-center gap-2"><HiStar className="text-yellow-400 w-5 h-5"/> <span className="text-slate-800 dark:text-white text-lg">{app.averageRating?.toFixed(1) || '0.0'}</span> <span className="text-slate-400 dark:text-gray-500">({app.ratings?.length || 0})</span></div>
-                <div className="flex items-center gap-2 text-slate-600 dark:text-gray-300"><HiFolder className="w-5 h-5 text-accent-violet"/> {app.category}</div>
-                <div className="flex items-center gap-2 text-slate-600 dark:text-gray-300"><HiDownload className="w-5 h-5 text-accent-emerald"/> {(app.totalDownloads / 1000).toFixed(1)}k+</div>
-                <div className="flex items-center gap-2 text-slate-600 dark:text-gray-300"><HiDeviceMobile className="w-5 h-5 text-rose-400"/> {app.platform || 'Cross-Platform'}</div>
+                <div className="flex items-center gap-2" aria-label={`Rating: ${app.averageRating?.toFixed(1) || '0.0'} stars`}>
+                  <HiStar className="text-yellow-400 w-5 h-5" aria-hidden="true" /> 
+                  <span className="text-slate-800 dark:text-white text-lg">{app.averageRating?.toFixed(1) || '0.0'}</span> 
+                  <span className="text-slate-400 dark:text-gray-500">({app.ratings?.length || 0})</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-600 dark:text-gray-300" aria-label={`Category: ${app.category}`}>
+                  <HiFolder className="w-5 h-5 text-accent-violet" aria-hidden="true" /> {app.category}
+                </div>
+                <div className="flex items-center gap-2 text-slate-600 dark:text-gray-300" aria-label={`${((app.totalDownloads || 0) / 1000).toFixed(1)}k plus downloads`}>
+                  <HiDownload className="w-5 h-5 text-accent-emerald" aria-hidden="true" /> {(app.totalDownloads / 1000).toFixed(1)}k+
+                </div>
+                <div className="flex items-center gap-2 text-slate-600 dark:text-gray-300" aria-label={`Platform: ${app.platform || 'Cross-Platform'}`}>
+                  <HiDeviceMobile className="w-5 h-5 text-rose-400" aria-hidden="true" /> {app.platform || 'Cross-Platform'}
+                </div>
               </div>
 
               <div className="flex flex-wrap gap-4">
                 <button 
                   onClick={handleDownload} disabled={downloading}
                   className="btn-primary w-full md:w-auto text-lg px-8 py-4 animate-pulse-slow"
+                  aria-label={downloading ? 'Preparing download...' : `Install ${app.title} now`}
                 >
-                  {downloading ? 'Initializing...' : <><HiDownload className="inline mr-2 w-6 h-6"/> Install Now</>}
+                  {downloading ? 'Initializing...' : <><HiDownload className="inline mr-2 w-6 h-6" aria-hidden="true" /> Install Now</>}
                 </button>
 
                 {user?.role === 'admin' && (
                   <button 
                     onClick={toggleFeatured}
+                    aria-label={app.isFeatured ? `Remove ${app.title} from featured apps` : `Mark ${app.title} as a featured app`}
                     className={`w-full md:w-auto px-8 py-4 rounded-xl font-bold transition-all border ${app.isFeatured ? 'bg-amber-100/50 border-amber-500 text-amber-600 dark:bg-amber-500/10 dark:text-amber-500' : 'bg-slate-100 border-slate-200 text-slate-600 dark:bg-white/5 dark:border-white/10 dark:text-white hover:bg-slate-200 dark:hover:bg-white/10'}`}
                   >
                     {app.isFeatured ? '★ Featured' : '☆ Feature App'}
@@ -209,7 +258,7 @@ const AppDetail = () => {
               </div>
             </div>
           </div>
-        </motion.div>
+        </motion.article>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content (Left) */}
@@ -221,14 +270,20 @@ const AppDetail = () => {
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">Visuals</h2>
                 <div className="flex overflow-x-auto gap-4 pb-4 hide-scrollbar snap-x">
                   {app.screenshots.map((s, i) => (
-                    <motion.img 
+                    <motion.button 
                       whileHover={{ scale: 1.02 }} 
-                      key={i} src={getImageUrl(s)} 
-                      alt={`${app.title} screenshot ${i + 1}`}
+                      key={i}
+                      aria-label={`View full size screenshot ${i + 1} of ${app.title}`}
                       onClick={() => setLightboxIndex(i)}
-                      className="h-64 md:h-80 w-auto object-cover rounded-2xl border border-slate-200 dark:border-white/10 shadow-glass snap-center cursor-zoom-in" 
-                      onError={(e) => { e.target.src = 'https://via.placeholder.com/600x400?text=Image+Lost'; }}
-                    />
+                      className="flex-shrink-0"
+                    >
+                      <img 
+                        src={getImageUrl(s)} 
+                        alt={`${app.title} screenshot ${i + 1}`}
+                        className="h-64 md:h-80 w-auto object-cover rounded-2xl border border-slate-200 dark:border-white/10 shadow-glass snap-center cursor-zoom-in" 
+                        onError={(e) => { e.target.src = 'https://via.placeholder.com/600x400?text=Image+Lost'; }}
+                      />
+                    </motion.button>
                   ))}
                 </div>
               </motion.section>
@@ -327,16 +382,39 @@ const AppDetail = () => {
             <motion.button 
               className="absolute top-8 right-8 text-white/40 hover:text-white text-5xl font-thin z-[110]"
               onClick={(e) => { e.stopPropagation(); setLightboxIndex(-1); setZoomScale(1); }}
+              aria-label="Close image gallery"
             >
               &times;
             </motion.button>
+            <div className="absolute inset-y-0 left-0 flex items-center px-4">
+               {isScreenshot && lightboxIndex > 0 && (
+                 <button 
+                  className="bg-white/10 hover:bg-white/20 p-4 rounded-full text-white backdrop-blur-md"
+                  onClick={(e) => { e.stopPropagation(); setLightboxIndex(prev => prev - 1); }}
+                  aria-label="Previous screenshot"
+                 >
+                   <HiArrowLeft className="w-8 h-8" />
+                 </button>
+               )}
+            </div>
+            <div className="absolute inset-y-0 right-0 flex items-center px-4">
+               {isScreenshot && lightboxIndex < (app?.screenshots?.length || 0) - 1 && (
+                 <button 
+                  className="bg-white/10 hover:bg-white/20 p-4 rounded-full text-white backdrop-blur-md"
+                  onClick={(e) => { e.stopPropagation(); setLightboxIndex(prev => prev + 1); }}
+                  aria-label="Next screenshot"
+                 >
+                   <HiArrowRight className="w-8 h-8" />
+                 </button>
+               )}
+            </div>
             <motion.div 
               initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }}
               className="relative max-w-full max-h-full flex items-center justify-center"
               onClick={(e) => e.stopPropagation()}
             >
               <img 
-                src={lightboxSrc} alt="Enlarged"
+                src={lightboxSrc} alt={isScreenshot ? `${app.title} screenshot ${lightboxIndex + 1} expanded` : `${app.title} icon expanded`}
                 className="max-w-[90vw] max-h-[80vh] object-contain rounded-2xl shadow-2xl transition-transform duration-500"
               />
             </motion.div>

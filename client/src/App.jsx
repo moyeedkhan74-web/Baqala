@@ -63,6 +63,12 @@ function App() {
   return (
     <>
       <LoadingScreen isLoading={isLoading} error={error} onRetry={handleRetry} />
+      <a 
+        href="#main-content" 
+        className="skip-link"
+      >
+        Skip to main content
+      </a>
       <div className="min-h-screen flex flex-col relative overflow-hidden bg-background-light dark:bg-background-dark transition-colors duration-500">
         {/* Global animated ambient background lights & interactive particles */}
         <ParticlesBackground />

@@ -150,7 +150,7 @@ const Home = () => {
 
         {/* Content */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pt-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pt-10" aria-label="Loading apps">
             {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <SkeletonCard key={i} />)}
           </div>
         ) : apps?.length === 0 ? (
@@ -159,7 +159,7 @@ const Home = () => {
             className="py-32 flex flex-col items-center justify-center text-center glass-panel rounded-3xl"
           >
             <div className="w-20 h-20 bg-slate-100 dark:bg-dark-800 rounded-full flex items-center justify-center border border-slate-200 dark:border-white/10 mb-6">
-              <HiSearch className="w-10 h-10 text-slate-400 dark:text-gray-500" />
+              <HiSearch className="w-10 h-10 text-slate-400 dark:text-gray-500" aria-hidden="true" />
             </div>
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">No apps found</h3>
             <p className="text-slate-500 dark:text-gray-400 max-w-md">We couldn't find any apps matching your filters. Try adjusting your search.</p>
@@ -167,12 +167,12 @@ const Home = () => {
         ) : (
           <AnimatePresence>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-16">
-              <section>
+              <div role="main" id="main-content">
                 {myApps?.length > 0 && !search && !category && (
-                  <div className="mb-12">
+                  <section className="mb-12" aria-label="Your Uploaded Projects">
                     <div className="flex items-center justify-between mb-6">
                       <div className="flex items-center gap-2">
-                        <HiCollection className="w-6 h-6 text-accent-violet" />
+                        <HiCollection className="w-6 h-6 text-accent-violet" aria-hidden="true" />
                         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Your Uploaded Projects</h2>
                       </div>
                       <Link to="/developer" className="text-accent-violet dark:text-accent-neon text-sm hover:underline font-medium">Manage All</Link>
@@ -184,29 +184,31 @@ const Home = () => {
                         </motion.div>
                       ))}
                     </div>
-                  </div>
+                  </section>
                 )}
 
-                {(!search && !category && sort === '-createdAt') && (
-                  <div className="flex items-center gap-2 mb-6">
-                    <HiTrendingUp className="w-6 h-6 text-accent-emerald" />
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Trending Now</h2>
-                  </div>
-                )}
+                <section aria-label="App Discovery Grid">
+                  {(!search && !category && sort === '-createdAt') && (
+                    <div className="flex items-center gap-2 mb-6">
+                      <HiTrendingUp className="w-6 h-6 text-accent-emerald" aria-hidden="true" />
+                      <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Trending Now</h2>
+                    </div>
+                  )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {((!search && !category && sort === '-createdAt') ? standardApps : apps).map((app, index) => (
-                    <motion.div
-                      key={app._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <AppCard app={app} />
-                    </motion.div>
-                  ))}
-                </div>
-              </section>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {((!search && !category && sort === '-createdAt') ? standardApps : apps).map((app, index) => (
+                      <motion.div
+                        key={app._id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                      >
+                        <AppCard app={app} />
+                      </motion.div>
+                    ))}
+                  </div>
+                </section>
+              </div>
             </motion.div>
           </AnimatePresence>
         )}
