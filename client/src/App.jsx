@@ -8,6 +8,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AnimatedLayout from './components/AnimatedLayout';
 import ParticlesBackground from './components/ParticlesBackground';
 import LoadingScreen from './components/LoadingScreen';
+import api from './api/axios';
 
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -27,10 +28,22 @@ function App() {
     const initializeApp = async () => {
       try {
         setError(null);
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        
+        // Parallelize static wait with backend ping for smooth transition
+        const [healthRes] = await Promise.all([
+          api.get('/health').catch(err => {
+            console.warn('Backend waking up...', err);
+            // If it fails once, we can retry or just wait a bit longer
+            return new Promise((resolve) => setTimeout(() => api.get('/health'), 5000));
+          }),
+          new Promise((resolve) => setTimeout(resolve, 2000)) // Min splash time for branding
+        ]);
+
         setIsLoading(false);
       } catch (err) {
-        setError(err.message || 'Failed to initialize application');
+        // Even if health check fails after retry, we show the app 
+        // and let page-level loaders/errors handle it
+        console.error('Initialization warning:', err);
         setIsLoading(false);
       }
     };
@@ -63,7 +76,7 @@ function App() {
         <div className="relative z-20 w-full flex flex-col flex-1">
           <Navbar />
           
-          <main className="flex-1 w-full flex flex-col">
+          <main id="main-content" className="flex-1 w-full flex flex-col">
             <AnimatePresence mode="wait">
               <Routes location={location} key={location.pathname}>
                 <Route path="/" element={<AnimatedLayout><Home /></AnimatedLayout>} />

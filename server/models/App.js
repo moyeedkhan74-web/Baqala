@@ -95,7 +95,11 @@ const appSchema = new mongoose.Schema({
   tags: [{
     type: String,
     trim: true
-  }]
+  }],
+  isFeatured: {
+    type: Boolean,
+    default: false
+  }
 }, {
   timestamps: true
 });

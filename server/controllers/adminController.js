@@ -142,9 +142,12 @@ exports.getDashboardStats = async (req, res) => {
 
 exports.getAllApps = async (req, res) => {
   try {
-    const { status, page = 1, limit = 20 } = req.query;
-    const query = {};
-    if (status) query.status = status;
+    const { status, page = 1, limit = 20, search, category, platform } = req.query;
+    const query = { status: { $in: ['approved', 'pending'] } };
+    if (search) query.$text = { $search: search };
+    if (category) query.category = category;
+    if (platform) query.platform = platform;
+    if (req.query.featured === 'true') query.isFeatured = true;
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -167,6 +170,21 @@ exports.getAllApps = async (req, res) => {
     });
   } catch (error) {
     console.error('Get all apps error:', error);
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
+
+exports.toggleFeaturedApp = async (req, res) => {
+  try {
+    const app = await App.findById(req.params.id);
+    if (!app) return res.status(404).json({ message: 'App not found.' });
+
+    app.isFeatured = !app.isFeatured;
+    await app.save();
+
+    res.json({ app, message: app.isFeatured ? 'App featured.' : 'App unfeatured.' });
+  } catch (error) {
+    console.error('Toggle feature app error:', error);
     res.status(500).json({ message: 'Server error.' });
   }
 };

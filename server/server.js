@@ -33,16 +33,23 @@ app.use(compression({
   }
 })); // Compress other responses
 
-// CORS Configuration
+// CORS Configuration - Strictly allow Vercel domains
 const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
   'https://baqala-lovat.vercel.app',
   'https://baqala-lovat-git-main-moyeedkhan74-webs-projects.vercel.app'
 ];
 
 app.use(cors({
-  origin: true,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl) 
+    // unless you want to be extremely strict
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
@@ -50,11 +57,20 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
-// Helmet Configuration
+// Helmet Configuration for enhanced security headers
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
-  crossOriginOpenerPolicy: { policy: 'unsafe-none' }, // Most relaxed setting for Firebase Auth compatibility
-  contentSecurityPolicy: false,
+  crossOriginOpenerPolicy: { policy: 'unsafe-none' },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://apis.google.com"],
+      connectSrc: ["'self'", ...allowedOrigins],
+      imgSrc: ["'self'", "data:", "https://*"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      upgradeInsecureRequests: [],
+    },
+  },
 }));
 app.use(generalLimiter);
 

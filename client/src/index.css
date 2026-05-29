@@ -6,82 +6,54 @@
 
 @layer base {
   body {
-    @apply bg-background-light text-dark-800 dark:bg-background-dark dark:text-dark-100 font-sans antialiased selection:bg-accent-magenta selection:text-white transition-colors duration-500 overflow-x-hidden;
-  }
-  ::-webkit-scrollbar {
-    @apply w-1.5;
-  }
-  ::-webkit-scrollbar-track {
-    @apply bg-background-light dark:bg-background-dark transition-colors duration-500;
-  }
-  ::-webkit-scrollbar-thumb {
-    @apply bg-dark-300 hover:bg-dark-400 dark:bg-dark-700 dark:hover:bg-dark-600 rounded-full transition-colors;
+    @apply bg-background-light text-slate-800 dark:bg-background-dark dark:text-dark-100 font-sans antialiased selection:bg-accent-magenta selection:text-white transition-colors duration-500 overflow-x-hidden;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.03) 0, transparent 50%), 
+      radial-gradient(at 50% 0%, rgba(34, 211, 238, 0.02) 0, transparent 50%);
   }
 }
 
 @layer components {
-  /* Glassmorphism primitives */
+  /* Premium Glassmorphism */
   .glass-panel {
-    @apply bg-white/70 dark:bg-surface-dark/80 backdrop-blur-xl border border-dark-200/50 dark:border-accent-violet/10 shadow-[0_8px_32px_rgba(0,0,0,0.05)] dark:shadow-glass-colorful transition-colors duration-500;
+    @apply bg-white/80 dark:bg-surface-dark/80 backdrop-blur-2xl border border-slate-200/60 dark:border-white/5 shadow-[0_8px_40px_-12px_rgba(0,0,0,0.08)] dark:shadow-glass-colorful transition-all duration-500;
+  }
+
+  .glass-panel:hover {
+    @apply shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] border-slate-300/60 dark:border-white/10;
   }
 
   /* Typography */
   .gradient-text {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-magenta via-accent-violet to-accent-neon;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-magenta via-accent-violet to-accent-neon font-bold;
   }
   
   .heading-hero {
-    @apply text-5xl md:text-7xl font-extrabold tracking-tight text-dark-900 dark:text-white mb-6 transition-colors;
+    @apply text-5xl md:text-7xl font-black tracking-tight text-slate-900 dark:text-white mb-6 transition-colors;
   }
 
-  /* Buttons */
+  /* Enhanced Buttons */
   .btn-primary {
-    @apply relative overflow-hidden bg-gradient-to-r from-accent-magenta to-accent-violet text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 shadow-glow-magenta active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed z-10 before:absolute before:inset-0 before:-z-10 before:bg-gradient-to-r before:from-accent-violet before:to-accent-neon before:opacity-0 hover:before:opacity-100 before:transition-opacity;
+    @apply relative overflow-hidden bg-gradient-to-r from-indigo-600 to-accent-violet text-white font-bold px-8 py-4 rounded-2xl transition-all duration-300 shadow-[0_10px_30px_-10px_rgba(79,70,229,0.5)] hover:shadow-[0_20px_40px_-10px_rgba(79,70,229,0.6)] active:scale-95 disabled:opacity-50 z-10;
   }
   
   .btn-secondary {
-    @apply glass-panel text-dark-700 dark:text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 hover:bg-dark-100 dark:hover:bg-white/10 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
-  }
-
-  .btn-success {
-    @apply bg-gradient-to-r from-emerald-600 to-accent-emerald text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 hover:shadow-[0_0_20px_-5px_rgba(16,185,129,0.5)] active:scale-95;
-  }
-
-  .btn-danger {
-    @apply bg-gradient-to-r from-red-600 to-rose-500 text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 hover:shadow-[0_0_20px_-5px_rgba(244,63,94,0.5)] active:scale-95;
+    @apply bg-white dark:bg-white/5 text-slate-600 dark:text-white font-bold px-8 py-4 rounded-2xl border border-slate-200 dark:border-white/10 transition-all duration-300 hover:bg-slate-50 dark:hover:bg-white/10 shadow-sm active:scale-95;
   }
 
   /* Forms */
   .input-field {
-    @apply w-full glass-panel rounded-xl px-4 py-3 text-dark-800 dark:text-white placeholder-dark-400 focus:outline-none focus:border-accent-violet focus:ring-1 focus:ring-accent-violet transition-all duration-300;
+    @apply w-full bg-white/70 dark:bg-dark-900/50 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent-violet/30 focus:border-accent-violet transition-all duration-300;
   }
   
-  .select-field {
-    @apply w-full glass-panel rounded-xl px-4 py-3 text-dark-800 dark:text-white focus:outline-none focus:border-accent-violet focus:ring-1 focus:ring-accent-violet transition-all duration-300 appearance-none bg-transparent;
-  }
-
   /* Badges */
   .badge {
-    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase;
+    @apply inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase;
   }
   .badge-primary {
-    @apply badge bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-300 border border-primary-200 dark:border-primary-500/30;
-  }
-  .badge-success {
-    @apply badge bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30;
-  }
-  .badge-warning {
-    @apply badge bg-yellow-100 dark:bg-yellow-500/20 text-yellow-600 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-500/30;
-  }
-  .badge-danger {
-    @apply badge bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30;
+    @apply badge bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20;
   }
   .badge-neon {
-    @apply badge bg-cyan-100 dark:bg-accent-neon/20 text-cyan-600 dark:text-accent-neon border border-cyan-200 dark:border-accent-neon/30;
-  }
-
-  /* Utilities */
-  .glow-bg {
-    @apply absolute w-96 h-96 rounded-full blur-[120px] pointer-events-none opacity-50 dark:opacity-40;
+    @apply badge bg-cyan-50 dark:bg-accent-neon/10 text-cyan-600 dark:text-accent-neon border border-cyan-100 dark:border-accent-neon/20;
   }
 }

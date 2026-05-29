@@ -4,12 +4,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api, { API_BASE_URL } from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import StarRating from '../components/StarRating';
+import { SkeletonDetail } from '../components/Skeleton';
 import toast from 'react-hot-toast';
 import { HiDownload, HiStar, HiFolder, HiClock, HiDeviceMobile, HiArrowLeft, HiArrowRight } from 'react-icons/hi';
 
 const AppDetail = () => {
   const getImageUrl = (url) => {
     if (!url) return '';
+    // If it's already a full CDN or B2 URL, return it
+    if (url.startsWith('http')) return url;
+    
+    // If it's a proxy path, redirect to CDN
+    if (url.startsWith('/api/assets/')) {
+      const path = url.replace('/api/assets/', '');
+      return `https://cdn.baqala.com/file/baqalaaa/${path}`;
+    }
+
+    // Fallback to backend host for other relative paths
     if (url.startsWith('/')) {
       const host = API_BASE_URL.replace(/\/api$/, '');
       return `${host}${url}`;
@@ -40,9 +51,14 @@ const AppDetail = () => {
 
   useEffect(() => { loadData(); }, [id]);
 
-  // Keyboard navigation for lightbox
+  // Keyboard navigation and Focus Trap for lightbox
   useEffect(() => {
     if (!lightboxOpen) return;
+    
+    const elements = document.querySelectorAll('#lightbox-modal button, #lightbox-modal img');
+    const firstElement = elements[0];
+    const lastElement = elements[elements.length - 1];
+
     const handler = (e) => {
       if (e.key === 'Escape') { setLightboxIndex(-1); setZoomScale(1); }
       if (isScreenshot && e.key === 'ArrowRight' && lightboxIndex < (app?.screenshots?.length || 0) - 1) {
@@ -51,7 +67,26 @@ const AppDetail = () => {
       if (isScreenshot && e.key === 'ArrowLeft' && lightboxIndex > 0) {
         setLightboxIndex(prev => prev - 1); setZoomScale(1);
       }
+      
+      // Tab Focus Trap
+      if (e.key === 'Tab') {
+        if (e.shiftKey) { // shift + tab
+          if (document.activeElement === firstElement) {
+            lastElement.focus();
+            e.preventDefault();
+          }
+        } else { // tab
+          if (document.activeElement === lastElement) {
+            firstElement.focus();
+            e.preventDefault();
+          }
+        }
+      }
     };
+    
+    // Auto-focus on open
+    firstElement?.focus();
+    
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [lightboxOpen, lightboxIndex, isScreenshot, app]);
@@ -126,12 +161,20 @@ const AppDetail = () => {
     } catch (e) { toast.error('Deletion failed'); }
   };
 
-  if (loading) return (
-    <div className="min-h-screen pt-24 pb-12 px-4 max-w-5xl mx-auto flex flex-col gap-8">
-      <div className="h-64 glass-panel rounded-3xl animate-pulse" />
-      <div className="h-40 glass-panel rounded-3xl animate-pulse" />
-    </div>
-  );
+  const toggleFeatured = async () => {
+    try {
+      setLoading(true);
+      await api.put(`/admin/apps/${id}/toggle-featured`);
+      toast.success(app.isFeatured ? 'App removed from featured' : 'App marked as featured');
+      loadData();
+    } catch (e) {
+      toast.error('Failed to update featured status');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) return <SkeletonDetail />;
   if (!app) return <div className="text-center text-white py-32 text-2xl font-bold">Signal Lost: App Not Found</div>;
 
   return (
@@ -154,6 +197,7 @@ const AppDetail = () => {
               <div className="absolute inset-0 bg-accent-neon blur-2xl opacity-50 rounded-full" />
               <img 
                 src={getImageUrl(app.icon)} 
+                alt={`${app.title} icon`}
                 className="w-full h-full object-cover rounded-[2rem] border-2 border-white/20 shadow-glass relative z-10" 
                 onError={(e) => { 
                   e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(app.title)}&background=random&size=256`; 
@@ -173,15 +217,24 @@ const AppDetail = () => {
                 <div className="flex items-center gap-2 text-gray-300"><HiDeviceMobile className="w-5 h-5 text-rose-400"/> {app.platform || 'Cross-Platform'}</div>
               </div>
 
-              <button 
-                onClick={handleDownload} disabled={downloading}
-                className="btn-primary w-full md:w-auto text-lg px-8 py-4 shadow-glow-violet disabled:shadow-none animate-pulse-slow"
-              >
-                {downloading ? 'Initializing...' : <><HiDownload className="inline mr-2 w-6 h-6"/> Install Experience</>}
-              </button>
+                <button 
+                  onClick={handleDownload} disabled={downloading}
+                  className="btn-primary w-full md:w-auto text-lg px-8 py-4 shadow-glow-violet disabled:shadow-none animate-pulse-slow"
+                >
+                  {downloading ? 'Initializing...' : <><HiDownload className="inline mr-2 w-6 h-6"/> Install Experience</>}
+                </button>
+
+                {user?.role === 'admin' && (
+                  <button 
+                    onClick={toggleFeatured}
+                    className={`w-full md:w-auto px-8 py-4 rounded-xl font-bold transition-all border ${app.isFeatured ? 'bg-amber-500/10 border-amber-500 text-amber-500' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}
+                  >
+                    {app.isFeatured ? '★ Featured' : '☆ Feature App'}
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content (Left) */}
@@ -196,6 +249,7 @@ const AppDetail = () => {
                     <motion.img 
                       whileHover={{ scale: 1.02 }} 
                       key={i} src={getImageUrl(s)} 
+                      alt={`${app.title} screenshot ${i + 1}`}
                       onClick={() => setLightboxIndex(i)}
                       className="h-64 md:h-80 w-auto object-cover rounded-2xl border border-white/10 shadow-glass snap-center cursor-zoom-in" 
                       onError={(e) => { 
@@ -261,7 +315,11 @@ const AppDetail = () => {
                     <p className="text-gray-300 text-sm leading-relaxed">{r.comment}</p>
                     
                     {(user?.role === 'admin' || user?._id === r.user?._id) && (
-                      <button onClick={() => deleteReview(r._id)} className="absolute top-4 right-4 text-gray-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold">
+                      <button 
+                        onClick={() => deleteReview(r._id)} 
+                        aria-label="Delete review"
+                        className="absolute top-4 right-4 text-gray-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold"
+                      >
                         Delete
                       </button>
                     )}
@@ -296,12 +354,17 @@ const AppDetail = () => {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-2xl"
             onClick={() => { setLightboxIndex(-1); setZoomScale(1); }}
+            id="lightbox-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${app.title} visual gallery`}
           >
             {/* Close Button */}
             <motion.button 
               whileHover={{ scale: 1.1, rotate: 90 }}
               className="absolute top-8 right-8 text-white/40 hover:text-white text-5xl font-thin z-[110] transition-colors"
               onClick={(e) => { e.stopPropagation(); setLightboxIndex(-1); setZoomScale(1); }}
+              aria-label="Close gallery"
             >
               &times;
             </motion.button>
@@ -313,6 +376,7 @@ const AppDetail = () => {
                   <button 
                     className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-[110] p-3 rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all border border-white/10"
                     onClick={(e) => { e.stopPropagation(); setLightboxIndex(prev => prev - 1); setZoomScale(1); }}
+                    aria-label="Previous screenshot"
                   >
                     <HiArrowLeft className="w-8 h-8" />
                   </button>
@@ -321,6 +385,7 @@ const AppDetail = () => {
                   <button 
                     className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-[110] p-3 rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all border border-white/10"
                     onClick={(e) => { e.stopPropagation(); setLightboxIndex(prev => prev + 1); setZoomScale(1); }}
+                    aria-label="Next screenshot"
                   >
                     <HiArrowRight className="w-8 h-8" />
                   </button>

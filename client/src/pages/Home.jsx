@@ -4,11 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/axios';
 import AppCard from '../components/AppCard';
 import HeroCarousel from '../components/HeroCarousel';
+import { SkeletonCard } from '../components/Skeleton';
 import { HiSearch, HiX, HiAdjustments, HiFire, HiTrendingUp, HiCollection } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 
 const Home = () => {
   const [apps, setApps] = useState([]);
+  const [featuredApps, setFeaturedApps] = useState([]);
   const [myApps, setMyApps] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +44,8 @@ const Home = () => {
       const token = localStorage.getItem('token');
       const fetchPromises = [
         api.get('/apps', { params: { search: debouncedSearch, category, sort } }),
-        api.get('/apps/categories')
+        api.get('/apps/categories'),
+        api.get('/apps', { params: { featured: 'true', limit: 5 } })
       ];
 
       if (token) {
@@ -52,8 +55,9 @@ const Home = () => {
       const results = await Promise.all(fetchPromises);
       setApps(results[0].data.apps);
       setCategories(results[1].data.categories || []);
-      if (token && results[2]) {
-        setMyApps(results[2].data.apps);
+      setFeaturedApps(results[2].data.apps || []);
+      if (token && results[3]) {
+        setMyApps(results[3].data.apps);
       }
     } catch (error) {
       toast.error('Failed to load experience');
@@ -91,16 +95,20 @@ const Home = () => {
               className="w-full pl-11 pr-10 py-4 glass-panel rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-neon/50 focus:border-accent-neon/50 transition-all border-white/5 shadow-glass text-lg"
             />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute inset-y-0 right-0 pr-4 flex items-center hover:text-white text-gray-400 transition-colors">
+              <button 
+                onClick={() => setSearch('')} 
+                aria-label="Clear search"
+                className="absolute inset-y-0 right-0 pr-4 flex items-center hover:text-white text-gray-400 transition-colors"
+              >
                 <HiX className="h-5 w-5" />
               </button>
             )}
           </div>
         </div>
 
-        {/* Carousel Banners - Only show when no active search/category filter */}
-        {!search && !category && sort === '-createdAt' && apps?.length > 0 && (
-          <HeroCarousel apps={apps} />
+        {/* Featured Section - Carousel Banners */}
+        {!search && !category && sort === '-createdAt' && featuredApps?.length > 0 && (
+          <HeroCarousel apps={featuredApps} />
         )}
 
         {/* Filters */}
@@ -139,9 +147,9 @@ const Home = () => {
         
         {/* Main Content Area */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-10">
-            {[1,2,3,4,5,6].map(i => (
-              <div key={i} className="glass-panel p-5 rounded-2xl h-40 animate-pulse bg-white/5" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pt-10">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+              <SkeletonCard key={i} />
             ))}
           </div>
         ) : apps?.length === 0 ? (
