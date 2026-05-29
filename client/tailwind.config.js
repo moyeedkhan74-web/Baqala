@@ -9,12 +9,12 @@ export default {
     extend: {
       colors: {
         background: {
-          light: '#f8fafc',
-          dark: '#0a0514', // Rich midnight violet
+          light: '#f5f6fa',   // Warm off-white, not stark white
+          dark: '#0a0514',
         },
         surface: {
-          light: 'rgba(255, 255, 255, 0.7)',
-          dark: 'rgba(19, 13, 38, 0.7)', // Deep space surface
+          light: 'rgba(255, 255, 255, 0.85)',
+          dark: 'rgba(19, 13, 38, 0.7)',
         },
         accent: {
           violet: '#8b5cf6',

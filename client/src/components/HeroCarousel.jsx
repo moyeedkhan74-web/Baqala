@@ -37,13 +37,8 @@ const HeroCarousel = ({ apps }) => {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="relative w-full h-[400px] md:h-[500px]"
         >
-          {/* Background Gradient / Blur of the app icon */}
-          <div className="absolute inset-0 z-0 overflow-hidden">
-            <div 
-              className="absolute inset-0 bg-cover bg-center blur-3xl opacity-30 dark:opacity-20 scale-150"
-              style={{ backgroundImage: `url(${currentApp?.iconUrl || currentApp?.icon || 'https://via.placeholder.com/150'})` }}
-            />
-            {/* Overlay Gradient to ensure text readability */}
+          {/* Background Gradient to ensure text readability */}
+          <div className="absolute inset-0 z-0 overflow-hidden bg-dark-100/10 dark:bg-dark-900/40">
             <div className="absolute inset-0 bg-gradient-to-t from-background-light dark:from-background-dark via-transparent to-transparent opacity-90" />
             <div className="absolute inset-0 bg-gradient-to-r from-background-light dark:from-background-dark via-background-light/80 dark:via-background-dark/80 to-transparent w-full md:w-3/4" />
           </div>
