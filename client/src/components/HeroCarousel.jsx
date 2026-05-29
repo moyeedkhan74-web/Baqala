@@ -56,7 +56,7 @@ const HeroCarousel = ({ apps }) => {
               <img 
                 src={currentApp?.iconUrl || currentApp?.icon} 
                 className="w-full h-full object-cover rounded-3xl shadow-glow-violet md:shadow-[0_0_40px_-10px_rgba(139,92,246,0.6)] border border-white/20 cursor-pointer transform hover:scale-105 transition-transform" 
-                alt={currentApp.title} 
+                alt={`${currentApp.title} app icon`} 
               />
             </motion.div>
 
@@ -66,9 +66,9 @@ const HeroCarousel = ({ apps }) => {
                 initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}
                 className="flex items-center gap-3 mb-3"
               >
-                <span className="badge-neon py-1 px-3 text-sm">{currentApp.category}</span>
-                <div className="flex items-center gap-1 text-yellow-500 font-bold bg-white/50 dark:bg-dark-900/50 px-3 py-1 rounded-full text-sm">
-                  <HiStar /> {(currentApp?.averageRating || 0).toFixed(1)}
+                <span className="badge-neon py-1 px-3 text-sm" aria-label={`Category: ${currentApp.category}`}>{currentApp.category}</span>
+                <div className="flex items-center gap-1 text-yellow-500 font-bold bg-white/50 dark:bg-dark-900/50 px-3 py-1 rounded-full text-sm" aria-label={`Rating: ${(currentApp?.averageRating || 0).toFixed(1)} stars`}>
+                  <HiStar aria-hidden="true" /> {(currentApp?.averageRating || 0).toFixed(1)}
                 </div>
               </motion.div>
 
@@ -91,8 +91,9 @@ const HeroCarousel = ({ apps }) => {
                 initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.6 }}
                 onClick={() => navigate(`/app/${currentApp._id}`)}
                 className="btn-primary flex items-center gap-2 group/btn"
+                aria-label={`Get ${currentApp.title} application`}
               >
-                Get App <HiArrowRight className="group-hover/btn:translate-x-1 transition-transform" />
+                Get App <HiArrowRight className="group-hover/btn:translate-x-1 transition-transform" aria-hidden="true" />
               </motion.button>
             </div>
           </div>
@@ -100,16 +101,17 @@ const HeroCarousel = ({ apps }) => {
       </AnimatePresence>
 
       {/* Pagination indicators */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
+      <nav className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20" aria-label="Featured apps carousel navigation">
         {featuredApps.map((_, idx) => (
           <button
             key={idx}
             onClick={() => setCurrentIndex(idx)}
             className={`transition-all duration-300 rounded-full ${currentIndex === idx ? 'w-8 h-2 bg-accent-magenta' : 'w-2 h-2 bg-dark-400 dark:bg-gray-500 hover:bg-dark-200 dark:hover:bg-gray-400'}`}
-            aria-label={`Go to slide ${idx + 1}`}
+            aria-label={`Go to slide ${idx + 1} - ${featuredApps[idx].title}`}
+            aria-current={currentIndex === idx ? 'true' : 'false'}
           />
         ))}
-      </div>
+      </nav>
     </div>
   );
 };

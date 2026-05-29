@@ -162,4 +162,12 @@
   .animate-pulse-slow {
     animation: pulse-slow 2.5s ease-in-out infinite;
   }
+  /* ── Skip Link ─────────────────────────────────── */
+  .skip-link {
+    @apply fixed top-4 left-4 z-[1000]
+           bg-accent-violet text-white font-bold px-6 py-3 rounded-xl
+           -translate-y-[200%] focus:translate-y-0
+           transition-transform duration-300
+           shadow-2xl outline-none ring-4 ring-accent-violet/30;
+  }
 }
