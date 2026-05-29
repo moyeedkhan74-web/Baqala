@@ -8,6 +8,15 @@ import MagneticHover from './MagneticHover';
 const AppCard = memo(({ app, featured = false }) => {
   const getImageUrl = (url) => {
     if (!url) return '';
+    // If it's already a full CDN or B2 URL, return it
+    if (url.startsWith('http')) return url;
+    
+    // If it's a proxy path, redirect to CDN
+    if (url.startsWith('/api/assets/')) {
+      const path = url.replace('/api/assets/', '');
+      return `https://cdn.baqala.com/file/baqalaaa/${path}`;
+    }
+
     if (url.startsWith('/')) {
       // Remove /api from the end of API_BASE_URL if it exists to match the proxy path
       const host = API_BASE_URL.replace(/\/api$/, '');
@@ -38,7 +47,7 @@ const AppCard = memo(({ app, featured = false }) => {
               <div className="absolute inset-0 bg-accent-neon blur-2xl opacity-20 dark:opacity-40 group-hover:opacity-50 dark:group-hover:opacity-70 transition-opacity duration-500 rounded-full" />
               <img 
                 src={getImageUrl(app.icon)} 
-                alt={app.title} 
+                alt={`${app.title} icon`}
                 className="w-full h-full object-cover rounded-3xl shadow-glass relative z-10 border border-white/50 dark:border-white/20 bg-white dark:bg-dark-800" 
                 onError={(e) => { e.target.src = fallbackIcon; }}
               />
@@ -85,7 +94,7 @@ const AppCard = memo(({ app, featured = false }) => {
               <div className="absolute inset-0 bg-accent-neon blur-xl opacity-0 group-hover:opacity-30 dark:group-hover:opacity-40 transition-opacity duration-500 rounded-full" />
               <img 
                 src={getImageUrl(app.icon)} 
-                alt={app.title} 
+                alt={`${app.title} icon`}
                 className="w-12 h-12 sm:w-16 sm:h-16 rounded-[12px] sm:rounded-2xl object-cover border border-white/50 dark:border-white/10 shadow-glass relative z-10 bg-white dark:bg-dark-800" 
                 onError={(e) => { e.target.src = fallbackIcon; }}
               />
@@ -112,7 +121,10 @@ const AppCard = memo(({ app, featured = false }) => {
                   {app.category}
                 </span>
               </div>
-              <button className="w-full sm:w-auto justify-center bg-dark-100 dark:bg-white/5 hover:bg-dark-200 dark:hover:bg-white/15 text-dark-700 dark:text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-bold transition-colors flex items-center gap-1 border border-dark-200 dark:border-white/10 group-hover:border-accent-violet/30 dark:group-hover:border-accent-neon/50">
+              <button 
+                className="w-full sm:w-auto justify-center bg-dark-100 dark:bg-white/5 hover:bg-dark-200 dark:hover:bg-white/15 text-dark-700 dark:text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-bold transition-colors flex items-center gap-1 border border-dark-200 dark:border-white/10 group-hover:border-accent-violet/30 dark:group-hover:border-accent-neon/50"
+                aria-label={`Install ${app.title}`}
+              >
                 Get
               </button>
             </div>

@@ -149,15 +149,21 @@ exports.uploadToB2 = async (filePath, fileBuffer, contentType, isPrivate = false
 
     await s3.send(command);
     
-    // GOD-MODE: Force direct URL for anything in apps/ folder, no exceptions
+    // CDN Configuration
+    const CDN_DOMAIN = 'cdn.baqala.com'; // User's Cloudflare domain
+
     let url;
     if (scrubbedPath.toLowerCase().includes('apps/')) {
+      // Binaries still use direct B2 for signed/attachment downloads
       url = `https://${process.env.B2_ENDPOINT}/${process.env.B2_BUCKET_NAME}/${scrubbedPath}`;
     } else if (!isPrivate) {
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://baqala-kwt6.onrender.com' 
-        : `http://localhost:${process.env.PORT || 5000}`;
-      url = `${baseUrl}/api/assets/${scrubbedPath}`;
+      // Production: Use Cloudflare CDN
+      // Development: Use local proxy
+      if (process.env.NODE_ENV === 'production') {
+        url = `https://${CDN_DOMAIN}/file/${process.env.B2_PRIVATE_BUCKET}/${scrubbedPath}`;
+      } else {
+        url = `http://localhost:${process.env.PORT || 5000}/api/assets/${scrubbedPath}`;
+      }
     } else {
       url = `https://${endpoint}/${bucket}/${scrubbedPath}`;
     }
@@ -276,15 +282,18 @@ exports.completeMultipartUpload = async (filePath, uploadId, parts, isPrivate = 
     });
     await s3.send(command);
     
-    // GOD-MODE: Force direct URL for anything in apps/ folder, no exceptions
+    // CDN Configuration
+    const CDN_DOMAIN = 'cdn.baqala.com';
+
     let url;
     if (scrubbedPath.toLowerCase().includes('apps/')) {
       url = `https://${process.env.B2_ENDPOINT}/${process.env.B2_BUCKET_NAME}/${scrubbedPath}`;
     } else if (!isPrivate) {
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://baqala-kwt6.onrender.com' 
-        : `http://localhost:${process.env.PORT || 5000}`;
-      url = `${baseUrl}/api/assets/${scrubbedPath}`;
+      if (process.env.NODE_ENV === 'production') {
+        url = `https://${CDN_DOMAIN}/file/${process.env.B2_PRIVATE_BUCKET}/${scrubbedPath}`;
+      } else {
+        url = `http://localhost:${process.env.PORT || 5000}/api/assets/${scrubbedPath}`;
+      }
     } else {
       url = `https://${endpoint}/${bucket}/${scrubbedPath}`;
     }

@@ -294,6 +294,7 @@ exports.getApps = async (req, res) => {
     if (search) query.$text = { $search: search };
     if (category) query.category = category;
     if (platform) query.platform = platform;
+    if (req.query.featured === 'true') query.isFeatured = true;
 
     let sortOption = {};
     switch (sort) {

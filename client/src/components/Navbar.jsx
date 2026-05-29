@@ -32,7 +32,14 @@ const Navbar = () => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <motion.nav 
+    <>
+      <a 
+        href="#main-content" 
+        className="fixed top-[-100px] left-4 z-[100] bg-accent-violet text-white px-4 py-2 rounded-lg transition-all focus:top-4 outline-none ring-2 ring-accent-neon"
+      >
+        Skip to content
+      </a>
+      <motion.nav 
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ type: 'spring', stiffness: 100, damping: 20 }}
@@ -91,6 +98,7 @@ const Navbar = () => {
             <motion.button 
               whileTap={{ scale: 0.9 }} 
               onClick={toggleTheme} 
+              aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
               className="p-2 rounded-full border border-dark-200/50 dark:border-white/10 bg-white/50 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 transition-colors shadow-sm"
             >
               {isDark ? <HiSun className="w-5 h-5 text-yellow-400" /> : <HiMoon className="w-5 h-5 text-accent-violet" />}
@@ -144,6 +152,7 @@ const Navbar = () => {
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => setMenuOpen(!menuOpen)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
             className="md:hidden p-2 text-dark-600 dark:text-gray-300 hover:text-dark-900 dark:hover:text-white rounded-xl bg-white/50 dark:bg-white/5 border border-dark-200/50 dark:border-white/10"
           >
             {menuOpen ? <HiX className="w-6 h-6" /> : <HiMenu className="w-6 h-6" />}
@@ -163,7 +172,11 @@ const Navbar = () => {
             <div className="px-4 py-6 flex flex-col gap-2">
               <div className="flex justify-between items-center px-2 mb-2">
                 <span className="text-dark-600 dark:text-gray-400 font-medium text-sm text-center align-middle h-full pt-1.5">Theme Preference</span>
-                <button onClick={toggleTheme} className="p-2 rounded-xl bg-white/50 dark:bg-white/5 border border-dark-200 dark:border-white/10 shadow-sm">
+                <button 
+                  onClick={toggleTheme} 
+                  aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+                  className="p-2 rounded-xl bg-white/50 dark:bg-white/5 border border-dark-200 dark:border-white/10 shadow-sm"
+                >
                   {isDark ? <HiSun className="w-5 h-5 text-yellow-500" /> : <HiMoon className="w-5 h-5 text-accent-violet" />}
                 </button>
               </div>
@@ -195,6 +208,7 @@ const Navbar = () => {
         )}
       </AnimatePresence>
     </motion.nav>
+    </>
   );
 };
 

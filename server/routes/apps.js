@@ -7,14 +7,30 @@ const {
 const { initUpload, uploadChunk, combineChunks } = require('../controllers/chunkController');
 const { auth } = require('../middleware/auth');
 const { uploadApp, uploadChunked, uploadImages, uploadAll } = require('../middleware/upload');
+const { body, validationResult } = require('express-validator');
+const { downloadLimiter, generalLimiter } = require('../middleware/rateLimiter');
+
+// Validation middleware
+const validateApp = [
+  body('title').trim().notEmpty().withMessage('App title is required').isLength({ max: 100 }),
+  body('description').trim().notEmpty().withMessage('Description is required'),
+  body('category').notEmpty().withMessage('Category is required'),
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    next();
+  }
+];
 
 const router = express.Router();
 
 // --- Static/Collection Routes ---
 router.get('/categories', getCategories);
 router.get('/my', auth, getMyApps);
-router.get('/', getApps);
-router.post('/', auth, uploadAll, createApp);
+router.get('/', generalLimiter, getApps);
+router.post('/', auth, uploadAll, validateApp, createApp);
 
 // --- Action Routes (Specific) ---
 router.post('/init-upload', auth, initUpload);
@@ -27,8 +43,8 @@ router.post('/:id/remove-screenshot', auth, removeScreenshot);
 router.post('/:id/images', auth, uploadImages, uploadAppImages);
 
 // --- Resource Routes (Individual) ---
-router.get('/:id', getApp);
-router.get('/:id/download', getAppDownloadLink);
+router.get('/:id', generalLimiter, getApp);
+router.get('/:id/download', downloadLimiter, getAppDownloadLink);
 router.put('/:id', auth, updateApp);
 router.delete('/:id', auth, deleteApp);
 router.delete('/:id/screenshot', auth, removeScreenshot);
