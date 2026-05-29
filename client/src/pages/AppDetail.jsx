@@ -186,15 +186,12 @@ const AppDetail = () => {
           initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
           className="glass-panel p-8 md:p-12 rounded-[2rem] relative overflow-hidden mb-12"
         >
-          <div className="absolute inset-0 bg-hero-glow opacity-20 blur-3xl pointer-events-none" />
-          
           <div className="relative z-10 flex flex-col md:flex-row gap-8 items-start md:items-center">
             <motion.div 
               whileHover={{ scale: 1.05, rotate: -2 }} 
               onClick={() => setLightboxIndex(-2)}
               className="w-32 h-32 md:w-48 md:h-48 flex-shrink-0 relative cursor-zoom-in"
             >
-              <div className="absolute inset-0 bg-accent-neon blur-2xl opacity-50 rounded-full" />
               <img 
                 src={getImageUrl(app.icon)} 
                 alt={`${app.title} icon`}
