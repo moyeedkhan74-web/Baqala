@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/axios';
 import AppCard from '../components/AppCard';
 import HeroCarousel from '../components/HeroCarousel';
+import SEOHead from '../components/SEOHead';
 import { SkeletonCard } from '../components/Skeleton';
 import { HiSearch, HiX, HiAdjustments, HiTrendingUp, HiCollection } from 'react-icons/hi';
 import toast from 'react-hot-toast';
@@ -59,6 +60,10 @@ const Home = () => {
 
   return (
     <div className="min-h-screen pb-24">
+      <SEOHead 
+        title="Discover the Best Apps"
+        description="Baqala is your premium app store for discovering and downloading high-quality Android apps, games, and productivity tools."
+      />
       <div className="pt-24 pb-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
 
         {/* Header */}

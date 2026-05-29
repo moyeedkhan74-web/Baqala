@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://baqala-lovat.vercel.app/sitemap.xml

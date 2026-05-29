@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api, { API_BASE_URL } from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import StarRating from '../components/StarRating';
+import SEOHead from '../components/SEOHead';
 import { SkeletonDetail } from '../components/Skeleton';
 import toast from 'react-hot-toast';
 import { HiDownload, HiStar, HiFolder, HiClock, HiDeviceMobile, HiArrowLeft, HiArrowRight } from 'react-icons/hi';
@@ -148,6 +149,12 @@ const AppDetail = () => {
 
   return (
     <div className="min-h-screen pt-24 pb-20">
+      <SEOHead 
+        title={app.title}
+        description={app.tagline || app.description?.substring(0, 160)}
+        image={getImageUrl(app.icon)}
+        url={`https://baqala-lovat.vercel.app/apps/${app._id}`}
+      />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Hero Section */}
