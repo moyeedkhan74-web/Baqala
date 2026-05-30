@@ -29,7 +29,7 @@ const Footer = ({ className = '' }) => {
             <ul className="space-y-3 text-sm text-gray-400">
               <li><Link to="/upload" className="hover:text-accent-neon transition-colors">Publish an App</Link></li>
               <li><Link to="/developer" className="hover:text-accent-neon transition-colors">Dashboard</Link></li>
-              <li><a href="#" className="hover:text-accent-neon transition-colors">Revenue Share</a></li>
+              <li><Link to="/revenue-share" className="hover:text-accent-neon transition-colors">Revenue Share</Link></li>
             </ul>
           </div>
 
