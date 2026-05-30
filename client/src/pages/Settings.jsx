@@ -218,7 +218,6 @@ const Settings = () => {
               Passwords managed via {user?.googleId ? 'Google/Firebase Auth' : 'Baqala Auth System'}.
            </p>
            <button disabled className="btn-secondary py-2 px-6 text-sm">Reset Password</button>
-        </div>
       </div>
     </div>
   );
