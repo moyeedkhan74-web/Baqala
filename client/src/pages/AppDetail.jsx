@@ -419,7 +419,12 @@ const AppDetail = () => {
                 >
                   {app.developer?.name || app.developerName || 'Unknown Developer'}
                 </Link>
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1">Publisher</span>
+                {app.developer?.tagline && (
+                  <span className="text-[11px] font-bold text-accent-violet dark:text-accent-neon uppercase tracking-wider mt-1">
+                    {app.developer.tagline}
+                  </span>
+                )}
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-2">Publisher</span>
               </div>
               
               <div className="p-6">

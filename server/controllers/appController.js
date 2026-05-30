@@ -411,7 +411,7 @@ exports.getApps = async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const [apps, total] = await Promise.all([
       App.find(query)
-        .populate('developer', 'name avatar')
+        .populate('developer', 'name avatar tagline')
         .sort(sortOption)
         .skip(skip)
         .limit(parseInt(limit)),
@@ -448,8 +448,9 @@ exports.searchApps = async (req, res) => {
       status: 'approved'
     })
     .sort({ totalDownloads: -1 })
+    .populate('developer', 'name avatar tagline')
     .limit(10)
-    .select('title icon developerName averageRating category platform');
+    .select('title icon developerName averageRating category platform developer');
 
     // 2. If regex finds nothing, try the Text Index (best for full words/relevance)
     if (apps.length === 0) {
@@ -461,8 +462,9 @@ exports.searchApps = async (req, res) => {
         { score: { $meta: 'textScore' } }
       )
       .sort({ score: { $meta: 'textScore' }, totalDownloads: -1 })
+      .populate('developer', 'name avatar tagline')
       .limit(10)
-      .select('title icon developerName averageRating category platform');
+      .select('title icon developerName averageRating category platform developer');
     }
 
     res.json({ apps });

@@ -59,9 +59,14 @@ const AppCard = memo(({ app, featured = false }) => {
                 {app.title}
               </h2>
               {app.tagline && <p className="text-lg text-gray-700 dark:text-gray-300 font-bold mb-2">{app.tagline}</p>}
-              <Link to={`/developer/${app.developer?._id || app.developer}`} className="inline-block text-lg text-accent-violet dark:text-accent-neon font-bold mb-4 hover:underline transition-all">
-                {app.developerName || app.developer?.name || 'Unknown'}
-              </Link>
+              <div className="flex flex-col mb-4">
+                <Link to={`/developer/${app.developer?._id || app.developer}`} className="inline-block text-lg text-accent-violet dark:text-accent-neon font-bold hover:underline transition-all">
+                  {app.developerName || app.developer?.name || 'Unknown'}
+                </Link>
+                {app.developer?.tagline && (
+                  <span className="text-[11px] uppercase tracking-widest text-slate-400 font-black">{app.developer.tagline}</span>
+                )}
+              </div>
               <p className="text-dark-600 dark:text-gray-400 max-w-xl mb-6 line-clamp-2 md:line-clamp-3 leading-relaxed font-medium">
                 {app.description}
               </p>
