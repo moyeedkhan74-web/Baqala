@@ -237,8 +237,17 @@ const AppDetail = () => {
             <div className="flex-1">
               <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 dark:text-white mb-3 tracking-tight">{app.title}</h1>
               {app.tagline && <p className="text-lg text-slate-600 dark:text-gray-300 font-bold mb-3">{app.tagline}</p>}
-              <Link to={`/developer/${app.developer?._id || app.developer}`} className="inline-block text-xl text-accent-violet dark:text-accent-neon font-medium mb-6 hover:underline transition-all">
-                {app.developerName || app.developer?.name}
+              <Link to={`/developer/${app.developer?._id || app.developer}`} className="flex items-center gap-3 mb-6 group">
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20 bg-slate-100 flex items-center justify-center">
+                   {app.developer?.avatar ? (
+                     <img src={app.developer.avatar} alt="" className="w-full h-full object-cover" />
+                   ) : (
+                     <span className="text-xs font-bold text-accent-violet">{(app.developer?.name || app.developerName || 'D').charAt(0)}</span>
+                   )}
+                </div>
+                <span className="text-xl text-accent-violet dark:text-accent-neon font-medium group-hover:underline transition-all">
+                  {app.developer?.name || app.developerName}
+                </span>
               </Link>
               
               <div className="flex flex-wrap gap-6 mb-8 text-sm font-semibold">
@@ -388,6 +397,44 @@ const AppDetail = () => {
 
           {/* Sidebar */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="space-y-6">
+            
+            {/* Developer Card */}
+            <div className="glass-panel overflow-hidden rounded-3xl border border-white/20">
+              <div className="bg-gradient-to-br from-accent-violet/20 to-accent-emerald/20 p-6 flex flex-col items-center text-center">
+                <Link to={`/developer/${app.developer?._id || app.developer}`} className="group relative mb-4">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-accent-violet to-accent-emerald rounded-full blur opacity-25 group-hover:opacity-60 transition duration-500"></div>
+                  <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-white bg-white dark:bg-dark-800">
+                    {app.developer?.avatar ? (
+                      <img src={app.developer.avatar} alt={app.developer.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-slate-100 flex items-center justify-center text-accent-violet text-3xl font-bold">
+                        {(app.developer?.name || app.developerName || 'D').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                </Link>
+                <Link 
+                  to={`/developer/${app.developer?._id || app.developer}`}
+                  className="text-xl font-bold text-slate-900 dark:text-white hover:text-accent-violet dark:hover:text-accent-neon transition-colors"
+                >
+                  {app.developer?.name || app.developerName || 'Unknown Developer'}
+                </Link>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1">Publisher</span>
+              </div>
+              
+              <div className="p-6">
+                <p className="text-sm text-slate-600 dark:text-gray-400 leading-relaxed mb-6 line-clamp-3">
+                  {app.developer?.bio || "A dedicated developer contributing to the Baqala ecosystem. Explore more apps from this creator's portfolio."}
+                </p>
+                <Link 
+                  to={`/developer/${app.developer?._id || app.developer}`}
+                  className="w-full btn-secondary py-2 text-sm flex items-center justify-center gap-2"
+                >
+                   View Profile
+                </Link>
+              </div>
+            </div>
+
             <div className="glass-panel p-6 rounded-3xl">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Information</h3>
               <ul className="space-y-4 text-sm">
