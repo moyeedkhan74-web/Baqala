@@ -124,7 +124,7 @@ const AppDetail = () => {
       // Same-origin = browser honours the `download` attribute = file saves directly.
       // The backend streams the file through with Content-Disposition: attachment,
       // so the B2 signed URL is never visible anywhere to the user.
-      const proxyUrl = `/api/apps/${id}/proxy-download`;
+      const proxyUrl = `${API_BASE_URL}/apps/${id}/proxy-download`;
 
       const link = document.createElement('a');
       link.href = proxyUrl;
