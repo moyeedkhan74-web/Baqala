@@ -3,8 +3,7 @@ import { motion } from 'framer-motion';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 import SEOHead from '../components/SEOHead';
-import { HiMail, HiChatAlt, HiExternalLink } from 'react-icons/hi';
-import { FaGithub } from 'react-icons/fa';
+import { HiMail, HiChatAlt } from 'react-icons/hi';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -66,23 +65,6 @@ const Contact = () => {
                 <p className="text-slate-900 dark:text-white font-semibold">support@baqala.com</p>
               </div>
             </div>
-
-            <a 
-              href="https://github.com/moyeedkhan74-web" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="glass-panel p-6 rounded-2xl flex items-center gap-4 border-dark-200/50 dark:border-white/5 hover:border-accent-neon/30 transition-all group"
-            >
-              <div className="w-12 h-12 bg-dark-100 dark:bg-white/5 rounded-xl flex items-center justify-center text-dark-900 dark:text-white group-hover:bg-accent-neon group-hover:text-black transition-colors">
-                <FaGithub className="w-6 h-6" />
-              </div>
-              <div className="flex-1">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">GitHub</p>
-                <p className="text-slate-900 dark:text-white font-semibold flex items-center justify-between">
-                  @moyeedkhan74-web <HiExternalLink className="w-4 h-4" />
-                </p>
-              </div>
-            </a>
           </div>
         </motion.div>
 
