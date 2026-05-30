@@ -12,8 +12,9 @@ exports.getDeveloperProfile = async (req, res) => {
     }
 
     // 2. Aggregate stats from App collection
+    const mongoose = require('mongoose');
     const stats = await App.aggregate([
-      { $match: { developer: user._id, status: 'approved' } },
+      { $match: { developer: new mongoose.Types.ObjectId(id), status: 'approved' } },
       {
         $group: {
           _id: null,

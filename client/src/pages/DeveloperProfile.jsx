@@ -80,7 +80,7 @@ const DeveloperProfile = () => {
               <img src={developer.avatar} alt={developer.name} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-gradient-to-tr from-accent-violet to-accent-magenta flex items-center justify-center text-white text-5xl font-bold">
-                {developer.name.charAt(0).toUpperCase()}
+                {(developer?.name || 'Developer').charAt(0).toUpperCase()}
               </div>
             )}
           </div>
@@ -90,7 +90,7 @@ const DeveloperProfile = () => {
         <div className="flex-1 text-center md:text-left">
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mb-4">
             <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              {developer.name}
+              {developer?.name || 'Unknown Developer'}
             </h1>
             <span className="badge-neon uppercase tracking-widest text-[10px] px-3 py-1">
               Verified Developer
@@ -98,28 +98,28 @@ const DeveloperProfile = () => {
           </div>
 
           <p className="text-lg text-slate-600 dark:text-gray-400 max-w-2xl mb-8 leading-relaxed font-medium">
-            {developer.bio || `Independent software engineer contributing high-quality digital experiences to the Baqala community since ${new Date(developer.joinDate).getFullYear()}.`}
+            {developer?.bio || `Independent software engineer contributing high-quality digital experiences to the Baqala community since ${developer?.joinDate ? new Date(developer.joinDate).getFullYear() : '2024'}.`}
           </p>
 
           {/* Stats Grid */}
           <div className="flex flex-wrap justify-center md:justify-start gap-4 sm:gap-6">
             <div className="glass-panel px-6 py-4 flex flex-col items-center md:items-start min-w-[140px]">
               <span className="text-2xl font-black text-accent-violet dark:text-accent-neon flex items-center gap-2">
-                <HiViewGrid className="w-5 h-5 opacity-50" /> {stats.totalApps}
+                <HiViewGrid className="w-5 h-5 opacity-50" /> {stats?.totalApps || 0}
               </span>
               <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Apps Uploaded</span>
             </div>
             
             <div className="glass-panel px-6 py-4 flex flex-col items-center md:items-start min-w-[140px]">
               <span className="text-2xl font-black text-accent-emerald flex items-center gap-2">
-                <HiDownload className="w-5 h-5 opacity-50" /> {stats.totalDownloads >= 1000 ? `${(stats.totalDownloads / 1000).toFixed(1)}k+` : stats.totalDownloads}
+                <HiDownload className="w-5 h-5 opacity-50" /> {stats?.totalDownloads >= 1000 ? `${(stats.totalDownloads / 1000).toFixed(1)}k+` : (stats?.totalDownloads || 0)}
               </span>
               <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Total Reach</span>
             </div>
 
             <div className="glass-panel px-6 py-4 flex flex-col items-center md:items-start min-w-[140px]">
               <span className="text-lg font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2 pt-1">
-                <HiCalendar className="w-5 h-5 opacity-50" /> {new Date(developer.joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                <HiCalendar className="w-5 h-5 opacity-50" /> {developer?.joinDate ? new Date(developer.joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '2024'}
               </span>
               <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Member Since</span>
             </div>
@@ -137,7 +137,7 @@ const DeveloperProfile = () => {
           <span className="text-sm font-bold text-slate-400">{apps.length} Releases</span>
         </div>
 
-        {apps.length > 0 ? (
+        {apps && apps.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {apps.map((app, index) => (
               <AppCard key={app._id} app={app} index={index} />
