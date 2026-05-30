@@ -69,7 +69,16 @@ exports.proxyDownload = async (req, res, next) => {
     }
 
     // Build a safe filename for Content-Disposition
-    const rawName = app.fileName || `${app.title}-download`;
+    let rawName = app.fileName || `${app.title}-download`;
+    
+    // If filename has no extension, try to extract it from the source URL
+    if (!rawName.includes('.')) {
+      const extMatch = sourceUrl.split('?')[0].match(/\.([a-zA-Z0-9]+)$/);
+      if (extMatch) {
+        rawName = `${rawName}.${extMatch[1]}`;
+      }
+    }
+    
     const safeFilename = rawName.replace(/[^\w.\-]/g, '_');
 
     // Set response headers so the browser saves the file immediately
