@@ -12,7 +12,8 @@ const Settings = () => {
   const [formData, setFormData] = useState({
     name: user?.name || '',
     bio: user?.bio || '',
-    tagline: user?.tagline || ''
+    tagline: user?.tagline || '',
+    specialization: user?.specialization || ''
   });
   const [avatarPreview, setAvatarPreview] = useState(user?.avatar || '');
   const [avatarFile, setAvatarFile] = useState(null);
@@ -122,8 +123,21 @@ const Settings = () => {
               />
             </div>
             
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">{user?.name}</h3>
-            <p className="text-sm text-slate-500 dark:text-gray-500 uppercase tracking-widest font-black mb-4">{user?.role}</p>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">{formData.name || user?.name}</h3>
+            {formData.specialization && (
+              <h4 className="text-xl font-bold text-slate-900 dark:text-white mt-2">
+                {formData.specialization}
+              </h4>
+            )}
+            {formData.tagline && (
+              <span className="text-[11px] font-black uppercase tracking-widest text-accent-violet dark:text-accent-neon mt-1">
+                {formData.tagline}
+              </span>
+            )}
+            <div className="w-full h-[1px] bg-slate-200 dark:bg-white/10 my-6" />
+            <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed italic line-clamp-4">
+              {formData.bio || 'Your story will appear here. Talk about your passion, your experience, and what you build.'}
+            </p>
             
             <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
                <div className="flex items-center justify-between text-xs font-bold">
@@ -160,6 +174,22 @@ const Settings = () => {
 
               <div>
                 <label className="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2">
+                  Specialization
+                </label>
+                <input
+                  type="text"
+                  name="specialization"
+                  value={formData.specialization}
+                  onChange={handleInputChange}
+                  placeholder="e.g. Android Developer"
+                  className="input-field"
+                  maxLength={100}
+                />
+                <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-tight italic">Shown on your developer profile page (short professional title)</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2">
                   Specialization / Tagline (Meta detail)
                 </label>
                 <input
@@ -167,7 +197,7 @@ const Settings = () => {
                   name="tagline"
                   value={formData.tagline}
                   onChange={handleInputChange}
-                  placeholder="e.g. Android Specialist • Web Artist"
+                  placeholder="e.g. Android Enthusiast • Indie Game Dev"
                   className="input-field"
                   maxLength={100}
                 />
