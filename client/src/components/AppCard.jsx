@@ -1,11 +1,12 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { HiDownload, HiStar } from 'react-icons/hi';
 import { API_BASE_URL } from '../api/axios';
 import MagneticHover from './MagneticHover';
 
 const AppCard = memo(({ app, featured = false }) => {
+  const navigate = useNavigate();
   const getImageUrl = (url) => {
     if (!url) return '';
     // If it's already a full CDN or B2 URL, return it
@@ -89,7 +90,11 @@ const AppCard = memo(({ app, featured = false }) => {
 
   return (
     <MagneticHover damping={15} stiffness={150} className="h-full">
-      <Link to={`/app/${app._id}`} className="block h-full group" aria-label={`View details for ${app.title}`}>
+      <div 
+        onClick={() => navigate(`/app/${app._id}`)}
+        className="block h-full group cursor-pointer" 
+        aria-label={`View details for ${app.title}`}
+      >
         <motion.article 
           whileHover={{ y: -8, scale: 1.02 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -143,7 +148,7 @@ const AppCard = memo(({ app, featured = false }) => {
             </div>
           </div>
         </motion.article>
-      </Link>
+      </div>
     </MagneticHover>
   );
 });
