@@ -63,9 +63,41 @@ exports.reactFeedback = async (req, res, next) => {
   try {
     const { feedbackId } = req.params;
     const { type } = req.body; // "like" or "dislike"
-    const update = type === 'like' ? { $inc: { likes: 1 } } : { $inc: { dislikes: 1 } };
-    const fb = await Feedback.findByIdAndUpdate(feedbackId, update, { new: true });
-    res.json({ feedback: fb });
+    const userId = req.user._id;
+
+    const feedback = await Feedback.findById(feedbackId);
+    if (!feedback) return res.status(404).json({ message: 'Feedback not found.' });
+
+    const hasLiked = feedback.likedBy.includes(userId);
+    const hasDisliked = feedback.dislikedBy.includes(userId);
+
+    if (type === 'like') {
+      if (hasLiked) {
+        // Toggle off
+        feedback.likedBy = feedback.likedBy.filter(id => id.toString() !== userId.toString());
+      } else {
+        // Add like, remove dislike if exists
+        feedback.likedBy.push(userId);
+        feedback.dislikedBy = feedback.dislikedBy.filter(id => id.toString() !== userId.toString());
+      }
+    } else if (type === 'dislike') {
+      if (hasDisliked) {
+        // Toggle off
+        feedback.dislikedBy = feedback.dislikedBy.filter(id => id.toString() !== userId.toString());
+      } else {
+        // Add dislike, remove like if exists
+        feedback.dislikedBy = feedback.dislikedBy.filter(id => id.toString() !== userId.toString()); // Safety
+        feedback.likedBy = feedback.likedBy.filter(id => id.toString() !== userId.toString());
+        feedback.dislikedBy.push(userId);
+      }
+    }
+
+    // Sync counts
+    feedback.likes = feedback.likedBy.length;
+    feedback.dislikes = feedback.dislikedBy.length;
+
+    await feedback.save();
+    res.json({ feedback });
   } catch (err) {
     next(err);
   }
