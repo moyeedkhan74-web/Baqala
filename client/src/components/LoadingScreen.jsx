@@ -3,9 +3,15 @@ import { useState, useEffect } from 'react';
 
 const LoadingScreen = ({ isLoading, error, onRetry }) => {
   const [sparkles, setSparkles] = useState([]);
+  const [showWarming, setShowWarming] = useState(false);
 
   useEffect(() => {
-    if (!isLoading) return;
+    if (!isLoading) {
+      setShowWarming(false);
+      return;
+    }
+
+    const warmingTimer = setTimeout(() => setShowWarming(true), 3000);
 
     const generateSparkles = () => {
       const newSparkles = [...Array(30)].map((_, i) => ({
@@ -19,6 +25,7 @@ const LoadingScreen = ({ isLoading, error, onRetry }) => {
     };
 
     generateSparkles();
+    return () => clearTimeout(warmingTimer);
   }, [isLoading]);
 
   // Animated rotating circles
@@ -171,6 +178,24 @@ const LoadingScreen = ({ isLoading, error, onRetry }) => {
               >
                 The Future of App Discovery.
               </motion.p>
+              
+              <AnimatePresence>
+                {showWarming && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="mt-6 flex flex-col items-center gap-2"
+                  >
+                    <span className="text-sm font-medium tracking-[0.2em] uppercase text-cyan-400/80 animate-pulse">
+                      Connecting to engine...
+                    </span>
+                    <span className="text-[10px] text-gray-500 max-w-[200px] leading-tight">
+                      Render instances take about 30s to wake up from sleep mode.
+                    </span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
 
             {/* Loading indicator dots */}
