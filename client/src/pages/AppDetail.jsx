@@ -187,14 +187,13 @@ const AppDetail = () => {
 
   const loadData = async () => {
     try {
-      const [appRes, revRes] = await Promise.all([
-        api.get(`/apps/${id}`),
-        api.get(`/reviews/${id}`)
-      ]);
-      setApp(appRes.data.app);
-      setReviews(revRes.data.reviews);
-    } catch (error) { toast.error('Failed to load application data'); }
-    finally { setLoading(false); }
+      const res = await api.get(`/apps/${id}`);
+      setApp(res.data.app);
+    } catch (error) { 
+      toast.error('Failed to load application data'); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const handleDownload = async () => {
@@ -417,143 +416,163 @@ const AppDetail = () => {
               </div>
             </motion.section>
 
-            {/* Reviews System */}
-            <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">User Reviews ({app.reviewCount || 0})</h2>
+            {/* Ratings & Feedback */}
+            <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} id="reviews-section">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+                  Ratings & Reviews <span className="text-sm font-normal text-slate-400">({app.reviewCount || 0})</span>
+                </h2>
+                <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 px-4 py-2 rounded-2xl">
+                  <HiStar className="text-yellow-400 w-5 h-5" />
+                  <span className="text-lg font-bold dark:text-white">{app.averageRating?.toFixed(1) || '0.0'}</span>
+                </div>
+              </div>
               
-              {user && user._id !== app.developer?._id && user._id !== app.developer?.toString() ? (
-                <form onSubmit={submitReview} className="glass-panel p-6 rounded-3xl mb-8 border border-accent-violet/30 relative overflow-hidden">
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Share your feedback</h3>
-                  <div className="mb-4"><StarRating rating={userRating} onRate={setUserRating} interactive /></div>
-                  <textarea
-                    value={userComment} onChange={e => setUserComment(e.target.value)}
-                    placeholder="Share your experience..." required
-                    className="input-field min-h-[100px] mb-4"
-                  />
-                  <button type="submit" disabled={submittingReview} className="btn-primary py-2 px-6">Submit</button>
-                </form>
-              ) : !user ? (
-                <div className="glass-panel p-6 rounded-3xl mb-8 flex items-center justify-between">
-                  <p className="text-slate-600 dark:text-gray-300">Sign in to leave a review.</p>
-                  <Link to="/login" className="btn-secondary py-2 px-6">Sign In</Link>
-                </div>
-              ) : null}
-
-                {/* Feedback Section */}
-                <div className="mt-12">
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">User Feedback</h2>
-                  {/* New Feedback Form */}
-                  {user ? (
-                    <form onSubmit={submitFeedback} className="glass-panel p-6 rounded-3xl mb-8">
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Your Rating</label>
-                        <StarRating rating={newRating} onRate={setNewRating} interactive />
-                      </div>
-                      <textarea
-                        value={newComment}
-                        onChange={e => setNewComment(e.target.value)}
-                        placeholder="Write your review..."
-                        className="input-field min-h-[80px] mb-4"
-                        required
-                      />
-                      <button type="submit" disabled={submittingFeedback} className="btn-primary py-2 px-6">
-                        Submit Review
-                      </button>
-                    </form>
-                  ) : (
-                    <p className="text-slate-600 dark:text-gray-400 mb-4">Sign in to leave a review.</p>
-                  )}
-                  {/* Feedback List */}
-                  {feedbacks.map(fb => (
-                    <div key={fb._id} className="glass-panel p-4 rounded-xl mb-4">
-                      <div className="flex items-center mb-2">
-                        {fb.user?.avatar ? (
-                          <img src={fb.user.avatar} alt={fb.user.name} className="w-8 h-8 rounded-full mr-2" />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center mr-2 text-xs font-bold">
-                            {fb.user?.name?.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <span className="font-semibold text-slate-900 dark:text-white mr-2">{fb.user?.name}</span>
-                        <StarRating rating={fb.rating} size="sm" />
-                      </div>
-                      <p className="text-sm text-slate-600 dark:text-gray-400 mb-2">{fb.comment}</p>
-                      <div className="flex items-center space-x-4 text-sm">
-                        <button onClick={() => reactFeedback(fb._id, 'like')} className="flex items-center text-accent-violet">
-                          👍 <span className="ml-1">{fb.likes}</span>
-                        </button>
-                        <button onClick={() => reactFeedback(fb._id, 'dislike')} className="flex items-center text-rose-500">
-                          👎 <span className="ml-1">{fb.dislikes}</span>
-                        </button>
-                        {/* Reply button toggles reply form */}
-                        <button onClick={() => toggleReply(fb._id)} className="text-accent-violet underline">Reply</button>
-                      </div>
-                      {/* Replies */}
-                      {fb.replies && fb.replies.map(rep => (
-                        <div key={rep._id} className="ml-8 mt-3 p-3 bg-slate-100 dark:bg-white/5 rounded">
-                          <div className="flex items-center mb-1">
-                            {rep.user?.avatar ? (
-                              <img src={rep.user.avatar} alt={rep.user.name} className="w-6 h-6 rounded-full mr-2" />
-                            ) : (
-                              <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center mr-2 text-xs font-bold">
-                                {rep.user?.name?.charAt(0).toUpperCase()}
-                              </div>
-                            )}
-                            <span className="font-medium text-slate-900 dark:text-white mr-2">{rep.user?.name}</span>
-                            <StarRating rating={rep.rating} size="xs" />
-                          </div>
-                          <p className="text-sm text-slate-600 dark:text-gray-400">{rep.comment}</p>
-                        </div>
-                      ))}
-                      {/* Inline reply form */}
-                      {replyingTo === fb._id && (
-                        <form onSubmit={e => submitReply(e, fb._id)} className="mt-2">
-                          <textarea
-                            value={replyComment}
-                            onChange={e => setReplyComment(e.target.value)}
-                            placeholder="Write a reply..."
-                            className="input-field min-h-[60px] mb-2"
-                            required
-                          />
-                          <button type="submit" className="btn-primary py-1 px-4 text-sm">Post Reply</button>
-                        </form>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-              <div className="space-y-4">
-                {reviews.filter(r => r.user && r.user.name).length === 0 && (
-                  <div className="glass-panel p-8 rounded-3xl text-center text-slate-500">
-                    No reviews yet. Be the first to share your experience!
+              {user ? (
+                <form onSubmit={submitFeedback} className="glass-panel p-8 rounded-[2rem] mb-12 border border-accent-violet/30 bg-gradient-to-br from-white to-white dark:from-dark-800 dark:to-dark-900 shadow-xl overflow-hidden relative">
+                  <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                     <HiStar className="w-32 h-32 text-accent-violet" />
                   </div>
-                )}
-                {reviews.filter(r => r.user && r.user.name).map((r, i) => (
-                  <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} key={r._id} className="glass-panel p-6 rounded-2xl relative group">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-accent-violet to-accent-emerald flex items-center justify-center font-bold text-white">
-                          {r.user?.name?.charAt(0)}
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Write a review</h3>
+                  <div className="mb-6">
+                    <label className="block text-sm font-bold text-slate-500 mb-3 uppercase tracking-wider">Rate your experience</label>
+                    <StarRating rating={newRating} onRate={setNewRating} interactive size="lg" />
+                  </div>
+                  <div className="space-y-4">
+                    <label className="block text-sm font-bold text-slate-500 uppercase tracking-wider">Your feedback</label>
+                    <textarea
+                      value={newComment}
+                      onChange={e => setNewComment(e.target.value)}
+                      placeholder="Describe your experience with this app..."
+                      className="input-field min-h-[120px] text-lg py-4"
+                      required
+                    />
+                  </div>
+                  <div className="mt-8 flex justify-end">
+                    <button type="submit" disabled={submittingFeedback} className="btn-primary py-3 px-10 text-lg shadow-lg shadow-accent-violet/25">
+                      {submittingFeedback ? 'Posting...' : 'Post Review'}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="glass-panel p-8 rounded-[2rem] mb-12 text-center border-dashed border-2 border-slate-200 dark:border-white/10">
+                  <p className="text-lg text-slate-600 dark:text-gray-400 mb-6">Please sign in to share your thoughts and rate this app.</p>
+                  <Link to="/login" className="btn-secondary px-8 py-3">Sign In to Review</Link>
+                </div>
+              )}
+
+              {/* Feedback List */}
+              <div className="space-y-8">
+                {feedbacks.length === 0 ? (
+                  <div className="py-20 text-center text-slate-400 italic">
+                    No reviews yet. Be the first to rate this app!
+                  </div>
+                ) : (
+                  feedbacks.map(fb => (
+                    <motion.div 
+                      key={fb._id} 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="glass-panel p-6 sm:p-8 rounded-[2.5rem] relative group border-white/40 dark:border-white/10"
+                    >
+                      <div className="flex flex-col sm:flex-row gap-6">
+                        {/* User Profile */}
+                        <div className="flex-shrink-0">
+                          <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white dark:border-white/10 bg-slate-100 flex items-center justify-center shadow-lg">
+                            {fb.user?.avatar ? (
+                              <img src={fb.user.avatar} alt={fb.user.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-xl font-bold text-accent-violet">{(fb.user?.name || 'U').charAt(0)}</span>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-semibold text-slate-900 dark:text-white leading-tight">{r.user?.name}</p>
-                          <span className="text-xs text-slate-400">{new Date(r.createdAt).toLocaleDateString()}</span>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                            <div>
+                              <h4 className="font-extrabold text-lg text-slate-900 dark:text-white leading-tight">{fb.user?.name}</h4>
+                              <div className="flex items-center gap-3 mt-1">
+                                <StarRating rating={fb.rating} size="sm" />
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">
+                                  {new Date(fb.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                              <button 
+                                onClick={() => reactFeedback(fb._id, 'like')}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-accent-violet/10 hover:text-accent-violet transition-all text-sm font-bold text-slate-600 dark:text-gray-400"
+                              >
+                                👍 <span>{fb.likes || 0}</span>
+                              </button>
+                              <button 
+                                onClick={() => reactFeedback(fb._id, 'dislike')}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-rose-500/10 hover:text-rose-500 transition-all text-sm font-bold text-slate-600 dark:text-gray-400"
+                              >
+                                👎 <span>{fb.dislikes || 0}</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          <p className="text-slate-600 dark:text-gray-300 leading-relaxed mb-6 font-medium">
+                            {fb.comment}
+                          </p>
+
+                          <div className="flex items-center gap-4">
+                            <button 
+                              onClick={() => toggleReply(fb._id)}
+                              className="text-sm font-bold text-accent-violet dark:text-accent-neon hover:underline flex items-center gap-2"
+                            >
+                              {fb.replies?.length > 0 ? `Show Replies (${fb.replies.length})` : 'Reply to review'}
+                            </button>
+                          </div>
+
+                          {/* Replies Thread */}
+                          {fb.replies && fb.replies.length > 0 && (
+                            <div className="mt-8 space-y-6 pt-6 border-t border-slate-100 dark:border-white/5">
+                              {fb.replies.map(rep => (
+                                <div key={rep._id} className="flex gap-4">
+                                  <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/50 bg-slate-50 dark:bg-white/5 flex items-center justify-center flex-shrink-0">
+                                    {rep.user?.avatar ? (
+                                      <img src={rep.user.avatar} alt={rep.user.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                      <span className="text-sm font-bold text-accent-violet">{(rep.user?.name || 'U').charAt(0)}</span>
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="font-bold text-sm text-slate-900 dark:text-white">{rep.user?.name}</span>
+                                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                                        {new Date(rep.createdAt).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                    <p className="text-sm text-slate-600 dark:text-gray-400 leading-relaxed">{rep.comment}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Reply Form */}
+                          {replyingTo === fb._id && (
+                            <form onSubmit={e => submitReply(e, fb._id)} className="mt-6 flex gap-3">
+                              <input
+                                value={replyComment}
+                                onChange={e => setReplyComment(e.target.value)}
+                                placeholder="Publicly reply to this review..."
+                                className="flex-1 bg-slate-100 dark:bg-white/5 border-none outline-none rounded-xl px-4 py-2 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-accent-violet/50 transition-all"
+                                required
+                              />
+                              <button type="submit" className="btn-primary py-2 px-6 text-sm">Reply</button>
+                            </form>
+                          )}
                         </div>
                       </div>
-                      <StarRating rating={r.rating} size="sm" />
-                    </div>
-                    <p className="text-slate-600 dark:text-gray-300 text-sm leading-relaxed">{r.comment}</p>
-                    
-                    {(user?.role === 'admin' || user?._id === r.user?._id) && (
-                      <button 
-                        onClick={() => deleteReview(r._id)} 
-                        className="absolute top-4 right-4 text-slate-400 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold"
-                      >
-                        Delete
-                      </button>
-                    )}
-                  </motion.div>
-                ))}
+                    </motion.div>
+                  ))
+                )}
               </div>
             </motion.section>
           </div>
@@ -580,27 +599,27 @@ const AppDetail = () => {
                   to={`/developer/${app.developer?._id || app.developer}`}
                   className="text-xl font-bold text-slate-900 dark:text-white hover:text-accent-violet dark:hover:text-accent-neon transition-colors"
                 >
-                  {app.developer?.specialization && (
-                    <p className="text-sm text-slate-600 dark:text-gray-400 mt-1">{app.developer.specialization}</p>
-                  )}
+                  {app.developer?.name || app.developerName}
                 </Link>
+                {app.developer?.specialization && (
+                  <p className="text-sm text-slate-600 dark:text-gray-400 mt-1 font-medium">{app.developer.specialization}</p>
+                )}
                 {app.developer?.tagline && (
-                  <span className="text-[11px] font-bold text-accent-violet dark:text-accent-neon uppercase tracking-wider mt-1">
+                  <span className="text-[11px] font-bold text-accent-violet dark:text-accent-neon uppercase tracking-wider mt-1 block">
                     {app.developer.tagline}
                   </span>
                 )}
-                <span className="border border-accent-violet text-accent-violet rounded px-2 py-0.5 uppercase tracking-[0.2em] text-[10px] font-black mt-2">Publisher</span>
+                <span className="inline-block border-2 border-accent-violet text-accent-violet rounded px-3 py-1 uppercase tracking-[0.2em] text-[11px] font-black mt-3 shadow-[0_0_15px_rgba(139,92,246,0.3)] bg-accent-violet/5">
+                  Publisher
+                </span>
               </div>
               
               <div className="p-6">
-                <p className="text-sm text-slate-600 dark:text-gray-400 leading-relaxed mb-6 line-clamp-3">
-                  
-                </p>
                 <Link 
                   to={`/developer/${app.developer?._id || app.developer}`}
                   className="w-full btn-secondary py-2 text-sm flex items-center justify-center gap-2"
                 >
-                   View Profile
+                   View Full Profile
                 </Link>
               </div>
             </div>

@@ -174,34 +174,34 @@ const Settings = () => {
 
               <div>
                 <label className="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2">
-                  Specialization
+                  Professional Specialization
                 </label>
                 <input
                   type="text"
                   name="specialization"
                   value={formData.specialization}
                   onChange={handleInputChange}
-                  placeholder="e.g. Android Developer"
+                  placeholder="e.g. Android UI Expert"
                   className="input-field"
                   maxLength={100}
                 />
-                <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-tight italic">Shown on your developer profile page (short professional title)</p>
+                <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-tight italic">Shown on the app inspection view under your name</p>
               </div>
 
               <div>
                 <label className="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2">
-                  Specialization / Tagline (Meta detail)
+                  Meta Tagline
                 </label>
                 <input
                   type="text"
                   name="tagline"
                   value={formData.tagline}
                   onChange={handleInputChange}
-                  placeholder="e.g. Android Enthusiast • Indie Game Dev"
+                  placeholder="e.g. Building the future of mobile design"
                   className="input-field"
                   maxLength={100}
                 />
-                <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-tight italic">Shown on app cards & search results (keep it short)</p>
+                <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-tight italic">Shown as a highlighted catchphrase on app inspection view</p>
               </div>
 
               <div>

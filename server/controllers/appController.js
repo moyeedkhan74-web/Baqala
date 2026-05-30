@@ -411,7 +411,7 @@ exports.getApps = async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const [apps, total] = await Promise.all([
       App.find(query)
-        .populate('developer', 'name avatar tagline specialization')
+        .populate('developer', 'name avatar')
         .sort(sortOption)
         .skip(skip)
         .limit(parseInt(limit)),
@@ -448,7 +448,7 @@ exports.searchApps = async (req, res) => {
       status: 'approved'
     })
     .sort({ totalDownloads: -1 })
-    .populate('developer', 'name avatar tagline')
+    .populate('developer', 'name avatar')
     .limit(10)
     .select('title icon developerName averageRating category platform developer');
 
@@ -462,7 +462,7 @@ exports.searchApps = async (req, res) => {
         { score: { $meta: 'textScore' } }
       )
       .sort({ score: { $meta: 'textScore' }, totalDownloads: -1 })
-      .populate('developer', 'name avatar tagline')
+      .populate('developer', 'name avatar')
       .limit(10)
       .select('title icon developerName averageRating category platform developer');
     }
@@ -477,7 +477,7 @@ exports.searchApps = async (req, res) => {
 exports.getApp = async (req, res) => {
   try {
     const app = await App.findById(req.params.id)
-      .populate('developer', 'name email avatar bio tagline specialization');
+      .populate('developer', 'name email avatar tagline specialization');
     if (!app) return res.status(404).json({ message: 'App not found.' });
     res.json({ app });
   } catch (error) {
