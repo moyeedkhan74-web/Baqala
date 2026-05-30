@@ -150,19 +150,24 @@ const About = () => {
           <div className="bg-gradient-to-br from-white to-transparent dark:from-white/10 p-12 lg:p-20 rounded-[3.4rem]">
             <div className="relative inline-block mb-10">
               <div className="absolute inset-0 bg-gradient-to-tr from-accent-violet to-accent-neon rounded-full blur-2xl opacity-20 animate-pulse" />
-              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-white/20 bg-slate-200 mx-auto relative z-10 shadow-xl">
-                 {/* Placeholder for Khan_Sahab image */}
-                 <div className="w-full h-full flex items-center justify-center bg-slate-900 text-6xl text-white font-black">
-                   K
-                 </div>
+              <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-white dark:border-white/20 bg-slate-200 mx-auto relative z-10 shadow-2xl">
+                 <img 
+                    src="/team/khan_sahab.jpg" 
+                    alt="Khan_Sahab" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.parentNode.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-slate-900 text-6xl text-white font-black">K</div>';
+                    }}
+                 />
               </div>
             </div>
             
-            <h2 className="text-sm font-black text-accent-violet uppercase tracking-[0.4em] mb-4">The Architect</h2>
-            <h3 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white mb-8 tracking-tight">Khan_Sahab</h3>
+            <h2 className="text-sm font-black text-accent-violet uppercase tracking-[0.6em] mb-4">Visionary Architect & Lead Producer</h2>
+            <h3 className="text-4xl md:text-7xl font-black text-slate-900 dark:text-white mb-8 tracking-tighter">Khan_Sahab</h3>
             
-            <p className="text-lg text-slate-600 dark:text-gray-400 max-w-xl mx-auto leading-relaxed mb-12">
-              Passionate full-stack developer committed to open-source and digital freedom. Built every line of Baqala to serve the developer community.
+            <p className="text-xl text-slate-600 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed mb-12 font-medium">
+              The mastermind behind the Baqala ecosystem. As a relentless digital craftsman, <span className="text-slate-900 dark:text-white font-bold">Khan_Sahab</span> has engineered every layer of this platform—from the intricate backend architecture to the stunning visual experience—with a single goal: to dismantle digital barriers and empower the next generation of developers.
             </p>
             
             <div className="flex flex-wrap justify-center gap-6">
