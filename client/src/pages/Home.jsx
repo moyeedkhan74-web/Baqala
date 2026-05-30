@@ -78,29 +78,6 @@ const Home = () => {
               Immerse yourself in the next generation of digital tools, games, and productivity software.
             </p>
           </div>
-
-          {/* Search */}
-          <div className="w-full md:w-96 relative group">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <HiSearch className="h-5 w-5 text-slate-400 group-focus-within:text-accent-violet transition-colors" />
-            </div>
-            <input
-              type="text"
-              placeholder="Search apps..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="input-field pl-11 pr-10 py-4 rounded-2xl text-lg"
-            />
-            {search && (
-              <button
-                onClick={() => setSearch('')}
-                aria-label="Clear search"
-                className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
-              >
-                <HiX className="h-5 w-5" />
-              </button>
-            )}
-          </div>
         </div>
 
         {/* Featured Carousel */}
