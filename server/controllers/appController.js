@@ -412,6 +412,46 @@ exports.getApps = async (req, res) => {
   }
 };
 
+exports.searchApps = async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q) return res.json({ apps: [] });
+
+    // Using text search for relevance + regex for partial matches
+    const apps = await App.find(
+      { 
+        $text: { $search: q },
+        status: 'approved'
+      },
+      { score: { $meta: 'textScore' } }
+    )
+    .sort({ score: { $meta: 'textScore' }, totalDownloads: -1 })
+    .limit(10)
+    .select('title icon developerName averageRating category platform');
+
+    res.json({ apps });
+  } catch (error) {
+    // Fallback to regex if text search fails/isn't indexed yet
+    try {
+      const q = req.query.q;
+      const apps = await App.find({
+        $or: [
+          { title: { $regex: q, $options: 'i' } },
+          { developerName: { $regex: q, $options: 'i' } },
+          { tags: { $regex: q, $options: 'i' } }
+        ],
+        status: 'approved'
+      })
+      .sort({ totalDownloads: -1 })
+      .limit(10)
+      .select('title icon developerName averageRating category platform');
+      res.json({ apps });
+    } catch (e) {
+      res.status(500).json({ message: 'Search failed.' });
+    }
+  }
+};
+
 exports.getApp = async (req, res) => {
   try {
     const app = await App.findById(req.params.id)

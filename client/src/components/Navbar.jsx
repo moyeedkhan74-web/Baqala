@@ -13,6 +13,30 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+
+  useEffect(() => {
+    const fetchResults = async () => {
+      if (searchQuery.trim().length < 2) {
+        setSearchResults([]);
+        return;
+      }
+      setSearching(true);
+      try {
+        const { data } = await api.get(`/apps/search?q=${encodeURIComponent(searchQuery)}`);
+        setSearchResults(data.apps || []);
+      } catch (err) {
+        setSearchResults([]);
+      } finally {
+        setSearching(false);
+      }
+    };
+
+    const timer = setTimeout(fetchResults, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const handleLogout = () => {
     logout();
@@ -24,8 +48,9 @@ const Navbar = () => {
   const handleGlobalSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/?search=${encodeURIComponent(searchQuery)}`);
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
+      setSearchFocused(false);
     }
   };
 
@@ -50,11 +75,11 @@ const Navbar = () => {
           
           {/* Brand */}
           <Link to="/" className="flex items-center gap-3 group shrink-0">
-            <img src={`${window.location.origin}/logo.png`} alt="Baqala Logo" className="h-16 sm:h-20 w-auto object-contain transition-transform duration-500 group-hover:scale-[1.3] drop-shadow-[0_0_15px_rgba(34,211,238,0.3)] scale-125 origin-left" />
+            <img src="/logo.png" alt="Baqala Logo" className="h-16 sm:h-20 w-auto object-contain transition-transform duration-500 group-hover:scale-[1.1] drop-shadow-[0_0_15px_rgba(34,211,238,0.3)] scale-110 origin-left" />
           </Link>
 
           {/* Global Search Bar (Desktop) */}
-          <div className="hidden lg:block flex-1 max-w-md mx-6">
+          <div className="hidden lg:block flex-1 max-w-md mx-6 relative">
             <form onSubmit={handleGlobalSearch} className="relative group/search">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <HiSearch className="h-4 w-4 text-gray-400 group-focus-within/search:text-accent-violet transition-colors" />
@@ -63,10 +88,65 @@ const Navbar = () => {
                 type="text"
                 placeholder="Search Baqala..."
                 value={searchQuery}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 text-sm bg-dark-100/50 dark:bg-dark-900/50 border border-dark-200/50 dark:border-white/10 rounded-full text-dark-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-violet/50 focus:border-accent-violet/50 transition-all shadow-sm"
               />
             </form>
+
+            <AnimatePresence>
+              {searchFocused && searchQuery.trim().length >= 2 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute top-full left-0 right-0 mt-2 glass-panel p-2 z-[60] shadow-2xl overflow-hidden origin-top"
+                >
+                  {searching ? (
+                    <div className="p-4 text-center text-sm text-slate-500 flex items-center justify-center gap-2">
+                       <div className="w-4 h-4 border-2 border-accent-violet border-t-transparent rounded-full animate-spin" />
+                       Searching...
+                    </div>
+                  ) : searchResults.length > 0 ? (
+                    <div className="space-y-1">
+                      {searchResults.map((app) => (
+                        <Link
+                          key={app._id}
+                          to={`/app/${app._id}`}
+                          className="flex items-center gap-3 p-2 rounded-xl hover:bg-dark-100 dark:hover:bg-white/5 transition-colors group"
+                          onClick={() => setSearchFocused(false)}
+                        >
+                          <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-slate-200 dark:border-white/10">
+                             <img 
+                              src={app.icon || '/placeholder-icon.png'} 
+                              alt="" 
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-accent-violet dark:group-hover:text-accent-neon transition-colors">{app.title}</p>
+                            <p className="text-[10px] text-slate-500 dark:text-gray-400 truncate uppercase tracking-wider">{app.developerName || 'Unknown'}</p>
+                          </div>
+                        </Link>
+                      ))}
+                      <div className="pt-2 mt-2 border-t border-slate-200 dark:border-white/10">
+                        <button
+                          onClick={handleGlobalSearch}
+                          className="w-full text-center py-2 text-xs font-bold text-accent-violet dark:text-accent-neon hover:underline"
+                        >
+                          See all results for "{searchQuery}"
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center text-sm text-slate-500">
+                      No apps matching "{searchQuery}"
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Desktop Nav Links */}
