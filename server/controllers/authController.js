@@ -115,10 +115,10 @@ exports.updateProfile = async (req, res) => {
       runValidators: true
     });
 
-    res.json({ user });
+    res.json({ user, message: 'Profile updated successfully' });
   } catch (error) {
-    console.error('Update profile error:', error);
-    res.status(500).json({ message: 'Server error.' });
+    console.error('[PROFILE_UPDATE_ERROR]:', error);
+    res.status(500).json({ message: 'Failed to update profile.', details: error.message });
   }
 };
 
