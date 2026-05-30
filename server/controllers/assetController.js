@@ -55,7 +55,7 @@ exports.proxyAsset = async (req, res) => {
     if (isBinary) {
         bucket = process.env.B2_BUCKET_NAME;
     } else if (isAvatar) {
-        bucket = 'baqala.avatar';
+        bucket = process.env.B2_AVATAR_BUCKET || 'baqala.avatar';
     } else {
         bucket = process.env.B2_PRIVATE_BUCKET;
     }
