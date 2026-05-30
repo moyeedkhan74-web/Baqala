@@ -2,7 +2,7 @@ const express = require('express');
 const {
   createApp, getApps, getApp, updateApp, deleteApp, getAppDownloadLink,
   proxyDownload, getMyApps, uploadAppImages, getCategories, uploadPlaceholderImages,
-  removeScreenshot, removeAllScreenshots
+  removeScreenshot, removeAllScreenshots, uploadTemp
 } = require('../controllers/appController');
 const { initUpload, uploadChunk, combineChunks } = require('../controllers/chunkController');
 const { auth, optionalAuth } = require('../middleware/auth');
@@ -38,6 +38,7 @@ router.post('/init-upload', auth, initUpload);
 router.post('/upload-chunk', auth, uploadChunked, uploadChunk);
 router.post('/combine-chunks', auth, combineChunks);
 router.post('/placeholder-images', auth, uploadImages, uploadPlaceholderImages);
+router.post('/upload-temp', auth, uploadImages, uploadTemp);
 
 // --- Individual App Action Fallbacks (POST versions for network safety) ---
 router.post('/:id/remove-screenshot', auth, removeScreenshot);
