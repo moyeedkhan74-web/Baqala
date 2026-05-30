@@ -27,13 +27,10 @@ const AppDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const [app, setApp] = useState(null);
-  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lightboxIndex, setLightboxIndex] = useState(-1);
   const [zoomScale, setZoomScale] = useState(1);
-  const [userRating, setUserRating] = useState(0);
-  const [userComment, setUserComment] = useState('');
-  const [submittingReview, setSubmittingReview] = useState(false);
+
   const [downloading, setDownloading] = useState(false);
   const [triggerElement, setTriggerElement] = useState(null);
 
@@ -246,27 +243,7 @@ const AppDetail = () => {
     }
   };
 
-  const submitReview = async (e) => {
-    e.preventDefault();
-    if (!userRating) return toast.error('Please assign a rating');
-    setSubmittingReview(true);
-    try {
-      await api.post(`/reviews/${id}`, { rating: userRating, comment: userComment });
-      toast.success('Review posted!');
-      setUserRating(0); setUserComment('');
-      loadData();
-    } catch (e) { toast.error(e.response?.data?.message || 'Review transmission failed'); }
-    finally { setSubmittingReview(false); }
-  };
 
-  const deleteReview = async (reviewId) => {
-    if (!window.confirm('Delete this review?')) return;
-    try {
-      await api.delete(`/reviews/${reviewId}`);
-      toast.success('Review removed');
-      loadData();
-    } catch { toast.error('Deletion failed'); }
-  };
 
   const toggleFeatured = async () => {
     try {
