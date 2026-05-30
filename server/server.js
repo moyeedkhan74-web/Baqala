@@ -78,9 +78,12 @@ app.use(generalLimiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+const userRoutes = require('./routes/users');
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/apps', appRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/assets', assetsRoutes);
 app.use('/api/downloads', downloadRoutes);
