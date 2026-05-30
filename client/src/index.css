@@ -5,9 +5,24 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Fluid font size base */
+    font-size: 14px;
+  }
+  
+  @media (min-width: 768px) {
+    :root {
+      font-size: 16px;
+    }
+  }
+
   body {
     @apply bg-background-light text-slate-800 dark:bg-background-dark dark:text-dark-100 font-sans antialiased selection:bg-accent-violet selection:text-white transition-colors duration-500 overflow-x-hidden;
+    /* Prevent layout shifting */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
   }
+  
   ::-webkit-scrollbar {
     @apply w-1.5;
   }
@@ -34,7 +49,26 @@
     @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-magenta via-accent-violet to-accent-neon font-bold;
   }
   .heading-hero {
-    @apply text-5xl md:text-7xl font-black tracking-tight text-slate-900 dark:text-white mb-6 transition-colors;
+    @apply text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 dark:text-white mb-4 md:mb-6 transition-colors leading-[1.1];
+  }
+
+  /* ── Responsive Ratios & Typography ──────────────── */
+  @media (max-width: 640px) {
+    .heading-hero {
+      @apply text-3xl font-black;
+    }
+    .glass-panel {
+      @apply rounded-2xl p-4;
+    }
+    .btn-primary, .btn-secondary {
+      @apply px-4 py-2.5 text-sm rounded-xl;
+    }
+  }
+
+  @media (min-width: 641px) and (max-width: 1024px) {
+    .heading-hero {
+      @apply text-5xl;
+    }
   }
 
   /* ── Buttons ───────────────────────────────────── */

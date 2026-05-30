@@ -55,8 +55,8 @@ const AppCard = memo(({ app, featured = false }) => {
               />
             </motion.div>
             
-            <div className="flex-1 text-center md:text-left">
-              <h2 className="text-4xl md:text-5xl font-extrabold text-dark-900 dark:text-white mb-2 tracking-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-accent-violet group-hover:to-accent-neon transition-all duration-300">
+            <div className="flex-1 text-center md:text-left min-w-0">
+              <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-dark-900 dark:text-white mb-2 tracking-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-accent-violet group-hover:to-accent-neon transition-all duration-300 truncate">
                 {app.title}
               </h2>
               {app.tagline && <p className="text-lg text-gray-700 dark:text-gray-300 font-bold mb-2">{app.tagline}</p>}

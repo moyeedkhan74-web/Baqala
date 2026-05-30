@@ -292,8 +292,8 @@ const AppDetail = () => {
               />
             </motion.button>
             
-            <div className="flex-1">
-              <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 dark:text-white mb-3 tracking-tight">{app.title}</h1>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold text-slate-900 dark:text-white mb-3 tracking-tight leading-tight">{app.title}</h1>
               {app.tagline && <p className="text-lg text-slate-600 dark:text-gray-300 font-bold mb-3">{app.tagline}</p>}
               <Link to={`/developer/${app.developer?._id || app.developer}`} className="flex items-center gap-3 mb-6 group">
                 <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20 bg-slate-100 flex items-center justify-center">
