@@ -6,22 +6,39 @@ exports.createFeedback = async (req, res, next) => {
   try {
     const { appId } = req.params;
     const { rating, comment, parentId } = req.body;
+    const userId = req.user._id;
+
+    // If it's a top-level review (not a reply), check for existing review
+    if (!parentId) {
+      const existing = await Feedback.findOne({ app: appId, user: userId, parent: null });
+      if (existing) {
+        return res.status(400).json({ message: 'You have already reviewed this app. Please edit your existing review.' });
+      }
+    }
+
     const feedback = await Feedback.create({
       app: appId,
-      user: req.user._id,
-      rating,
+      user: userId,
+      rating: parentId ? 0 : Number(rating) || 1, // Replies don't carry ratings
       comment,
       parent: parentId || null
     });
-    // Update app rating aggregate if top‑level feedback
-    if (!parentId && rating) {
-      const app = await App.findById(appId);
-      const total = (app.averageRating || 0) * (app.reviewCount || 0) + Number(rating);
-      const count = (app.reviewCount || 0) + 1;
-      app.averageRating = Math.round((total / count) * 10) / 10;
-      app.reviewCount = count;
-      await app.save();
+
+    // Update app rating aggregate ONLY if top‑level feedback
+    if (!parentId) {
+      const feedbacks = await Feedback.find({ app: appId, parent: null });
+      const totalRatings = feedbacks.length;
+      const sumRatings = feedbacks.reduce((acc, f) => acc + (f.rating || 0), 0);
+      
+      const averageRating = totalRatings > 0 ? (sumRatings / totalRatings) : 0;
+
+      await App.findByIdAndUpdate(appId, {
+        averageRating: Math.round(averageRating * 10) / 10,
+        reviewCount: totalRatings
+      });
     }
+
+    await feedback.populate('user', 'name avatar');
     res.status(201).json({ feedback });
   } catch (err) {
     next(err);
