@@ -18,9 +18,9 @@ const Footer = ({ className = '' }) => {
           <div>
             <h3 className="text-white font-semibold tracking-wide uppercase text-xs mb-4">Platform</h3>
             <ul className="space-y-3 text-sm text-gray-400">
+              <li><Link to="/about" className="hover:text-accent-neon transition-colors">About Us</Link></li>
               <li><Link to="/" className="hover:text-accent-neon transition-colors">Explore Apps</Link></li>
               <li><a href="#" className="hover:text-accent-neon transition-colors">Top Charts</a></li>
-              <li><a href="#" className="hover:text-accent-neon transition-colors">New Releases</a></li>
             </ul>
           </div>
 
