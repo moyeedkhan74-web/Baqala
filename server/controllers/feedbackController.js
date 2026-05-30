@@ -1,35 +1,78 @@
-const Feedback = require('../models/Feedback');
+const supabase = require('../config/supabase');
 const App = require('../models/App');
+const User = require('../models/User');
 
-// Create feedback or reply
+// Helper to manual populate user data from MongoDB
+const populateUsers = async (feedbacks) => {
+  if (!feedbacks || feedbacks.length === 0) return [];
+  
+  const userIds = [...new Set(feedbacks.map(f => f.user_id))];
+  const users = await User.find({ _id: { $in: userIds } }).select('name avatar');
+  
+  const userMap = {};
+  users.forEach(u => {
+    userMap[u._id.toString()] = u;
+  });
+
+  return feedbacks.map(f => ({
+    ...f,
+    _id: f.id,
+    app: f.app_id,
+    user: userMap[f.user_id] || { name: 'Unknown User' },
+    parent: f.parent_id,
+    likedBy: f.liked_by || [],
+    dislikedBy: f.disliked_by || [],
+    createdAt: f.created_at
+  }));
+};
+
+// Create feedback or reply (Supabase version)
 exports.createFeedback = async (req, res, next) => {
   try {
     const { appId } = req.params;
     const { rating, comment, parentId } = req.body;
-    const userId = req.user._id;
+    const userId = req.user._id.toString();
 
-    // If it's a top-level review (not a reply), check for existing review
+    // 1. If top-level, check for existing review in Supabase
     if (!parentId) {
-      const existing = await Feedback.findOne({ app: appId, user: userId, parent: null });
+      const { data: existing } = await supabase
+        .from('feedbacks')
+        .select('id')
+        .eq('app_id', appId)
+        .eq('user_id', userId)
+        .is('parent_id', null)
+        .single();
+
       if (existing) {
-        return res.status(400).json({ message: 'You have already reviewed this app. Please edit your existing review.' });
+        return res.status(400).json({ message: 'You have already reviewed this app.' });
       }
     }
 
-    const feedback = await Feedback.create({
-      app: appId,
-      user: userId,
-      rating: parentId ? 0 : Number(rating) || 1, // Replies don't carry ratings
-      comment,
-      parent: parentId || null
-    });
+    // 2. Insert into Supabase
+    const { data: feedback, error } = await supabase
+      .from('feedbacks')
+      .insert([{
+        app_id: appId,
+        user_id: userId,
+        rating: parentId ? 0 : Number(rating) || 1,
+        comment,
+        parent_id: parentId || null
+      }])
+      .select()
+      .single();
 
-    // Update app rating aggregate ONLY if top‑level feedback
+    if (error) throw error;
+
+    // 3. Update MongoDB App rating aggregate ONLY if top-level feedback
     if (!parentId) {
-      const feedbacks = await Feedback.find({ app: appId, parent: null });
-      const totalRatings = feedbacks.length;
-      const sumRatings = feedbacks.reduce((acc, f) => acc + (f.rating || 0), 0);
-      
+      const { data: allTopLevel } = await supabase
+        .from('feedbacks')
+        .select('rating')
+        .eq('app_id', appId)
+        .is('parent_id', null);
+
+      const totalRatings = allTopLevel.length;
+      const sumRatings = allTopLevel.reduce((acc, f) => acc + (f.rating || 0), 0);
       const averageRating = totalRatings > 0 ? (sumRatings / totalRatings) : 0;
 
       await App.findByIdAndUpdate(appId, {
@@ -38,66 +81,83 @@ exports.createFeedback = async (req, res, next) => {
       });
     }
 
-    await feedback.populate('user', 'name avatar');
-    res.status(201).json({ feedback });
+    // 4. Return populated result
+    const populated = await populateUsers([feedback]);
+    res.status(201).json({ feedback: populated[0] });
   } catch (err) {
     next(err);
   }
 };
 
-// Get feedback for an app (including replies)
+// Get feedback for an app (Supabase version)
 exports.getFeedback = async (req, res, next) => {
   try {
     const { appId } = req.params;
-    const feedback = await Feedback.find({ app: appId })
-      .populate('user', 'name avatar')
-      .sort({ createdAt: -1 });
-    res.json({ feedback });
+    const { data, error } = await supabase
+      .from('feedbacks')
+      .select('*')
+      .eq('app_id', appId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    const populated = await populateUsers(data);
+    res.json({ feedback: populated });
   } catch (err) {
     next(err);
   }
 };
 
-// Like / dislike a feedback
+// Like / dislike a feedback (Supabase version)
 exports.reactFeedback = async (req, res, next) => {
   try {
     const { feedbackId } = req.params;
-    const { type } = req.body; // "like" or "dislike"
-    const userId = req.user._id;
+    const { type } = req.body;
+    const userId = req.user._id.toString();
 
-    const feedback = await Feedback.findById(feedbackId);
-    if (!feedback) return res.status(404).json({ message: 'Feedback not found.' });
+    const { data: feedback, error: fetchErr } = await supabase
+      .from('feedbacks')
+      .select('*')
+      .eq('id', feedbackId)
+      .single();
 
-    const hasLiked = feedback.likedBy.includes(userId);
-    const hasDisliked = feedback.dislikedBy.includes(userId);
+    if (fetchErr || !feedback) return res.status(404).json({ message: 'Feedback not found.' });
+
+    let likedBy = feedback.liked_by || [];
+    let dislikedBy = feedback.disliked_by || [];
 
     if (type === 'like') {
-      if (hasLiked) {
-        // Toggle off
-        feedback.likedBy = feedback.likedBy.filter(id => id.toString() !== userId.toString());
+      if (likedBy.includes(userId)) {
+        likedBy = likedBy.filter(id => id !== userId);
       } else {
-        // Add like, remove dislike if exists
-        feedback.likedBy.push(userId);
-        feedback.dislikedBy = feedback.dislikedBy.filter(id => id.toString() !== userId.toString());
+        likedBy.push(userId);
+        dislikedBy = dislikedBy.filter(id => id !== userId);
       }
     } else if (type === 'dislike') {
-      if (hasDisliked) {
-        // Toggle off
-        feedback.dislikedBy = feedback.dislikedBy.filter(id => id.toString() !== userId.toString());
+      if (dislikedBy.includes(userId)) {
+        dislikedBy = dislikedBy.filter(id => id !== userId);
       } else {
-        // Add dislike, remove like if exists
-        feedback.dislikedBy = feedback.dislikedBy.filter(id => id.toString() !== userId.toString()); // Safety
-        feedback.likedBy = feedback.likedBy.filter(id => id.toString() !== userId.toString());
-        feedback.dislikedBy.push(userId);
+        dislikedBy.push(userId);
+        likedBy = likedBy.filter(id => id !== userId);
       }
     }
 
-    // Sync counts
-    feedback.likes = feedback.likedBy.length;
-    feedback.dislikes = feedback.dislikedBy.length;
+    const { data: updated, error: updateErr } = await supabase
+      .from('feedbacks')
+      .update({
+        liked_by: likedBy,
+        disliked_by: dislikedBy,
+        likes: likedBy.length,
+        dislikes: dislikedBy.length
+      })
+      .eq('id', feedbackId)
+      .select()
+      .single();
 
-    await feedback.save();
-    res.json({ feedback });
+    if (updateErr) throw updateErr;
+
+    const populated = await populateUsers([updated]);
+    res.json({ feedback: populated[0] });
   } catch (err) {
     next(err);
   }
