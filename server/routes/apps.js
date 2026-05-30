@@ -2,7 +2,7 @@ const express = require('express');
 const {
   createApp, getApps, getApp, updateApp, deleteApp, getAppDownloadLink,
   proxyDownload, getMyApps, uploadAppImages, getCategories, uploadPlaceholderImages,
-  removeScreenshot, removeAllScreenshots, uploadTemp
+  removeScreenshot, removeAllScreenshots, uploadTemp, searchApps
 } = require('../controllers/appController');
 const { initUpload, uploadChunk, combineChunks } = require('../controllers/chunkController');
 const { auth, optionalAuth } = require('../middleware/auth');
