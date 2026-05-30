@@ -166,11 +166,11 @@ const About = () => {
             <h2 className="text-sm font-black text-accent-violet uppercase tracking-[0.6em] mb-4">Visionary Architect & Lead Producer</h2>
             <h3 className="text-4xl md:text-7xl font-black text-slate-900 dark:text-white mb-8 tracking-tighter">Khan_Sahab</h3>
             
-            <p className="text-xl text-slate-600 dark:text-gray-400 max-w-4xl mx-auto leading-relaxed mb-8 font-medium">
-              The mastermind behind the Baqala ecosystem. As a <span className="text-slate-900 dark:text-white font-bold">Technological Vanguard</span> and <span className="text-slate-900 dark:text-white font-bold">Artisan of Code</span>, Khan_Sahab has meticulously engineered every layer of this platform—from its high-performance backend infrastructure to the stunning, fluid visual interface—with an unwavering commitment to digital sovereignty.
+            <p className="text-xl text-slate-600 dark:text-gray-400 max-w-4xl mx-auto leading-relaxed mb-6 font-medium">
+              The mastermind behind every dimension of the Baqala ecosystem. As a <span className="text-slate-900 dark:text-white font-bold">Technological Vanguard</span> and <span className="text-slate-900 dark:text-white font-bold">Artisan of Code</span>, Khan_Sahab has meticulously engineered every layer—from the high-performance backend infrastructure to the fluid, premium visual interface—with a single focused goal: to dismantle digital barriers and empower the next generation of creators through digital sovereignty.
             </p>
             <p className="text-lg text-slate-500 dark:text-gray-500 max-w-3xl mx-auto leading-relaxed mb-12 font-regular italic">
-              "Baqala is the realization of a dream where technology serves the creator first, ensuring that innovation remains free, accessible, and boundlessly creative for developers across the globe."
+              "Baqala is the realization of a dream where technology serves the innovator first, ensuring discovery remains free, accessible, and boundlessly creative for developers across the globe."
             </p>
             
             <div className="flex flex-wrap justify-center gap-6">
