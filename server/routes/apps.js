@@ -5,7 +5,7 @@ const {
   removeScreenshot, removeAllScreenshots
 } = require('../controllers/appController');
 const { initUpload, uploadChunk, combineChunks } = require('../controllers/chunkController');
-const { auth } = require('../middleware/auth');
+const { auth, optionalAuth } = require('../middleware/auth');
 const { uploadApp, uploadChunked, uploadImages, uploadAll } = require('../middleware/upload');
 const { body, validationResult } = require('express-validator');
 const { downloadLimiter, generalLimiter } = require('../middleware/rateLimiter');
@@ -45,7 +45,7 @@ router.post('/:id/images', auth, uploadImages, uploadAppImages);
 // --- Resource Routes (Individual) ---
 router.get('/:id', generalLimiter, getApp);
 router.get('/:id/download', downloadLimiter, getAppDownloadLink);
-router.get('/:id/proxy-download', downloadLimiter, proxyDownload);
+router.get('/:id/proxy-download', downloadLimiter, optionalAuth, proxyDownload);
 router.put('/:id', auth, updateApp);
 router.delete('/:id', auth, deleteApp);
 router.delete('/:id/screenshot', auth, removeScreenshot);
