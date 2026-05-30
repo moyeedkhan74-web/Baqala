@@ -27,6 +27,7 @@ const validateApp = [
 const router = express.Router();
 
 // --- Static/Collection Routes ---
+router.get('/search', generalLimiter, searchApps);
 router.get('/categories', getCategories);
 router.get('/my', auth, getMyApps);
 router.get('/', generalLimiter, getApps);

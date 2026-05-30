@@ -24,6 +24,7 @@ import TermsOfService from './pages/TermsOfService';
 import CookiePolicy from './pages/CookiePolicy';
 import RevenueShare from './pages/RevenueShare';
 import Contact from './pages/Contact';
+import SearchResults from './pages/SearchResults';
 
 function App() {
   const location = useLocation();
@@ -101,6 +102,7 @@ function App() {
                 <Route path="/cookie-policy" element={<AnimatedLayout><CookiePolicy /></AnimatedLayout>} />
                 <Route path="/revenue-share" element={<AnimatedLayout><RevenueShare /></AnimatedLayout>} />
                 <Route path="/contact" element={<AnimatedLayout><Contact /></AnimatedLayout>} />
+                <Route path="/search" element={<AnimatedLayout><SearchResults /></AnimatedLayout>} />
                 
                 <Route path="/developer" element={
                   <ProtectedRoute>
