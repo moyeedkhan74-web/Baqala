@@ -49,6 +49,11 @@ const userSchema = new mongoose.Schema({
     maxlength: [500, 'Bio cannot exceed 500 characters'],
     default: ''
   },
+  tagline: {
+    type: String,
+    maxlength: [100, 'Tagline cannot exceed 100 characters'],
+    default: ''
+  },
   isBanned: {
     type: Boolean,
     default: false

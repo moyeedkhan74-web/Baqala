@@ -11,7 +11,8 @@ const Settings = () => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
-    bio: user?.bio || ''
+    bio: user?.bio || '',
+    tagline: user?.tagline || ''
   });
   const [avatarPreview, setAvatarPreview] = useState(user?.avatar || '');
   const [avatarFile, setAvatarFile] = useState(null);
@@ -159,14 +160,32 @@ const Settings = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Professional Bio</label>
-                <textarea 
+                <label className="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2">
+                  Specialization / Tagline
+                </label>
+                <input
+                  type="text"
+                  name="tagline"
+                  value={formData.tagline}
+                  onChange={handleInputChange}
+                  placeholder="e.g. Android Enthusiast • Indie Game Dev"
+                  className="input-field"
+                  maxLength={100}
+                />
+                <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-tight">Small description for app cards</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2">
+                  Full Bio
+                </label>
+                <textarea
                   name="bio"
                   value={formData.bio}
                   onChange={handleInputChange}
-                  rows="4"
-                  className="input-field py-3 text-base min-h-[120px]"
-                  placeholder="Tell the community about your work, skills, or what drives you..."
+                  placeholder="Tell your story..."
+                  className="input-field min-h-[120px] py-3"
+                  maxLength={500}
                 />
                 <p className="mt-2 text-[10px] text-slate-500 italic">Visible on your public developer profile page.</p>
               </div>
