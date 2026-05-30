@@ -417,7 +417,9 @@ const AppDetail = () => {
                   to={`/developer/${app.developer?._id || app.developer}`}
                   className="text-xl font-bold text-slate-900 dark:text-white hover:text-accent-violet dark:hover:text-accent-neon transition-colors"
                 >
-                  {app.developer?.name || app.developerName || 'Unknown Developer'}
+                  {app.developer?.specialization && (
+                    <p className="text-sm text-slate-600 dark:text-gray-400 mt-1">{app.developer.specialization}</p>
+                  )}
                 </Link>
                 {app.developer?.tagline && (
                   <span className="text-[11px] font-bold text-accent-violet dark:text-accent-neon uppercase tracking-wider mt-1">
