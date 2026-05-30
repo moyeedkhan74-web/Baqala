@@ -125,17 +125,21 @@ exports.extractB2Key = (url) => {
 
 // --- ACTIONS ---
 
-exports.uploadToB2 = async (filePath, fileBuffer, contentType, isPrivate = false) => {
+exports.uploadToB2 = async (reqOrFilePath, fileBuffer, contentType, isPrivate = false) => {
   try {
     const s3 = getClient(isPrivate);
-    const bucket = getBucket(isPrivate);
-    const endpoint = getEndpoint(isPrivate);
+    const scrubbedPath = sanitizePath(typeof reqOrFilePath === 'string' ? reqOrFilePath : '');
     
-    // Scrub the path globally before any operation
-    const scrubbedPath = sanitizePath(filePath);
+    // 1. Determine Bucket: If it's in the avatars folder, use the dedicated bucket
+    let bucket = getBucket(isPrivate);
+    if (scrubbedPath.startsWith('avatars/')) {
+        bucket = 'baqala.avatar';
+    }
+    
+    const endpoint = getEndpoint(isPrivate);
 
     if (!bucket || !endpoint) {
-      throw new Error(`B2 ${isPrivate ? 'Private' : 'Public'} configuration missing`);
+      throw new Error(`B2 configuration missing for target: ${scrubbedPath}`);
     }
 
     const command = new PutObjectCommand({
@@ -143,8 +147,8 @@ exports.uploadToB2 = async (filePath, fileBuffer, contentType, isPrivate = false
       Key: scrubbedPath,
       Body: fileBuffer,
       ContentType: contentType,
-      ContentDisposition: (isPrivate || scrubbedPath.startsWith('apps/')) ? 'attachment' : 'inline',
-      CacheControl: (isPrivate || scrubbedPath.startsWith('apps/')) ? 'no-cache' : 'public, max-age=31536000'
+      ContentDisposition: (isPrivate || scrubbedPath.startsWith('apps/') || scrubbedPath.startsWith('avatars/')) ? 'attachment' : 'inline',
+      CacheControl: (isPrivate || scrubbedPath.startsWith('apps/') || scrubbedPath.startsWith('avatars/')) ? 'no-cache' : 'public, max-age=31536000'
     });
 
     await s3.send(command);
@@ -178,7 +182,11 @@ exports.uploadToB2 = async (filePath, fileBuffer, contentType, isPrivate = false
 exports.deleteFromB2 = async (filePath, isPrivate = false) => {
   try {
     const s3 = getClient(isPrivate);
-    const bucket = getBucket(isPrivate);
+    
+    let bucket = getBucket(isPrivate);
+    if (filePath && filePath.startsWith('avatars/')) {
+        bucket = 'baqala.avatar';
+    }
 
     const command = new DeleteObjectCommand({
       Bucket: bucket,

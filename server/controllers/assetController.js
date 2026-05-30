@@ -48,8 +48,17 @@ exports.proxyAsset = async (req, res) => {
     // Logic Swap Check: Binaries (apps) are in the PUBLIC bucket (Old Account)
     // Images (icons, screenshots) are in the PRIVATE bucket (New Account)
     const isBinary = folder === 'apps';
+    const isAvatar = folder === 'avatars';
     const s3 = isBinary ? publicS3 : privateS3;
-    const bucket = isBinary ? process.env.B2_BUCKET_NAME : process.env.B2_PRIVATE_BUCKET;
+
+    let bucket;
+    if (isBinary) {
+        bucket = process.env.B2_BUCKET_NAME;
+    } else if (isAvatar) {
+        bucket = 'baqala.avatar';
+    } else {
+        bucket = process.env.B2_PRIVATE_BUCKET;
+    }
 
     // Use extractB2Key logic to ensure we are looking for the scrubbed version
     const scrubbedKey = extractB2Key(`/api/assets/${key}`);

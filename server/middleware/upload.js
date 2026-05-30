@@ -17,7 +17,7 @@ const appFileFilter = (req, file, cb) => {
     } else {
       cb(new Error(`Invalid file type. Allowed: ${allowedAppExtensions.join(', ')}`), false);
     }
-  } else if (file.fieldname === 'icon' || file.fieldname === 'screenshots') {
+  } else if (file.fieldname === 'icon' || file.fieldname === 'screenshots' || file.fieldname === 'file') {
     if (allowedImageExtensions.includes(ext)) {
       cb(null, true);
     } else {
@@ -51,6 +51,7 @@ const uploadImages = multer({
     fileSize: 10 * 1024 * 1024 // 10MB for images
   }
 }).fields([
+  { name: 'file', maxCount: 1 },
   { name: 'icon', maxCount: 1 },
   { name: 'screenshots', maxCount: 5 }
 ]);

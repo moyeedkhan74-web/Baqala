@@ -342,10 +342,17 @@ exports.removeAllScreenshots = async (req, res, next) => {
   }
 };
 
-exports.uploadPlaceholderImages = async (req, res, next) => {
+exports.uploadTemp = async (req, res, next) => {
   try {
-    const result = { icon: '', screenshots: [] };
+    const { folder = 'icons' } = req.body;
+    const result = { url: '', icon: '', screenshots: [] };
 
+    if (req.files && req.files.file && req.files.file[0]) {
+      const url = await uploadAsset(req.files.file[0], folder);
+      result.url = url;
+    }
+    
+    // Compatibility with old placeholder system
     if (req.files && req.files.icon && req.files.icon[0]) {
       result.icon = await uploadAsset(req.files.icon[0], 'icons');
     }
@@ -362,6 +369,8 @@ exports.uploadPlaceholderImages = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.uploadPlaceholderImages = exports.uploadTemp;
 
 exports.getApps = async (req, res) => {
   try {
