@@ -23,6 +23,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import CookiePolicy from './pages/CookiePolicy';
 import RevenueShare from './pages/RevenueShare';
+import Contact from './pages/Contact';
 
 function App() {
   const location = useLocation();
@@ -99,6 +100,7 @@ function App() {
                 <Route path="/terms-of-service" element={<AnimatedLayout><TermsOfService /></AnimatedLayout>} />
                 <Route path="/cookie-policy" element={<AnimatedLayout><CookiePolicy /></AnimatedLayout>} />
                 <Route path="/revenue-share" element={<AnimatedLayout><RevenueShare /></AnimatedLayout>} />
+                <Route path="/contact" element={<AnimatedLayout><Contact /></AnimatedLayout>} />
                 
                 <Route path="/developer" element={
                   <ProtectedRoute>
