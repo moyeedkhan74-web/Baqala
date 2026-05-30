@@ -18,6 +18,9 @@ import DeveloperDashboard from './pages/DeveloperDashboard';
 import UploadApp from './pages/UploadApp';
 import EditApp from './pages/EditApp';
 import AdminPanel from './pages/AdminPanel';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
+import CookiePolicy from './pages/CookiePolicy';
 
 function App() {
   const location = useLocation();
@@ -89,6 +92,9 @@ function App() {
                 <Route path="/login" element={<AnimatedLayout><Login /></AnimatedLayout>} />
                 <Route path="/register" element={<AnimatedLayout><Register /></AnimatedLayout>} />
                 <Route path="/app/:id" element={<AnimatedLayout><AppDetail /></AnimatedLayout>} />
+                <Route path="/privacy-policy" element={<AnimatedLayout><PrivacyPolicy /></AnimatedLayout>} />
+                <Route path="/terms-of-service" element={<AnimatedLayout><TermsOfService /></AnimatedLayout>} />
+                <Route path="/cookie-policy" element={<AnimatedLayout><CookiePolicy /></AnimatedLayout>} />
                 
                 <Route path="/developer" element={
                   <ProtectedRoute>
