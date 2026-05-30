@@ -20,13 +20,14 @@ const Navbar = () => {
 
   useEffect(() => {
     const fetchResults = async () => {
-      if (searchQuery.trim().length < 2) {
+      const trimmed = searchQuery.trim();
+      if (trimmed.length < 1) {
         setSearchResults([]);
         return;
       }
       setSearching(true);
       try {
-        const { data } = await api.get(`/apps/search?q=${encodeURIComponent(searchQuery)}`);
+        const { data } = await api.get(`/apps/search?q=${encodeURIComponent(trimmed)}`);
         setSearchResults(data.apps || []);
       } catch (err) {
         setSearchResults([]);
@@ -35,7 +36,7 @@ const Navbar = () => {
       }
     };
 
-    const timer = setTimeout(fetchResults, 300);
+    const timer = setTimeout(fetchResults, 200);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
@@ -92,12 +93,21 @@ const Navbar = () => {
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 text-sm bg-dark-100/50 dark:bg-dark-900/50 border border-dark-200/50 dark:border-white/10 rounded-full text-dark-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-violet/50 focus:border-accent-violet/50 transition-all shadow-sm"
+                className="w-full pl-10 pr-10 py-2 text-sm bg-dark-100/50 dark:bg-dark-900/50 border border-dark-200/50 dark:border-white/10 rounded-full text-dark-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-violet/50 focus:border-accent-violet/50 transition-all shadow-sm"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-accent-violet transition-colors"
+                >
+                  <HiX className="h-4 w-4" />
+                </button>
+              )}
             </form>
 
             <AnimatePresence>
-              {searchFocused && searchQuery.trim().length >= 2 && (
+              {searchFocused && searchQuery.trim().length >= 1 && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
