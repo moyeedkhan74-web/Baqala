@@ -93,7 +93,7 @@ const Settings = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Form Side */}
           <div className="lg:col-span-2">
             <form onSubmit={handleProfileUpdate} className="glass-panel p-8 md:p-12 rounded-[2rem] relative overflow-hidden">
@@ -205,21 +205,19 @@ const Settings = () => {
                </div>
             </div>
           </div>
-            </div>
-          </form>
+        </div>
 
-          {/* Security Mockup (Not functional without backend password reset logic yet) */}
-          <div className="glass-panel p-8 opacity-60">
-             <div className="flex items-center gap-2 mb-6">
-                <HiLockClosed className="text-rose-500 w-5 h-5" />
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Security & Password</h2>
-             </div>
-             <p className="text-sm text-slate-500 mb-4 flex items-center gap-2">
-                <HiExclamationCircle className="text-amber-500" />
-                Passwords managed via {user?.googleId ? 'Google/Firebase Auth' : 'Baqala Auth System'}.
-             </p>
-             <button disabled className="btn-secondary py-2 px-6 text-sm">Reset Password</button>
-          </div>
+        {/* Security Mockup */}
+        <div className="mt-8 glass-panel p-8 opacity-60 rounded-3xl">
+           <div className="flex items-center gap-2 mb-6">
+              <HiLockClosed className="text-rose-500 w-5 h-5" />
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Security & Password</h2>
+           </div>
+           <p className="text-sm text-slate-500 mb-4 flex items-center gap-2">
+              <HiExclamationCircle className="text-amber-500" />
+              Passwords managed via {user?.googleId ? 'Google/Firebase Auth' : 'Baqala Auth System'}.
+           </p>
+           <button disabled className="btn-secondary py-2 px-6 text-sm">Reset Password</button>
         </div>
       </div>
     </div>
