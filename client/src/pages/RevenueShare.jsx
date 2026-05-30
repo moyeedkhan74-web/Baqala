@@ -79,15 +79,15 @@ const RevenueShare = () => {
         
         <div className="relative z-10 max-w-3xl">
           <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-6">
-            A <span className="text-accent-emerald">90/10</span> Revenue Split
+            An <span className="text-accent-emerald">88 / 12</span> Revenue Split
           </h2>
           <p className="text-lg text-slate-600 dark:text-gray-300 mb-8 leading-relaxed">
-            While we are currently fine-tuning our payment processing system, our commitment is clear: **Developers keep 90% of every sale.** 
+            While we are currently fine-tuning our payment processing system, our commitment is clear: **Developers keep 88% of every sale.** 
           </p>
           <div className="space-y-4">
             <div className="flex items-start gap-3">
               <HiShieldCheck className="w-6 h-6 text-accent-neon shrink-0 mt-1" />
-              <p className="text-slate-600 dark:text-gray-400"><strong>No Hidden Listing Fees:</strong> You only pay when you sell. Posting your app is always free.</p>
+              <p className="text-slate-600 dark:text-gray-400"><strong>Transparent Support:</strong> The remaining 12% is reinvested into the platform to cover global hosting, security, and transaction fees.</p>
             </div>
             <div className="flex items-start gap-3">
               <HiShieldCheck className="w-6 h-6 text-accent-neon shrink-0 mt-1" />
