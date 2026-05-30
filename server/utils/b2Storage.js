@@ -137,6 +137,8 @@ exports.uploadToB2 = async (reqOrFilePath, fileBuffer, contentType, isPrivate = 
     }
     
     const endpoint = getEndpoint(isPrivate);
+    
+    console.log(`[B2_ROUTER] Routing ${scrubbedPath} to Bucket: ${bucket} at Endpoint: ${endpoint}`);
 
     if (!bucket || !endpoint) {
       throw new Error(`B2 configuration missing for target: ${scrubbedPath}`);

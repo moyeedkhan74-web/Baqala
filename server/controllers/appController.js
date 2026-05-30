@@ -10,9 +10,12 @@ const uploadAsset = async (file, folder = 'icons') => {
 
     // Upload original buffer and mimetype (No compression)
     const result = await uploadToB2(filePath, file.buffer, file.mimetype, false);
+    if (!result.success) {
+      console.error(`[B2_UPLOAD_FAILURE] Folder: ${folder}, File: ${fileName}, Error: ${result.error}`);
+    }
     return result.success ? result.url : null;
   } catch (err) {
-    console.error(`Upload error [${folder}]:`, err);
+    console.error(`[UPLOAD_EXCEPTION] [${folder}]:`, err.message);
     return null;
   }
 };
@@ -366,6 +369,7 @@ exports.uploadTemp = async (req, res, next) => {
 
     res.json(result);
   } catch (error) {
+    console.error('[UPLOAD_TEMP_ERROR]:', error);
     next(error);
   }
 };
