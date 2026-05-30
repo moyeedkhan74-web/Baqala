@@ -33,13 +33,17 @@ exports.downloadApp = async (req, res) => {
 
     // If it's in a B2 bucket, we must sign it
     if (app.fileUrl.includes('.backblazeb2.com/') || app.fileUrl.includes('/api/assets/')) {
-      const result = await getDownloadUrl(app.fileUrl);
+      const result = await getDownloadUrl(app.fileUrl, app.fileName);
       if (result.success) {
         downloadUrl = result.url;
       }
     }
 
-    res.json({ downloadUrl, message: 'Download initiated' });
+    res.json({ 
+      url: downloadUrl, 
+      filename: app.fileName || `${app.title}_download`,
+      message: 'Download initiated' 
+    });
   } catch (error) {
     console.error('Download error:', error);
     res.status(500).json({ message: 'Server error during download.' });

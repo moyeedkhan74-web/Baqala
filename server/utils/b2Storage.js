@@ -195,7 +195,7 @@ exports.deleteFromB2 = async (filePath, isPrivate = false) => {
 
 // --- Secure Download Support (For Private Bucket) ---
 
-exports.getDownloadUrl = async (filePathOrUrl) => {
+exports.getDownloadUrl = async (filePathOrUrl, fileName) => {
   try {
     // If a full URL is passed, extract the key first
     const key = filePathOrUrl.includes('/') && (filePathOrUrl.includes('http') || filePathOrUrl.includes('.com'))
@@ -208,11 +208,15 @@ exports.getDownloadUrl = async (filePathOrUrl) => {
     const s3 = publicS3;
     const bucket = process.env.B2_BUCKET_NAME;
 
-    console.log(`[B2_SIGN] Signing Key: "${key}" in Bucket: "${bucket}"`);
+    console.log(`[B2_SIGN] Signing Key: "${key}" in Bucket: "${bucket}" for file: "${fileName || 'auto'}"`);
 
     const command = new GetObjectCommand({
       Bucket: bucket,
       Key: key,
+      // Force download with the specified filename if provided
+      ResponseContentDisposition: fileName 
+        ? `attachment; filename="${fileName}"` 
+        : 'attachment'
     });
 
     const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });

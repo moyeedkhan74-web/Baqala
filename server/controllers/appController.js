@@ -46,11 +46,14 @@ exports.getAppDownloadLink = async (req, res, next) => {
       console.log(`[DOWNLOAD] Serving legacy URL: ${app.fileUrl}`);
       app.totalDownloads += 1;
       await app.save();
-      return res.json({ downloadUrl: app.fileUrl });
+      return res.json({ 
+        url: app.fileUrl,
+        filename: app.fileName || `${app.title}_download`
+      });
     }
 
     console.log(`[DOWNLOAD] Generating link for URL: ${app.fileUrl}`);
-    const result = await getDownloadUrl(app.fileUrl);
+    const result = await getDownloadUrl(app.fileUrl, app.fileName);
     
     if (!result.success) {
       return res.status(500).json({ message: 'Failed to generate download link.' });
@@ -59,7 +62,10 @@ exports.getAppDownloadLink = async (req, res, next) => {
     app.totalDownloads += 1;
     await app.save();
 
-    res.json({ downloadUrl: result.url });
+    res.json({ 
+      url: result.url,
+      filename: app.fileName || `${app.title}_download`
+    });
   } catch (error) {
     next(error);
   }
