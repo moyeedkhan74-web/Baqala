@@ -169,11 +169,13 @@ const AppDetail = () => {
     if (!replyComment.trim()) return;
     try {
       await api.post(`/feedback/${app._id}`, { rating: 0, comment: replyComment, parentId });
+      toast.success('Reply posted');
       setReplyingTo(null);
       setReplyComment('');
       loadFeedback();
     } catch (err) {
       console.error('Reply error', err);
+      toast.error('Failed to post reply');
     }
   };
 
@@ -550,7 +552,7 @@ const AppDetail = () => {
                                 className="flex-1 bg-slate-100 dark:bg-white/5 border-none outline-none rounded-xl px-4 py-2 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-accent-violet/50 transition-all"
                                 required
                               />
-                              <button type="submit" className="btn-primary py-2 px-6 text-sm">Reply</button>
+                              <button type="submit" className="btn-primary py-2 px-6 text-sm">Post Reply</button>
                             </form>
                           )}
                         </div>
