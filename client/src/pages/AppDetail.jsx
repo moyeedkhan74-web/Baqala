@@ -120,32 +120,31 @@ const AppDetail = () => {
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      const res = await api.post(`/downloads/${id}`);
-      const downloadUrl = res.data.downloadUrl;
-      try {
-        const fileRes = await fetch(downloadUrl);
-        const blob = await fileRes.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', app.fileName || `${app.title}-download`);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.URL.revokeObjectURL(url);
-      } catch {
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-      }
-      toast.success('Downloading...');
-      setApp(prev => ({ ...prev, totalDownloads: prev.totalDownloads + 1 }));
-    } catch { toast.error('Download sequence failed'); }
-    finally { setDownloading(false); }
+      // Get the signed URL from our backend — never exposes URL to the address bar
+      const res = await api.get(`/apps/${id}/download`);
+      const { url, filename } = res.data;
+
+      if (!url) throw new Error('No download URL received');
+
+      // Trigger browser download silently via hidden anchor with `download` attribute.
+      // The `download` attribute forces a Save dialog even for cross-origin B2 URLs
+      // because the backend sets ResponseContentDisposition: attachment in the signed URL.
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename || app.fileName || `${app.title}-download`);
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success('Your download has started!');
+      setApp(prev => ({ ...prev, totalDownloads: (prev.totalDownloads || 0) + 1 }));
+    } catch (err) {
+      console.error('Download failed:', err);
+      toast.error('Download failed. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const submitReview = async (e) => {
@@ -240,10 +239,20 @@ const AppDetail = () => {
               <div className="flex flex-wrap gap-4">
                 <button 
                   onClick={handleDownload} disabled={downloading}
-                  className="btn-primary w-full md:w-auto text-lg px-8 py-4 animate-pulse-slow"
-                  aria-label={downloading ? 'Preparing download...' : `Install ${app.title} now`}
+                  className="btn-primary w-full md:w-auto text-lg px-8 py-4 animate-pulse-slow disabled:opacity-70 disabled:cursor-not-allowed"
+                  aria-label={downloading ? 'Preparing download, please wait...' : `Install ${app.title} now`}
                 >
-                  {downloading ? 'Initializing...' : <><HiDownload className="inline mr-2 w-6 h-6" aria-hidden="true" /> Install Now</>}
+                  {downloading ? (
+                    <span className="flex items-center gap-2 justify-center">
+                      <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Downloading...
+                    </span>
+                  ) : (
+                    <><HiDownload className="inline mr-2 w-6 h-6" aria-hidden="true" /> Install Now</>
+                  )}
                 </button>
 
                 {user?.role === 'admin' && (
