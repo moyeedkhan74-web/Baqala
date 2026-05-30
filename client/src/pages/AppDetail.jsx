@@ -237,7 +237,9 @@ const AppDetail = () => {
             <div className="flex-1">
               <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 dark:text-white mb-3 tracking-tight">{app.title}</h1>
               {app.tagline && <p className="text-lg text-slate-600 dark:text-gray-300 font-bold mb-3">{app.tagline}</p>}
-              <p className="text-xl text-accent-violet dark:text-accent-neon font-medium mb-6">{app.developerName || app.developer?.name}</p>
+              <Link to={`/developer/${app.developer?._id || app.developer}`} className="inline-block text-xl text-accent-violet dark:text-accent-neon font-medium mb-6 hover:underline transition-all">
+                {app.developerName || app.developer?.name}
+              </Link>
               
               <div className="flex flex-wrap gap-6 mb-8 text-sm font-semibold">
                 <div className="flex items-center gap-2 text-slate-600 dark:text-gray-300" aria-label={`Rating: ${app.averageRating?.toFixed(1) || '0.0'} stars from ${app.reviewCount || 0} reviews`}>

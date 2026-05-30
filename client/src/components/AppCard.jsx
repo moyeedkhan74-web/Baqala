@@ -59,7 +59,9 @@ const AppCard = memo(({ app, featured = false }) => {
                 {app.title}
               </h2>
               {app.tagline && <p className="text-lg text-gray-700 dark:text-gray-300 font-bold mb-2">{app.tagline}</p>}
-              <p className="text-lg text-accent-violet dark:text-accent-neon font-bold mb-4">{app.developerName || app.developer?.name || 'Unknown'}</p>
+              <Link to={`/developer/${app.developer?._id || app.developer}`} className="inline-block text-lg text-accent-violet dark:text-accent-neon font-bold mb-4 hover:underline transition-all">
+                {app.developerName || app.developer?.name || 'Unknown'}
+              </Link>
               <p className="text-dark-600 dark:text-gray-400 max-w-xl mb-6 line-clamp-2 md:line-clamp-3 leading-relaxed font-medium">
                 {app.description}
               </p>
@@ -106,7 +108,13 @@ const AppCard = memo(({ app, featured = false }) => {
                 {app.title}
               </h3>
               {app.tagline && <p className="hidden sm:block text-xs text-dark-600 dark:text-gray-400 font-semibold truncate">{app.tagline}</p>}
-              <p className="text-[11px] sm:text-sm text-dark-500 dark:text-gray-400 font-semibold truncate mt-0.5 sm:mt-0">{app.developerName || app.developer?.name || 'Unknown'}</p>
+              <Link 
+                to={`/developer/${app.developer?._id || app.developer}`} 
+                onClick={(e) => e.stopPropagation()}
+                className="text-[11px] sm:text-sm text-dark-500 dark:text-gray-400 font-semibold truncate mt-0.5 sm:mt-0 hover:text-accent-violet dark:hover:text-accent-neon transition-colors relative z-20"
+              >
+                {app.developerName || app.developer?.name || 'Unknown'}
+              </Link>
             </div>
           </div>
 

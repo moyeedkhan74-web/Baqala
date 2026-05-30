@@ -26,6 +26,7 @@ import RevenueShare from './pages/RevenueShare';
 import Contact from './pages/Contact';
 import SearchResults from './pages/SearchResults';
 import CategoryPage from './pages/CategoryPage';
+import DeveloperProfile from './pages/DeveloperProfile';
 
 function App() {
   const location = useLocation();
@@ -105,6 +106,7 @@ function App() {
                 <Route path="/contact" element={<AnimatedLayout><Contact /></AnimatedLayout>} />
                 <Route path="/search" element={<AnimatedLayout><SearchResults /></AnimatedLayout>} />
                 <Route path="/category/:name" element={<AnimatedLayout><CategoryPage /></AnimatedLayout>} />
+                <Route path="/developer/:id" element={<AnimatedLayout><DeveloperProfile /></AnimatedLayout>} />
                 
                 <Route path="/developer" element={
                   <ProtectedRoute>
