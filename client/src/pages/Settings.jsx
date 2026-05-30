@@ -66,12 +66,8 @@ const Settings = () => {
       });
       setAvatarFile(null);
     } catch (err) {
-      console.error('Update error full details:', err);
-      const status = err.response?.status;
-      const serverMsg = err.response?.data?.details || err.response?.data?.message;
-      const errorMsg = serverMsg ? `Error ${status}: ${serverMsg}` : `Network Error: ${err.message}`;
-      
-      toast.error(errorMsg, { duration: 5000 });
+      console.error('Update error:', err);
+      toast.error('Failed to update: ' + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }
