@@ -47,7 +47,6 @@ const Settings = () => {
         uploadData.append('file', avatarFile);
         uploadData.append('folder', 'avatars');
         
-        // Use the general upload endpoint if available, or a specific one
         const uploadRes = await api.post('/apps/upload-temp', uploadData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
@@ -75,7 +74,7 @@ const Settings = () => {
   };
 
   return (
-    <div className="pt-32 pb-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+    <div className="pt-32 pb-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
       <SEOHead 
         title="Settings & Profile | Baqala"
         description="Manage your Baqala account, update your primary avatar, and edit your developer bio."
@@ -93,110 +92,40 @@ const Settings = () => {
         </p>
       </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Form Side */}
-          <div className="lg:col-span-2">
-            <form onSubmit={handleProfileUpdate} className="glass-panel p-8 md:p-12 rounded-[2rem] relative overflow-hidden">
-               <div className="space-y-8">
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Display Name</label>
-                    <input 
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      className="input-field py-3 text-base"
-                      placeholder="Your name as it appears in the store"
-                      required
-                    />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left: Avatar & Profile Card */}
+        <div className="lg:col-span-1">
+          <div className="glass-panel p-6 text-center">
+            <div className="relative inline-block group mb-6">
+              <div className="absolute -inset-1 bg-gradient-to-r from-accent-violet to-accent-neon rounded-full blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
+              <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-dark-800 bg-slate-100 dark:bg-dark-900 shadow-xl">
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Avatar Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-slate-400">
+                    <HiUser className="w-16 h-16" />
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2">
-                      Specialization / Tagline
-                    </label>
-                    <input
-                      type="text"
-                      name="tagline"
-                      value={formData.tagline}
-                      onChange={handleInputChange}
-                      placeholder="e.g. Android Enthusiast • Indie Game Dev"
-                      className="input-field"
-                      maxLength={100}
-                    />
-                    <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-tight">Appears on your app cards and search results</p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2">
-                      Full Bio
-                    </label>
-                    <textarea
-                      name="bio"
-                      value={formData.bio}
-                      onChange={handleInputChange}
-                      placeholder="Tell your story..."
-                      className="input-field min-h-[120px] py-3"
-                      maxLength={500}
-                    />
-                    <p className="mt-2 text-[10px] text-slate-500 italic">Detailed biography for your full profile page.</p>
-                  </div>
-
-                  <div className="pt-4">
-                    <button 
-                      type="submit" 
-                      disabled={loading}
-                      className="btn-primary w-full py-4 text-lg"
-                    >
-                      {loading ? 'Saving Changes...' : 'Save Profile Settings'}
-                    </button>
-                  </div>
-               </div>
-            </form>
-          </div>
-
-          {/* Preview Side */}
-          <div className="space-y-6">
-            <div className="glass-panel p-6 rounded-3xl border-2 border-accent-violet/20">
-               <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
-                  <HiPencilAlt /> Live Identity Preview
-               </h3>
-               
-               <div className="flex flex-col items-center text-center">
-                  <div className="w-24 h-24 rounded-[2rem] overflow-hidden border-4 border-white dark:border-white/10 shadow-glass bg-slate-100 mb-4 cursor-pointer" onClick={() => fileInputRef.current.click()}>
-                     {avatarPreview ? (
-                        <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover" />
-                     ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-300 text-3xl font-bold">
-                           {formData.name?.charAt(0) || '?'}
-                        </div>
-                     )}
-                  </div>
-                  <input type="file" hidden ref={fileInputRef} onChange={handleAvatarChange} accept="image/*" />
-                  
-                  <h4 className="text-2xl font-black text-slate-900 dark:text-white leading-tight">
-                     {formData.name || 'Your Name'}
-                  </h4>
-                  
-                  {formData.tagline && (
-                     <span className="text-[11px] font-black uppercase tracking-widest text-accent-violet dark:text-accent-neon mt-1">
-                        {formData.tagline}
-                     </span>
-                  )}
-
-                  <div className="w-full h-[1px] bg-slate-200 dark:bg-white/10 my-6" />
-
-                  <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed italic line-clamp-4">
-                     {formData.bio || 'Your story will appear here. Talk about your passion, your experience, and what you build.'}
-                  </p>
-               </div>
+                )}
+                <button 
+                  onClick={() => fileInputRef.current.click()}
+                  className="absolute inset-x-0 bottom-0 py-2 bg-black/60 text-white text-[10px] uppercase font-bold tracking-widest opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  Change
+                </button>
+              </div>
+              <input 
+                type="file" 
+                hidden 
+                ref={fileInputRef} 
+                onChange={handleAvatarChange}
+                accept="image/*"
+              />
             </div>
-
-            <div className="glass-panel p-6 rounded-3xl">
-               <div className="flex items-center justify-between text-xs font-bold mb-3">
-                  <span className="text-slate-400 uppercase">Account Rank</span>
-                  <span className="px-2 py-0.5 bg-accent-violet/10 text-accent-violet rounded uppercase text-[9px]">Developer</span>
-               </div>
+            
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">{user?.name}</h3>
+            <p className="text-sm text-slate-500 dark:text-gray-500 uppercase tracking-widest font-black mb-4">{user?.role}</p>
+            
+            <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
                <div className="flex items-center justify-between text-xs font-bold">
                   <span className="text-slate-400 uppercase">Status</span>
                   <span className="flex items-center gap-1 text-accent-emerald">
@@ -207,17 +136,84 @@ const Settings = () => {
           </div>
         </div>
 
-        {/* Security Mockup */}
-        <div className="mt-8 glass-panel p-8 opacity-60 rounded-3xl">
-           <div className="flex items-center gap-2 mb-6">
-              <HiLockClosed className="text-rose-500 w-5 h-5" />
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Security & Password</h2>
-           </div>
-           <p className="text-sm text-slate-500 mb-4 flex items-center gap-2">
-              <HiExclamationCircle className="text-amber-500" />
-              Passwords managed via {user?.googleId ? 'Google/Firebase Auth' : 'Baqala Auth System'}.
-           </p>
-           <button disabled className="btn-secondary py-2 px-6 text-sm">Reset Password</button>
+        {/* Right: Profile Form */}
+        <div className="lg:col-span-2 space-y-6">
+          <form onSubmit={handleProfileUpdate} className="glass-panel p-8 space-y-8">
+            <div className="flex items-center gap-2 mb-2">
+              <HiPencilAlt className="text-accent-violet w-5 h-5" />
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Public Identity</h2>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Display Name</label>
+                <input 
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="input-field py-3 text-base"
+                  placeholder="Your name as it appears in the store"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2">
+                  Specialization / Tagline (Meta detail)
+                </label>
+                <input
+                  type="text"
+                  name="tagline"
+                  value={formData.tagline}
+                  onChange={handleInputChange}
+                  placeholder="e.g. Android Specialist • Web Artist"
+                  className="input-field"
+                  maxLength={100}
+                />
+                <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-tight italic">Shown on app cards & search results (keep it short)</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2">
+                  Full Biography
+                </label>
+                <textarea
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleInputChange}
+                  placeholder="Tell your story..."
+                  className="input-field min-h-[150px] py-3"
+                  maxLength={500}
+                />
+                <p className="mt-1 text-[10px] text-slate-500 italic">Shown only on your public profile page.</p>
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-slate-200 dark:border-white/10 flex justify-end">
+              <button 
+                type="submit" 
+                disabled={loading}
+                className="btn-primary py-3 px-10"
+              >
+                {loading ? 'Saving...' : 'Save All Changes'}
+              </button>
+            </div>
+          </form>
+
+          {/* Security */}
+          <div className="glass-panel p-8 opacity-60 rounded-3xl">
+             <div className="flex items-center gap-2 mb-6">
+                <HiLockClosed className="text-rose-500 w-5 h-5" />
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Security & Password</h2>
+             </div>
+             <p className="text-sm text-slate-500 mb-4 flex items-center gap-2">
+                <HiExclamationCircle className="text-amber-500" />
+                Passwords managed via {user?.googleId ? 'Google/Firebase Auth' : 'Baqala Auth System'}.
+             </p>
+             <button disabled className="btn-secondary py-2 px-6 text-sm">Reset Password</button>
+          </div>
+        </div>
       </div>
     </div>
   );
