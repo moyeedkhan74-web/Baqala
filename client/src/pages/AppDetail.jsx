@@ -105,6 +105,86 @@ const AppDetail = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [lightboxOpen, lightboxIndex, isScreenshot, app]);
 
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [newRating, setNewRating] = useState(0);
+  const [newComment, setNewComment] = useState('');
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyComment, setReplyComment] = useState('');
+
+  const loadFeedback = async () => {
+    try {
+      const res = await api.get(`/feedback/${app._id}`);
+      const data = res.data.feedback || [];
+      // Organize replies under parent feedback
+      const map = {};
+      data.forEach(fb => {
+        fb.replies = [];
+        map[fb._id] = fb;
+      });
+      const topLevel = [];
+      data.forEach(fb => {
+        if (fb.parent) {
+          if (map[fb.parent]) map[fb.parent].replies.push(fb);
+        } else {
+          topLevel.push(fb);
+        }
+      });
+      setFeedbacks(topLevel);
+    } catch (err) {
+      console.error('Failed to load feedback', err);
+    }
+  };
+
+  const submitFeedback = async (e) => {
+    e.preventDefault();
+    if (!newRating || !newComment.trim()) return toast.error('Rating and comment required');
+    setSubmittingFeedback(true);
+    try {
+      await api.post(`/feedback/${app._id}`, { rating: newRating, comment: newComment });
+      toast.success('Feedback submitted');
+      setNewRating(0);
+      setNewComment('');
+      loadFeedback();
+    } catch (err) {
+      toast.error('Failed to submit feedback');
+    } finally {
+      setSubmittingFeedback(false);
+    }
+  };
+
+  const reactFeedback = async (feedbackId, type) => {
+    try {
+      await api.post(`/feedback/${feedbackId}/react`, { type });
+      loadFeedback();
+    } catch (err) {
+      console.error('Reaction error', err);
+    }
+  };
+
+  const toggleReply = (fbId) => {
+    setReplyingTo(replyingTo === fbId ? null : fbId);
+    setReplyComment('');
+  };
+
+  const submitReply = async (e, parentId) => {
+    e.preventDefault();
+    if (!replyComment.trim()) return;
+    try {
+      await api.post(`/feedback/${app._id}`, { rating: 0, comment: replyComment, parentId });
+      setReplyingTo(null);
+      setReplyComment('');
+      loadFeedback();
+    } catch (err) {
+      console.error('Reply error', err);
+    }
+  };
+
+  // Load feedback after app data is loaded
+  useEffect(() => {
+    if (app) loadFeedback();
+  }, [app]);
+
   const loadData = async () => {
     try {
       const [appRes, revRes] = await Promise.all([
@@ -359,6 +439,89 @@ const AppDetail = () => {
                 </div>
               ) : null}
 
+                {/* Feedback Section */}
+                <div className="mt-12">
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">User Feedback</h2>
+                  {/* New Feedback Form */}
+                  {user ? (
+                    <form onSubmit={submitFeedback} className="glass-panel p-6 rounded-3xl mb-8">
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Your Rating</label>
+                        <StarRating rating={newRating} onRate={setNewRating} interactive />
+                      </div>
+                      <textarea
+                        value={newComment}
+                        onChange={e => setNewComment(e.target.value)}
+                        placeholder="Write your review..."
+                        className="input-field min-h-[80px] mb-4"
+                        required
+                      />
+                      <button type="submit" disabled={submittingFeedback} className="btn-primary py-2 px-6">
+                        Submit Review
+                      </button>
+                    </form>
+                  ) : (
+                    <p className="text-slate-600 dark:text-gray-400 mb-4">Sign in to leave a review.</p>
+                  )}
+                  {/* Feedback List */}
+                  {feedbacks.map(fb => (
+                    <div key={fb._id} className="glass-panel p-4 rounded-xl mb-4">
+                      <div className="flex items-center mb-2">
+                        {fb.user?.avatar ? (
+                          <img src={fb.user.avatar} alt={fb.user.name} className="w-8 h-8 rounded-full mr-2" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center mr-2 text-xs font-bold">
+                            {fb.user?.name?.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <span className="font-semibold text-slate-900 dark:text-white mr-2">{fb.user?.name}</span>
+                        <StarRating rating={fb.rating} size="sm" />
+                      </div>
+                      <p className="text-sm text-slate-600 dark:text-gray-400 mb-2">{fb.comment}</p>
+                      <div className="flex items-center space-x-4 text-sm">
+                        <button onClick={() => reactFeedback(fb._id, 'like')} className="flex items-center text-accent-violet">
+                          👍 <span className="ml-1">{fb.likes}</span>
+                        </button>
+                        <button onClick={() => reactFeedback(fb._id, 'dislike')} className="flex items-center text-rose-500">
+                          👎 <span className="ml-1">{fb.dislikes}</span>
+                        </button>
+                        {/* Reply button toggles reply form */}
+                        <button onClick={() => toggleReply(fb._id)} className="text-accent-violet underline">Reply</button>
+                      </div>
+                      {/* Replies */}
+                      {fb.replies && fb.replies.map(rep => (
+                        <div key={rep._id} className="ml-8 mt-3 p-3 bg-slate-100 dark:bg-white/5 rounded">
+                          <div className="flex items-center mb-1">
+                            {rep.user?.avatar ? (
+                              <img src={rep.user.avatar} alt={rep.user.name} className="w-6 h-6 rounded-full mr-2" />
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center mr-2 text-xs font-bold">
+                                {rep.user?.name?.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <span className="font-medium text-slate-900 dark:text-white mr-2">{rep.user?.name}</span>
+                            <StarRating rating={rep.rating} size="xs" />
+                          </div>
+                          <p className="text-sm text-slate-600 dark:text-gray-400">{rep.comment}</p>
+                        </div>
+                      ))}
+                      {/* Inline reply form */}
+                      {replyingTo === fb._id && (
+                        <form onSubmit={e => submitReply(e, fb._id)} className="mt-2">
+                          <textarea
+                            value={replyComment}
+                            onChange={e => setReplyComment(e.target.value)}
+                            placeholder="Write a reply..."
+                            className="input-field min-h-[60px] mb-2"
+                            required
+                          />
+                          <button type="submit" className="btn-primary py-1 px-4 text-sm">Post Reply</button>
+                        </form>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
               <div className="space-y-4">
                 {reviews.filter(r => r.user && r.user.name).length === 0 && (
                   <div className="glass-panel p-8 rounded-3xl text-center text-slate-500">
@@ -426,7 +589,7 @@ const AppDetail = () => {
                     {app.developer.tagline}
                   </span>
                 )}
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-2">Publisher</span>
+                <span className="border border-accent-violet text-accent-violet rounded px-2 py-0.5 uppercase tracking-[0.2em] text-[10px] font-black mt-2">Publisher</span>
               </div>
               
               <div className="p-6">
