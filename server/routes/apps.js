@@ -1,7 +1,7 @@
 const express = require('express');
 const {
   createApp, getApps, getApp, updateApp, deleteApp, getAppDownloadLink,
-  getMyApps, uploadAppImages, getCategories, uploadPlaceholderImages,
+  proxyDownload, getMyApps, uploadAppImages, getCategories, uploadPlaceholderImages,
   removeScreenshot, removeAllScreenshots
 } = require('../controllers/appController');
 const { initUpload, uploadChunk, combineChunks } = require('../controllers/chunkController');
@@ -45,6 +45,7 @@ router.post('/:id/images', auth, uploadImages, uploadAppImages);
 // --- Resource Routes (Individual) ---
 router.get('/:id', generalLimiter, getApp);
 router.get('/:id/download', downloadLimiter, getAppDownloadLink);
+router.get('/:id/proxy-download', downloadLimiter, proxyDownload);
 router.put('/:id', auth, updateApp);
 router.delete('/:id', auth, deleteApp);
 router.delete('/:id/screenshot', auth, removeScreenshot);

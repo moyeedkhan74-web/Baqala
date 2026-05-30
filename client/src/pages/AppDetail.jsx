@@ -120,30 +120,29 @@ const AppDetail = () => {
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      // Get the signed URL from our backend — never exposes URL to the address bar
-      const res = await api.get(`/apps/${id}/download`);
-      const { url, filename } = res.data;
+      // Point to our OWN backend proxy endpoint (same-origin).
+      // Same-origin = browser honours the `download` attribute = file saves directly.
+      // The backend streams the file through with Content-Disposition: attachment,
+      // so the B2 signed URL is never visible anywhere to the user.
+      const proxyUrl = `/api/apps/${id}/proxy-download`;
 
-      if (!url) throw new Error('No download URL received');
-
-      // Trigger browser download silently via hidden anchor with `download` attribute.
-      // The `download` attribute forces a Save dialog even for cross-origin B2 URLs
-      // because the backend sets ResponseContentDisposition: attachment in the signed URL.
       const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', filename || app.fileName || `${app.title}-download`);
+      link.href = proxyUrl;
+      link.setAttribute('download', app.fileName || `${app.title}-download`);
       link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
       toast.success('Your download has started!');
+      // Optimistically update UI counter (backend also increments)
       setApp(prev => ({ ...prev, totalDownloads: (prev.totalDownloads || 0) + 1 }));
     } catch (err) {
       console.error('Download failed:', err);
       toast.error('Download failed. Please try again.');
     } finally {
-      setDownloading(false);
+      // Keep spinner going a moment so user knows something happened
+      setTimeout(() => setDownloading(false), 2000);
     }
   };
 

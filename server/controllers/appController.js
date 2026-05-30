@@ -36,6 +36,75 @@ const deleteFileFromB2 = async (rawUrl) => {
   }
 };
 
+/**
+ * Proxy Download — streams the file through our server.
+ * This is the ONLY reliable cross-browser way to force a download of a
+ * cross-origin file (B2 signed URL) without opening a new tab.
+ * Because the URL is same-origin, the <a download> attribute is honoured.
+ */
+exports.proxyDownload = async (req, res, next) => {
+  const https = require('https');
+  const http = require('http');
+
+  try {
+    const app = await App.findById(req.params.id);
+    if (!app) return res.status(404).json({ message: 'App not found.' });
+
+    if (app.status === 'rejected') {
+      return res.status(400).json({ message: 'This app is not available for download.' });
+    }
+
+    if (!app.fileUrl) {
+      return res.status(404).json({ message: 'File not found.' });
+    }
+
+    // Generate a short-lived signed URL for reading from B2
+    let sourceUrl = app.fileUrl;
+    if (app.fileUrl.includes('.backblazeb2.com/')) {
+      const result = await getDownloadUrl(app.fileUrl, app.fileName);
+      if (!result.success) {
+        return res.status(500).json({ message: 'Failed to prepare download.' });
+      }
+      sourceUrl = result.url;
+    }
+
+    // Build a safe filename for Content-Disposition
+    const rawName = app.fileName || `${app.title}-download`;
+    const safeFilename = rawName.replace(/[^\w.\-]/g, '_');
+
+    // Set response headers so the browser saves the file immediately
+    res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Cache-Control', 'no-store');
+
+    // Increment download counter (fire-and-forget)
+    App.findByIdAndUpdate(app._id, { $inc: { totalDownloads: 1 } }).catch(() => {});
+
+    console.log(`[PROXY DOWNLOAD] Streaming "${safeFilename}" for app ${app._id}`);
+
+    // Pipe the B2 response straight through to the browser
+    const protocol = sourceUrl.startsWith('https') ? https : http;
+    protocol.get(sourceUrl, (b2Res) => {
+      if (b2Res.statusCode !== 200) {
+        console.error(`[PROXY DOWNLOAD] B2 responded with ${b2Res.statusCode}`);
+        if (!res.headersSent) res.status(502).json({ message: 'Upstream file error.' });
+        return;
+      }
+      // Forward content-length so the browser can show a progress bar
+      if (b2Res.headers['content-length']) {
+        res.setHeader('Content-Length', b2Res.headers['content-length']);
+      }
+      b2Res.pipe(res);
+    }).on('error', (err) => {
+      console.error('[PROXY DOWNLOAD] Pipe error:', err.message);
+      if (!res.headersSent) res.status(500).json({ message: 'Download stream failed.' });
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.getAppDownloadLink = async (req, res, next) => {
   try {
     const app = await App.findById(req.params.id);
