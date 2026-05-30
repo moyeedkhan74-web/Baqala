@@ -25,6 +25,7 @@ import CookiePolicy from './pages/CookiePolicy';
 import RevenueShare from './pages/RevenueShare';
 import Contact from './pages/Contact';
 import SearchResults from './pages/SearchResults';
+import CategoryPage from './pages/CategoryPage';
 
 function App() {
   const location = useLocation();
@@ -103,6 +104,7 @@ function App() {
                 <Route path="/revenue-share" element={<AnimatedLayout><RevenueShare /></AnimatedLayout>} />
                 <Route path="/contact" element={<AnimatedLayout><Contact /></AnimatedLayout>} />
                 <Route path="/search" element={<AnimatedLayout><SearchResults /></AnimatedLayout>} />
+                <Route path="/category/:name" element={<AnimatedLayout><CategoryPage /></AnimatedLayout>} />
                 
                 <Route path="/developer" element={
                   <ProtectedRoute>
