@@ -67,7 +67,8 @@ const Settings = () => {
       setAvatarFile(null);
     } catch (err) {
       console.error('Update error:', err);
-      toast.error(err.response?.data?.message || 'Failed to update profile');
+      const msg = err.response?.data?.details || err.response?.data?.message || 'Failed to update profile';
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -131,10 +132,6 @@ const Settings = () => {
                   <span className="flex items-center gap-1 text-accent-emerald">
                      <HiCheckCircle /> Online
                   </span>
-               </div>
-               <div className="flex items-center justify-between text-xs font-bold">
-                  <span className="text-slate-400 uppercase">Storage</span>
-                  <span className="text-slate-700 dark:text-slate-300">Dedicated Avatar Bucket</span>
                </div>
             </div>
           </div>
