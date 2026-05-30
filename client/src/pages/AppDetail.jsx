@@ -120,29 +120,50 @@ const AppDetail = () => {
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      // Point to our OWN backend proxy endpoint (same-origin).
-      // Same-origin = browser honours the `download` attribute = file saves directly.
-      // The backend streams the file through with Content-Disposition: attachment,
-      // so the B2 signed URL is never visible anywhere to the user.
-      const proxyUrl = `${API_BASE_URL}/apps/${id}/proxy-download`;
+      toast.loading('Preparing your file...', { id: 'download-progress' });
 
+      // Fetch the file through our backend proxy as a blob.
+      // This is the most reliable cross-origin silent download method.
+      const proxyPath = `/apps/${id}/proxy-download`;
+      const res = await api.get(proxyPath, {
+        responseType: 'blob',
+        timeout: 120000 // 2 minutes for large files
+      });
+
+      // Create a local blob URL
+      const blob = new Blob([res.data], { 
+        type: res.headers['content-type'] || 'application/octet-stream' 
+      });
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      // Trigger download from the same-origin blob URL
       const link = document.createElement('a');
-      link.href = proxyUrl;
-      link.setAttribute('download', app.fileName || `${app.title}-download`);
+      link.href = blobUrl;
+      
+      // Determine filename: check headers first, then app metadata
+      let filename = app.fileName || `${app.title}-download`;
+      const disposition = res.headers['content-disposition'];
+      if (disposition) {
+        const match = disposition.match(/filename="?([^"]+)"?/);
+        if (match) filename = match[1];
+      }
+      
+      link.setAttribute('download', filename);
       link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
 
-      toast.success('Your download has started!');
-      // Optimistically update UI counter (backend also increments)
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+
+      toast.success('Download started!', { id: 'download-progress' });
       setApp(prev => ({ ...prev, totalDownloads: (prev.totalDownloads || 0) + 1 }));
     } catch (err) {
       console.error('Download failed:', err);
-      toast.error('Download failed. Please try again.');
+      toast.error('Download sequence interrupted. Please check your network.', { id: 'download-progress' });
     } finally {
-      // Keep spinner going a moment so user knows something happened
-      setTimeout(() => setDownloading(false), 2000);
+      setDownloading(false);
     }
   };
 
