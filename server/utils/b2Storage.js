@@ -133,7 +133,7 @@ exports.uploadToB2 = async (reqOrFilePath, fileBuffer, contentType, isPrivate = 
     // 1. Determine Bucket: If it's in the avatars folder, use the dedicated bucket
     let bucket = getBucket(isPrivate);
     if (scrubbedPath.startsWith('avatars/')) {
-        bucket = 'baqala.avatar';
+        bucket = process.env.B2_AVATAR_BUCKET || 'baqala.avatar';
     }
     
     const endpoint = getEndpoint(isPrivate);
@@ -185,7 +185,7 @@ exports.deleteFromB2 = async (filePath, isPrivate = false) => {
     
     let bucket = getBucket(isPrivate);
     if (filePath && filePath.startsWith('avatars/')) {
-        bucket = 'baqala.avatar';
+        bucket = process.env.B2_AVATAR_BUCKET || 'baqala.avatar';
     }
 
     const command = new DeleteObjectCommand({
