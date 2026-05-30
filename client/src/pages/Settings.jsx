@@ -7,7 +7,7 @@ import { HiUser, HiCloudUpload, HiCheckCircle, HiExclamationCircle, HiPencilAlt,
 import toast from 'react-hot-toast';
 
 const Settings = () => {
-  const { user, setUser } = useAuth();
+  const { user, updateUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -59,7 +59,7 @@ const Settings = () => {
         avatar: avatarUrl
       });
 
-      setUser(res.data.user);
+      updateUser(res.data.user);
       toast.success('Profile updated successfully!', {
         icon: '🚀',
         style: { borderRadius: '15px', background: '#333', color: '#fff' }
