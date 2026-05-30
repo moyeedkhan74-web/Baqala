@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { HiMenu, HiX, HiLogout, HiUpload, HiViewGrid, HiShieldCheck, HiOutlineSparkles, HiMoon, HiSun, HiSearch } from 'react-icons/hi';
+import api from '../api/axios';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
