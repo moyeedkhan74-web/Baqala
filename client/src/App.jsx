@@ -8,6 +8,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AnimatedLayout from './components/AnimatedLayout';
 import ParticlesBackground from './components/ParticlesBackground';
 import LoadingScreen from './components/LoadingScreen';
+import CookieBanner from './components/CookieBanner';
 import api from './api/axios';
 
 import Home from './pages/Home';
@@ -67,6 +68,7 @@ function App() {
   return (
     <>
       <LoadingScreen isLoading={isLoading} error={error} onRetry={handleRetry} />
+      <CookieBanner />
       <a 
         href="#main-content" 
         className="skip-link"
