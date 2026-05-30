@@ -480,13 +480,21 @@ const AppDetail = () => {
                             <div className="flex items-center gap-2">
                               <button 
                                 onClick={() => reactFeedback(fb._id, 'like')}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-accent-violet/10 hover:text-accent-violet transition-all text-sm font-bold text-slate-600 dark:text-gray-400"
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all text-sm font-bold ${
+                                  fb.likedBy?.includes(user?._id) 
+                                    ? 'bg-accent-violet text-white shadow-lg shadow-accent-violet/25' 
+                                    : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-gray-400 hover:bg-accent-violet/10 hover:text-accent-violet'
+                                }`}
                               >
                                 👍 <span>{fb.likes || 0}</span>
                               </button>
                               <button 
                                 onClick={() => reactFeedback(fb._id, 'dislike')}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-rose-500/10 hover:text-rose-500 transition-all text-sm font-bold text-slate-600 dark:text-gray-400"
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all text-sm font-bold ${
+                                  fb.dislikedBy?.includes(user?._id) 
+                                    ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/25' 
+                                    : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-gray-400 hover:bg-rose-500/10 hover:text-rose-500'
+                                }`}
                               >
                                 👎 <span>{fb.dislikes || 0}</span>
                               </button>
