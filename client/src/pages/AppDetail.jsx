@@ -429,7 +429,7 @@ const AppDetail = () => {
               
               <div className="p-6">
                 <p className="text-sm text-slate-600 dark:text-gray-400 leading-relaxed mb-6 line-clamp-3">
-                  {app.developer?.bio || "A dedicated developer contributing to the Baqala ecosystem. Explore more apps from this creator's portfolio."}
+                  
                 </p>
                 <Link 
                   to={`/developer/${app.developer?._id || app.developer}`}
