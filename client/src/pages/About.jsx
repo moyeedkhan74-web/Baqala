@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
-import { HiOutlineCode, HiOutlineGlobe, HiOutlineSparkles, HiOutlineCube, HiOutlineShieldCheck, HiOutlineCpuChip } from 'react-icons/hi2';
-import { HiStar, HiRocketLaunch, HiCpuChip, HiCircleStack, HiGlobeAmericas, HiCommandLine } from 'react-icons/hi2';
+import { Link } from 'react-router-dom';
+import { HiCode, HiGlobe, HiSparkles, HiCube, HiShieldCheck, HiCog } from 'react-icons/hi';
+import { HiStar, HiTrendingUp, HiDatabase, HiGlobeAlt, HiTerminal } from 'react-icons/hi';
 import SEOHead from '../components/SEOHead';
 
 const TechCard = ({ icon: Icon, name, description }) => (
@@ -66,7 +67,7 @@ const About = () => {
           className="grid grid-cols-1 md:grid-cols-3 gap-8"
         >
           <motion.div variants={itemVariants} className="glass-panel p-10 rounded-[2.5rem] border-white/20 bg-gradient-to-br from-white/50 to-transparent dark:from-white/5">
-            <HiOutlineGlobe className="w-12 h-12 text-accent-emerald mb-6" />
+            <HiGlobe className="w-12 h-12 text-accent-emerald mb-6" />
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">What is Baqala?</h3>
             <p className="text-slate-600 dark:text-gray-400 leading-relaxed">
               Baqala is a free, decentralized-style app marketplace designed for developers and power users. No gatekeeping, no hidden fees—just pure, unrestricted access to the best APKs and tools.
@@ -74,7 +75,7 @@ const About = () => {
           </motion.div>
 
           <motion.div variants={itemVariants} className="glass-panel p-10 rounded-[2.5rem] border-white/20 bg-gradient-to-br from-white/50 to-transparent dark:from-white/5">
-            <HiOutlineSparkles className="w-12 h-12 text-accent-sun mb-6" />
+            <HiSparkles className="w-12 h-12 text-accent-sun mb-6" />
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">The Mission</h3>
             <p className="text-slate-600 dark:text-gray-400 leading-relaxed">
               Our mission is to make app sharing as simple as a handshake. We believe in high-speed downloads, verified identities, and a visual experience that feels like the premium store you deserve.
@@ -82,7 +83,7 @@ const About = () => {
           </motion.div>
 
           <motion.div variants={itemVariants} className="glass-panel p-10 rounded-[2.5rem] border-white/20 bg-gradient-to-br from-white/50 to-transparent dark:from-white/5 shadow-2xl shadow-accent-violet/5">
-            <HiOutlineCode className="w-12 h-12 text-accent-violet mb-6" />
+            <HiCode className="w-12 h-12 text-accent-violet mb-6" />
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Dev-First Values</h3>
             <p className="text-slate-600 dark:text-gray-400 leading-relaxed">
               Built by a developer for developers. We offer robust analytics, custom bio pages, and full control over your releases without the usual corporate friction.
@@ -100,14 +101,14 @@ const About = () => {
             <p className="text-slate-500 dark:text-gray-400">Engineered with modern tools for ultimate performance and reliability.</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-6">
-            <TechCard name="React" description="Frontend Master" icon={HiOutlineCpuChip} />
-            <TechCard name="Node.js" description="Fast Runtime" icon={HiCommandLine} />
-            <TechCard name="MongoDB" description="NoSQL Core" icon={HiCircleStack} />
-            <TechCard name="Firebase" description="Auth System" icon={HiOutlineShieldCheck} />
-            <TechCard name="Backblaze B2" description="S3 Storage" icon={HiOutlineCube} />
+            <TechCard name="React" description="Frontend Master" icon={HiCog} />
+            <TechCard name="Node.js" description="Fast Runtime" icon={HiTerminal} />
+            <TechCard name="MongoDB" description="NoSQL Core" icon={HiDatabase} />
+            <TechCard name="Firebase" description="Auth System" icon={HiShieldCheck} />
+            <TechCard name="Backblaze B2" description="S3 Storage" icon={HiCube} />
             <TechCard name="Supabase" description="Review Data" icon={HiStar} />
-            <TechCard name="Vercel" description="Edge Hosting" icon={HiOutlineGlobe} />
-            <TechCard name="Render" description="Backend Engine" icon={HiRocketLaunch} />
+            <TechCard name="Vercel" description="Edge Hosting" icon={HiGlobeAlt} />
+            <TechCard name="Render" description="Backend Engine" icon={HiTrendingUp} />
           </div>
         </div>
       </section>
@@ -171,7 +172,7 @@ const About = () => {
                 rel="noopener noreferrer"
                 className="btn-primary px-10 py-4 text-lg flex items-center gap-3 shadow-glow-violet"
               >
-                <HiOutlineCode className="w-6 h-6" /> Explore GitHub
+                <HiCode className="w-6 h-6" /> Explore GitHub
               </a>
               <Link to="/contact" className="btn-secondary px-10 py-4 text-lg">
                 Get in Touch
