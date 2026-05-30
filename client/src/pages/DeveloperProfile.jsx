@@ -131,7 +131,7 @@ const DeveloperProfile = () => {
       <div>
         <div className="flex items-center justify-between mb-8 border-b border-slate-200 dark:border-white/10 pb-6">
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Hi GlobeAlt className="text-accent-violet" />
+            <HiGlobeAlt className="text-accent-violet" />
             Software <span className="gradient-text italic">Portfolio</span>
           </h2>
           <span className="text-sm font-bold text-slate-400">{apps.length} Releases</span>
