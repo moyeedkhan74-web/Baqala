@@ -44,12 +44,12 @@ reviewSchema.statics.calculateAverageRating = async function (appId) {
   if (result?.length > 0) {
     await App.findByIdAndUpdate(appId, {
       averageRating: Math.round(result[0].averageRating * 10) / 10,
-      totalReviews: result[0].totalReviews
+      reviewCount: result[0].totalReviews
     });
   } else {
     await App.findByIdAndUpdate(appId, {
       averageRating: 0,
-      totalReviews: 0
+      reviewCount: 0
     });
   }
 };

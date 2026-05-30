@@ -240,10 +240,10 @@ const AppDetail = () => {
               <p className="text-xl text-accent-violet dark:text-accent-neon font-medium mb-6">{app.developerName || app.developer?.name}</p>
               
               <div className="flex flex-wrap gap-6 mb-8 text-sm font-semibold">
-                <div className="flex items-center gap-2" aria-label={`Rating: ${app.averageRating?.toFixed(1) || '0.0'} stars`}>
+                <div className="flex items-center gap-2 text-slate-600 dark:text-gray-300" aria-label={`Rating: ${app.averageRating?.toFixed(1) || '0.0'} stars from ${app.reviewCount || 0} reviews`}>
                   <HiStar className="text-yellow-400 w-5 h-5" aria-hidden="true" /> 
                   <span className="text-slate-800 dark:text-white text-lg">{app.averageRating?.toFixed(1) || '0.0'}</span> 
-                  <span className="text-slate-400 dark:text-gray-500">({app.ratings?.length || 0})</span>
+                  <span className="text-slate-400 dark:text-gray-500">({app.reviewCount || 0})</span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-600 dark:text-gray-300" aria-label={`Category: ${app.category}`}>
                   <HiFolder className="w-5 h-5 text-accent-violet" aria-hidden="true" /> {app.category}
@@ -328,12 +328,12 @@ const AppDetail = () => {
 
             {/* Reviews System */}
             <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">User Reviews [{reviews?.filter(r => r.user?.name).length}]</h2>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">User Reviews ({app.reviewCount || 0})</h2>
               
               {user && user._id !== app.developer?._id && user._id !== app.developer?.toString() ? (
                 <form onSubmit={submitReview} className="glass-panel p-6 rounded-3xl mb-8 border border-accent-violet/30 relative overflow-hidden">
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Share your feedback</h3>
-                  <div className="mb-4"><StarRating rating={userRating} setRating={setUserRating} interactive /></div>
+                  <div className="mb-4"><StarRating rating={userRating} onRate={setUserRating} interactive /></div>
                   <textarea
                     value={userComment} onChange={e => setUserComment(e.target.value)}
                     placeholder="Share your experience..." required
