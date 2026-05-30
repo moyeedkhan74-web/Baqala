@@ -1,0 +1,213 @@
+import { useState, useRef } from 'react';
+import { useAuth } from '../context/AuthContext';
+import api from '../api/axios';
+import SEOHead from '../components/SEOHead';
+import { motion } from 'framer-motion';
+import { HiUser, HiCloudUpload, HiCheckCircle, HiExclamationCircle, HiPencilAlt, HiLockClosed } from 'react-icons/hi';
+import toast from 'react-hot-toast';
+
+const Settings = () => {
+  const { user, setUser } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    bio: user?.bio || ''
+  });
+  const [avatarPreview, setAvatarPreview] = useState(user?.avatar || '');
+  const [avatarFile, setAvatarFile] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('Avatar must be less than 2MB');
+        return;
+      }
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      let avatarUrl = user.avatar;
+
+      // 1. If there's a new avatar file, upload it first
+      if (avatarFile) {
+        const uploadData = new FormData();
+        uploadData.append('file', avatarFile);
+        uploadData.append('folder', 'avatars');
+        
+        // Use the general upload endpoint if available, or a specific one
+        const uploadRes = await api.post('/apps/upload-temp', uploadData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        avatarUrl = uploadRes.data.url;
+      }
+
+      // 2. Update user profile
+      const res = await api.put('/auth/profile', {
+        ...formData,
+        avatar: avatarUrl
+      });
+
+      setUser(res.data.user);
+      toast.success('Profile updated successfully!', {
+        icon: '🚀',
+        style: { borderRadius: '15px', background: '#333', color: '#fff' }
+      });
+      setAvatarFile(null);
+    } catch (err) {
+      console.error('Update error:', err);
+      toast.error(err.response?.data?.message || 'Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="pt-32 pb-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+      <SEOHead 
+        title="Settings & Profile | Baqala"
+        description="Manage your Baqala account, update your primary avatar, and edit your developer bio."
+      />
+
+      <div className="mb-12">
+        <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white flex items-center gap-4">
+          <span className="w-12 h-12 rounded-2xl bg-accent-violet/10 dark:bg-white/5 flex items-center justify-center text-accent-violet">
+            <HiUser className="w-6 h-6" />
+          </span>
+          Account <span className="gradient-text">Settings</span>
+        </h1>
+        <p className="mt-2 text-slate-500 dark:text-gray-400 font-medium">
+          Personalize your public profile and developer presence.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left: Avatar & Quick Info */}
+        <div className="lg:col-span-1">
+          <div className="glass-panel p-6 text-center">
+            <div className="relative inline-block group mb-6">
+              <div className="absolute -inset-1 bg-gradient-to-r from-accent-violet to-accent-neon rounded-full blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
+              <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-dark-800 bg-slate-100 dark:bg-dark-900 shadow-xl">
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Avatar Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-slate-400">
+                    <HiUser className="w-16 h-16" />
+                  </div>
+                )}
+                <button 
+                  onClick={() => fileInputRef.current.click()}
+                  className="absolute inset-x-0 bottom-0 py-2 bg-black/60 text-white text-[10px] uppercase font-bold tracking-widest opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  Change
+                </button>
+              </div>
+              <input 
+                type="file" 
+                hidden 
+                ref={fileInputRef} 
+                onChange={handleAvatarChange}
+                accept="image/*"
+              />
+            </div>
+            
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">{user?.name}</h3>
+            <p className="text-sm text-slate-500 dark:text-gray-500 uppercase tracking-widest font-black mb-4">{user?.role}</p>
+            
+            <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
+               <div className="flex items-center justify-between text-xs font-bold">
+                  <span className="text-slate-400 uppercase">Status</span>
+                  <span className="flex items-center gap-1 text-accent-emerald">
+                     <HiCheckCircle /> Online
+                  </span>
+               </div>
+               <div className="flex items-center justify-between text-xs font-bold">
+                  <span className="text-slate-400 uppercase">Storage</span>
+                  <span className="text-slate-700 dark:text-slate-300">Dedicated Avatar Bucket</span>
+               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Main Form */}
+        <div className="lg:col-span-2 space-y-6">
+          <form onSubmit={handleProfileUpdate} className="glass-panel p-8 space-y-6">
+            <div className="flex items-center gap-2 mb-2">
+              <HiPencilAlt className="text-accent-violet w-5 h-5" />
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Public Profile</h2>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Display Name</label>
+                <input 
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="input-field py-3 text-base"
+                  placeholder="Your name as it appears in the store"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Professional Bio</label>
+                <textarea 
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleInputChange}
+                  rows="4"
+                  className="input-field py-3 text-base min-h-[120px]"
+                  placeholder="Tell the community about your work, skills, or what drives you..."
+                />
+                <p className="mt-2 text-[10px] text-slate-500 italic">Visible on your public developer profile page.</p>
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-slate-200 dark:border-white/10 flex justify-end">
+              <button 
+                type="submit" 
+                disabled={loading}
+                className="btn-primary py-3 px-10 flex items-center gap-2"
+              >
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <HiCloudUpload className="w-5 h-5" />
+                )}
+                Save Changes
+              </button>
+            </div>
+          </form>
+
+          {/* Security Mockup (Not functional without backend password reset logic yet) */}
+          <div className="glass-panel p-8 opacity-60">
+             <div className="flex items-center gap-2 mb-6">
+                <HiLockClosed className="text-rose-500 w-5 h-5" />
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Security & Password</h2>
+             </div>
+             <p className="text-sm text-slate-500 mb-4 flex items-center gap-2">
+                <HiExclamationCircle className="text-amber-500" />
+                Passwords managed via {user?.googleId ? 'Google/Firebase Auth' : 'Baqala Auth System'}.
+             </p>
+             <button disabled className="btn-secondary py-2 px-6 text-sm">Reset Password</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Settings;

@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { HiMenu, HiX, HiLogout, HiUpload, HiViewGrid, HiShieldCheck, HiOutlineSparkles, HiMoon, HiSun, HiSearch } from 'react-icons/hi';
+import { HiMenu, HiX, HiLogout, HiUpload, HiViewGrid, HiShieldCheck, HiOutlineSparkles, HiMoon, HiSun, HiSearch, HiCog } from 'react-icons/hi';
 import api from '../api/axios';
 
 const Navbar = () => {
@@ -221,6 +221,13 @@ const Navbar = () => {
                         <p className="text-xs text-dark-500 dark:text-gray-400 truncate">{user.email}</p>
                         <span className="badge-neon mt-2 scale-90 origin-left">{user.role}</span>
                       </div>
+                      <Link
+                        to="/settings"
+                        onClick={() => setProfileOpen(false)}
+                        className="w-full px-4 py-2.5 text-left text-sm font-medium text-dark-700 dark:text-gray-200 hover:bg-dark-100 dark:hover:bg-white/5 rounded-xl flex items-center gap-2 transition-colors"
+                      >
+                        <HiCog className="w-4 h-4 text-accent-violet" /> Settings
+                      </Link>
                       <button
                         onClick={handleLogout}
                         className="w-full px-4 py-2.5 text-left text-sm font-medium text-rose-500 dark:text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-500/10 rounded-xl flex items-center gap-2 transition-colors"
@@ -282,6 +289,11 @@ const Navbar = () => {
                 <Link to="/admin" onClick={() => setMenuOpen(false)} className="p-3 bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-xl font-medium flex items-center gap-2 border border-rose-200 dark:border-rose-500/20"><HiShieldCheck /> Admin Panel</Link>
               )}
               
+              {user && (
+                <Link to="/settings" onClick={() => setMenuOpen(false)} className="p-3 bg-white/50 dark:bg-white/5 rounded-xl text-dark-800 dark:text-gray-300 font-medium flex items-center gap-2">
+                  <HiCog className="text-accent-violet" /> Settings
+                </Link>
+              )}
               <div className="h-px bg-dark-200/50 dark:bg-white/10 my-2" />
               
               {user ? (
