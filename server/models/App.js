@@ -75,7 +75,7 @@ const appSchema = new mongoose.Schema({
     min: 0,
     max: 5
   },
-  totalReviews: {
+  reviewCount: {
     type: Number,
     default: 0
   },
