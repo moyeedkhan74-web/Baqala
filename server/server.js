@@ -85,6 +85,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/assets', assetsRoutes);
 app.use('/api/downloads', downloadRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/contact', require('./routes/contact'));
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -39,6 +39,7 @@ const Footer = ({ className = '' }) => {
               <li><Link to="/privacy-policy" className="hover:text-accent-neon transition-colors">Privacy Policy</Link></li>
               <li><Link to="/terms-of-service" className="hover:text-accent-neon transition-colors">Terms of Service</Link></li>
               <li><Link to="/cookie-policy" className="hover:text-accent-neon transition-colors">Cookie Policy</Link></li>
+              <li><Link to="/contact" className="hover:text-accent-neon transition-colors">Contact Us</Link></li>
             </ul>
           </div>
         </div>
