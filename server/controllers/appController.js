@@ -375,7 +375,13 @@ exports.getApps = async (req, res) => {
     } = req.query;
 
     const query = { status: { $in: ['approved', 'pending'] } };
-    if (search) query.$text = { $search: search };
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { developerName: { $regex: search, $options: 'i' } },
+        { tags: { $regex: search, $options: 'i' } }
+      ];
+    }
     if (category) query.category = category;
     if (platform) query.platform = platform;
     if (req.query.featured === 'true') query.isFeatured = true;
@@ -415,40 +421,41 @@ exports.getApps = async (req, res) => {
 exports.searchApps = async (req, res) => {
   try {
     const { q } = req.query;
-    if (!q) return res.json({ apps: [] });
+    if (!q || q.trim().length < 2) return res.json({ apps: [] });
 
-    // Using text search for relevance + regex for partial matches
-    const apps = await App.find(
-      { 
-        $text: { $search: q },
-        status: 'approved'
-      },
-      { score: { $meta: 'textScore' } }
-    )
-    .sort({ score: { $meta: 'textScore' }, totalDownloads: -1 })
+    const queryStr = q.trim();
+
+    // 1. First attempt: Aggressive Case-Insensitive Regex (best for partial matches like "baqa")
+    let apps = await App.find({
+      $or: [
+        { title: { $regex: queryStr, $options: 'i' } },
+        { developerName: { $regex: queryStr, $options: 'i' } },
+        { tags: { $regex: queryStr, $options: 'i' } }
+      ],
+      status: 'approved'
+    })
+    .sort({ totalDownloads: -1 })
     .limit(10)
     .select('title icon developerName averageRating category platform');
 
-    res.json({ apps });
-  } catch (error) {
-    // Fallback to regex if text search fails/isn't indexed yet
-    try {
-      const q = req.query.q;
-      const apps = await App.find({
-        $or: [
-          { title: { $regex: q, $options: 'i' } },
-          { developerName: { $regex: q, $options: 'i' } },
-          { tags: { $regex: q, $options: 'i' } }
-        ],
-        status: 'approved'
-      })
-      .sort({ totalDownloads: -1 })
+    // 2. If regex finds nothing, try the Text Index (best for full words/relevance)
+    if (apps.length === 0) {
+      apps = await App.find(
+        { 
+          $text: { $search: queryStr },
+          status: 'approved'
+        },
+        { score: { $meta: 'textScore' } }
+      )
+      .sort({ score: { $meta: 'textScore' }, totalDownloads: -1 })
       .limit(10)
       .select('title icon developerName averageRating category platform');
-      res.json({ apps });
-    } catch (e) {
-      res.status(500).json({ message: 'Search failed.' });
     }
+
+    res.json({ apps });
+  } catch (error) {
+    console.error('Search error:', error);
+    res.status(500).json({ message: 'Search failed.' });
   }
 };
 
