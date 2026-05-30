@@ -4,13 +4,13 @@ const { auth } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Like or dislike a feedback (must be before /:appId to avoid route conflict)
+router.post('/:feedbackId/react', auth, reactFeedback);
+
 // Get all feedback for an app
 router.get('/:appId', getFeedback);
 
 // Create feedback or reply (requires auth)
 router.post('/:appId', auth, createFeedback);
-
-// Like or dislike a feedback
-router.post('/:feedbackId/react', auth, reactFeedback);
 
 module.exports = router;
