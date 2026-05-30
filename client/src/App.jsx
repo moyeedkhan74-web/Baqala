@@ -27,6 +27,7 @@ import Contact from './pages/Contact';
 import SearchResults from './pages/SearchResults';
 import CategoryPage from './pages/CategoryPage';
 import DeveloperProfile from './pages/DeveloperProfile';
+import Settings from './pages/Settings';
 
 function App() {
   const location = useLocation();
@@ -107,6 +108,11 @@ function App() {
                 <Route path="/search" element={<AnimatedLayout><SearchResults /></AnimatedLayout>} />
                 <Route path="/category/:name" element={<AnimatedLayout><CategoryPage /></AnimatedLayout>} />
                 <Route path="/developer/:id" element={<AnimatedLayout><DeveloperProfile /></AnimatedLayout>} />
+                <Route path="/settings" element={
+                  <ProtectedRoute>
+                    <AnimatedLayout><Settings /></AnimatedLayout>
+                  </ProtectedRoute>
+                } />
                 
                 <Route path="/developer" element={
                   <ProtectedRoute>
