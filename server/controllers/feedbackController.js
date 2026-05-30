@@ -14,12 +14,12 @@ exports.createFeedback = async (req, res, next) => {
       parent: parentId || null
     });
     // Update app rating aggregate if top‑level feedback
-    if (!parentId) {
+    if (!parentId && rating) {
       const app = await App.findById(appId);
-      const total = (app.averageRating || 0) * (app.ratingCount || 0) + rating;
-      const count = (app.ratingCount || 0) + 1;
-      app.averageRating = total / count;
-      app.ratingCount = count;
+      const total = (app.averageRating || 0) * (app.reviewCount || 0) + Number(rating);
+      const count = (app.reviewCount || 0) + 1;
+      app.averageRating = Math.round((total / count) * 10) / 10;
+      app.reviewCount = count;
       await app.save();
     }
     res.status(201).json({ feedback });

@@ -80,6 +80,7 @@ app.use('/api/assets', assetsRoutes);
 app.use('/api/downloads', downloadRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/contact', require('./routes/contact'));
+app.use('/api/feedback', require('./routes/feedback'));
 
 // Health check
 app.get('/api/health', (req, res) => {
