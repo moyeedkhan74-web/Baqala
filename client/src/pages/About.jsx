@@ -118,8 +118,8 @@ const About = () => {
         <div className="glass-panel p-12 rounded-[3rem] border-white/30 relative flex flex-col md:flex-row gap-12 items-center overflow-hidden">
           <div className="absolute -top-10 -left-10 w-40 h-40 bg-accent-neon opacity-10 blur-[100px]" />
           <div className="flex-1">
-            <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-6">Overcoming the Hurdles</h2>
-            <div className="space-y-6 text-slate-600 dark:text-gray-400 font-medium">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white mb-6">Overcoming the Hurdles</h2>
+            <div className="space-y-6 text-sm sm:text-base text-slate-600 dark:text-gray-400 font-medium">
               <p>
                 Developing Baqala was an intense journey of solving engineering puzzles. From tackling complex <span className="text-accent-violet">CORS configuration</span> across diverse cloud providers to building a seamless file-proxy for cross-origin downloads, we never backed down.
               </p>
