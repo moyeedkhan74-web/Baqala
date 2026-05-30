@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/axios';
+import { useAuth } from '../context/AuthContext';
 import AppCard from '../components/AppCard';
 import HeroCarousel from '../components/HeroCarousel';
 import SEOHead from '../components/SEOHead';
@@ -34,21 +35,22 @@ const Home = () => {
 
   useEffect(() => { fetchData(); }, [debouncedSearch, category, sort]);
 
+  const { user } = useAuth();
+  
   const fetchData = async () => {
     try {
-      const token = localStorage.getItem('token');
       const fetchPromises = [
         api.get('/apps', { params: { search: debouncedSearch, category, sort } }),
         api.get('/apps/categories'),
         api.get('/apps', { params: { featured: 'true', limit: 5 } })
       ];
-      if (token) fetchPromises.push(api.get('/apps/my'));
+      if (user) fetchPromises.push(api.get('/apps/my'));
 
       const results = await Promise.all(fetchPromises);
       setApps(results[0].data.apps);
       setCategories(results[1].data.categories || []);
       setFeaturedApps(results[2].data.apps || []);
-      if (token && results[3]) setMyApps(results[3].data.apps);
+      if (user && results[3]) setMyApps(results[3].data.apps);
     } catch {
       toast.error('Failed to load apps');
     } finally {
