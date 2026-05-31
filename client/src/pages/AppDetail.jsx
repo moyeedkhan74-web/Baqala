@@ -588,18 +588,26 @@ const AppDetail = () => {
                 >
                   {app.developer?.name || app.developerName}
                 </Link>
-                {app.developer?.specialization && (
-                  <p className="text-sm font-bold text-slate-800 dark:text-slate-100 mt-1.5 leading-tight">{app.developer.specialization}</p>
-                )}
-                {app.developer?.tagline && (
-                  <span className="text-[10px] font-black text-accent-violet dark:text-accent-neon uppercase tracking-[0.15em] mt-1 block">
-                    {app.developer.tagline}
-                  </span>
-                )}
+                <div className="mt-4 space-y-1">
+                  {app.developer?.specialization && (
+                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">
+                      Expert in {app.developer.specialization}
+                    </p>
+                  )}
+                  {app.developer?.tagline && (
+                    <p className="text-[11px] font-medium text-slate-500 dark:text-gray-400 italic">
+                      "{app.developer.tagline}"
+                    </p>
+                  )}
+                </div>
+
                 {app.developer?.bio && (
-                  <p className="text-[13px] text-slate-600 dark:text-gray-400 mt-4 line-clamp-3 italic leading-relaxed">
-                    "{app.developer.bio}"
-                  </p>
+                  <div className="mt-6 w-full text-left">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-violet dark:text-accent-neon mb-2">Biography</h4>
+                    <p className="text-[13px] text-slate-600 dark:text-gray-400 line-clamp-4 leading-relaxed italic">
+                      {app.developer.bio}
+                    </p>
+                  </div>
                 )}
                 <span className="inline-block border-2 border-accent-violet text-accent-violet rounded px-3 py-1 uppercase tracking-[0.2em] text-[11px] font-black mt-4 shadow-[0_0_15px_rgba(139,92,246,0.3)] bg-accent-violet/5">
                   Publisher
