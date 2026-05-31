@@ -115,9 +115,12 @@ const DeveloperProfile = () => {
             </div>
           )}
 
-          <p className="text-lg text-slate-600 dark:text-gray-400 max-w-2xl mb-8 leading-relaxed font-medium">
-            {developer?.bio || `Independent software engineer contributing high-quality digital experiences to the Baqala community since ${developer?.joinDate ? new Date(developer.joinDate).getFullYear() : '2024'}.`}
-          </p>
+          <div className="mt-8">
+            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-accent-violet dark:text-accent-neon mb-4">About the Developer</h2>
+            <p className="text-lg text-slate-600 dark:text-gray-400 max-w-2xl mb-8 leading-relaxed font-medium">
+              {developer?.bio || `Independent software engineer contributing high-quality digital experiences to the Baqala community since ${developer?.joinDate ? new Date(developer.joinDate).getFullYear() : '2024'}.`}
+            </p>
+          </div>
 
           {/* Stats Grid */}
           <div className="flex flex-wrap justify-center md:justify-start gap-4 sm:gap-6">
