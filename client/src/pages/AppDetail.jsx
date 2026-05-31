@@ -611,17 +611,7 @@ const AppDetail = () => {
                   )}
                 </div>
 
-                {app.developer?.bio && (
-                  <div className="mt-8 w-full text-left pt-6 border-t border-slate-200/50 dark:border-white/5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-1.5 h-4 bg-accent-violet rounded-full"></div>
-                      <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900 dark:text-white">Developer Bio</h4>
-                    </div>
-                    <p className="text-[13px] text-slate-600 dark:text-gray-400 line-clamp-4 leading-relaxed font-serif italic pl-3.5 border-l-2 border-slate-100 dark:border-white/5">
-                      {app.developer.bio}
-                    </p>
-                  </div>
-                )}
+
                 <span className="inline-block border-2 border-accent-violet text-accent-violet rounded px-3 py-1 uppercase tracking-[0.2em] text-[11px] font-black mt-4 shadow-[0_0_15px_rgba(139,92,246,0.3)] bg-accent-violet/5">
                   Publisher
                 </span>
