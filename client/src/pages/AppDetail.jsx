@@ -588,23 +588,36 @@ const AppDetail = () => {
                 >
                   {app.developer?.name || app.developerName}
                 </Link>
-                <div className="mt-4 space-y-1">
+                <div className="mt-5 w-full space-y-4">
                   {app.developer?.specialization && (
-                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">
-                      Expert in {app.developer.specialization}
-                    </p>
+                    <div className="flex flex-col items-center">
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-gray-500 mb-2">Specialization</span>
+                      <div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-accent-violet/10 to-accent-emerald/10 border border-accent-violet/30 dark:border-accent-neon/30 shadow-glass-colorful">
+                        <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                           {app.developer.specialization}
+                        </span>
+                      </div>
+                    </div>
                   )}
+                  
                   {app.developer?.tagline && (
-                    <p className="text-[11px] font-medium text-slate-500 dark:text-gray-400 italic">
-                      "{app.developer.tagline}"
-                    </p>
+                    <div className="relative py-2 px-4 italic text-center">
+                      <span className="absolute top-0 left-0 text-3xl font-serif text-accent-violet/20 leading-none">“</span>
+                      <p className="text-sm font-semibold text-slate-600 dark:text-gray-300 leading-relaxed px-4">
+                        {app.developer.tagline}
+                      </p>
+                      <span className="absolute bottom-0 right-0 text-3xl font-serif text-accent-violet/20 leading-none translate-y-2">”</span>
+                    </div>
                   )}
                 </div>
 
                 {app.developer?.bio && (
-                  <div className="mt-6 w-full text-left">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-violet dark:text-accent-neon mb-2">Biography</h4>
-                    <p className="text-[13px] text-slate-600 dark:text-gray-400 line-clamp-4 leading-relaxed italic">
+                  <div className="mt-8 w-full text-left pt-6 border-t border-slate-200/50 dark:border-white/5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-1.5 h-4 bg-accent-violet rounded-full"></div>
+                      <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900 dark:text-white">Developer Bio</h4>
+                    </div>
+                    <p className="text-[13px] text-slate-600 dark:text-gray-400 line-clamp-4 leading-relaxed font-serif italic pl-3.5 border-l-2 border-slate-100 dark:border-white/5">
                       {app.developer.bio}
                     </p>
                   </div>

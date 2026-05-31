@@ -98,26 +98,41 @@ const DeveloperProfile = () => {
           </div>
 
           {(developer?.tagline || developer?.specialization) && (
-            <div className="mb-8 space-y-3">
+            <div className="mb-8 mt-4 space-y-5">
               {developer?.specialization && (
-                <div className="flex items-center gap-3 text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100">
-                  <span className="w-1 h-8 bg-gradient-to-b from-accent-violet to-accent-neon rounded-full" />
-                  {developer.specialization}
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-gray-500 mb-2 block">
+                    Field of Specialization
+                  </span>
+                  <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full bg-gradient-to-r from-accent-violet/10 to-accent-emerald/10 border border-accent-violet/30 dark:border-accent-neon/20">
+                    <div className="w-1.5 h-4 bg-gradient-to-b from-accent-violet to-accent-emerald rounded-full flex-shrink-0" />
+                    <span className="text-base md:text-lg font-bold text-slate-800 dark:text-slate-100">
+                      {developer.specialization}
+                    </span>
+                  </div>
                 </div>
               )}
               {developer?.tagline && (
-                <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm">
-                  <p className="text-xs md:text-sm font-black text-accent-violet dark:text-accent-neon uppercase tracking-[0.2em]">
-                    {developer.tagline}
-                  </p>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-gray-500 mb-2 block">
+                    Professional Tagline
+                  </span>
+                  <div className="relative pl-5 border-l-2 border-accent-violet/40 dark:border-accent-neon/30">
+                    <p className="text-base font-semibold italic text-slate-600 dark:text-gray-300 leading-relaxed">
+                      "{developer.tagline}"
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
           )}
 
-          <div className="mt-8">
-            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-accent-violet dark:text-accent-neon mb-4">About the Developer</h2>
-            <p className="text-lg text-slate-600 dark:text-gray-400 max-w-2xl mb-8 leading-relaxed font-medium">
+          <div className="mt-6 pt-6 border-t border-slate-200/70 dark:border-white/5">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-1.5 h-4 bg-accent-violet rounded-full" />
+              <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900 dark:text-white">About the Developer</h2>
+            </div>
+            <p className="text-base text-slate-600 dark:text-gray-400 max-w-2xl mb-8 leading-relaxed font-serif italic pl-3.5 border-l-2 border-slate-100 dark:border-white/5">
               {developer?.bio || `Independent software engineer contributing high-quality digital experiences to the Baqala community since ${developer?.joinDate ? new Date(developer.joinDate).getFullYear() : '2024'}.`}
             </p>
           </div>
