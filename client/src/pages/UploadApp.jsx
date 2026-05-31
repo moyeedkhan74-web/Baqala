@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 import { HiUpload, HiDocumentText, HiPhotograph, HiCheckCircle, HiArrowRight, HiArrowLeft, HiOutlineSparkles } from 'react-icons/hi';
 
 const UploadApp = () => {
@@ -10,7 +11,16 @@ const UploadApp = () => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [formData, setFormData] = useState({ title: '', description: '', tagline: '', category: 'Games', version: '1.0.0', platform: 'Windows', developerName: '' });
+  const { user } = useAuth();
+  const [formData, setFormData] = useState({ 
+    title: '', 
+    description: '', 
+    tagline: '', 
+    category: 'Games', 
+    version: '1.0.0', 
+    platform: 'Windows', 
+    developerName: user?.name || '' 
+  });
   const [files, setFiles] = useState({ appFile: null, icon: null, screenshots: [] });
 
   const categories = ['Games', 'Productivity', 'Social', 'Entertainment', 'Tools', 'Education'];
