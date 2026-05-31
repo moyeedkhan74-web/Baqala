@@ -477,7 +477,7 @@ exports.searchApps = async (req, res) => {
 exports.getApp = async (req, res) => {
   try {
     const app = await App.findById(req.params.id)
-      .populate('developer', 'name email avatar tagline specialization');
+      .populate('developer', 'name email avatar tagline specialization bio');
     if (!app) return res.status(404).json({ message: 'App not found.' });
     res.json({ app });
   } catch (error) {

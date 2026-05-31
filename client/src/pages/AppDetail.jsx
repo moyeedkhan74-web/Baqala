@@ -596,7 +596,12 @@ const AppDetail = () => {
                     {app.developer.tagline}
                   </span>
                 )}
-                <span className="inline-block border-2 border-accent-violet text-accent-violet rounded px-3 py-1 uppercase tracking-[0.2em] text-[11px] font-black mt-3 shadow-[0_0_15px_rgba(139,92,246,0.3)] bg-accent-violet/5">
+                {app.developer?.bio && (
+                  <p className="text-[13px] text-slate-600 dark:text-gray-400 mt-3 line-clamp-3 italic">
+                    "{app.developer.bio}"
+                  </p>
+                )}
+                <span className="inline-block border-2 border-accent-violet text-accent-violet rounded px-3 py-1 uppercase tracking-[0.2em] text-[11px] font-black mt-4 shadow-[0_0_15px_rgba(139,92,246,0.3)] bg-accent-violet/5">
                   Publisher
                 </span>
               </div>

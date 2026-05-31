@@ -88,7 +88,7 @@ const DeveloperProfile = () => {
 
         {/* Info */}
         <div className="flex-1 text-center md:text-left">
-          <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mb-4">
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mb-2">
             <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               {developer?.name || 'Unknown Developer'}
             </h1>
@@ -96,6 +96,21 @@ const DeveloperProfile = () => {
               Verified Developer
             </span>
           </div>
+
+          {(developer?.tagline || developer?.specialization) && (
+            <div className="mb-6 flex flex-col gap-1">
+              {developer?.specialization && (
+                <p className="text-xl font-bold text-slate-700 dark:text-slate-200">
+                  {developer.specialization}
+                </p>
+              )}
+              {developer?.tagline && (
+                <p className="text-xs font-black text-accent-violet dark:text-accent-neon uppercase tracking-[0.3em]">
+                  {developer.tagline}
+                </p>
+              )}
+            </div>
+          )}
 
           <p className="text-lg text-slate-600 dark:text-gray-400 max-w-2xl mb-8 leading-relaxed font-medium">
             {developer?.bio || `Independent software engineer contributing high-quality digital experiences to the Baqala community since ${developer?.joinDate ? new Date(developer.joinDate).getFullYear() : '2024'}.`}
