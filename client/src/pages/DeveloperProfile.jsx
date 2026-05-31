@@ -98,16 +98,19 @@ const DeveloperProfile = () => {
           </div>
 
           {(developer?.tagline || developer?.specialization) && (
-            <div className="mb-6 flex flex-col gap-1">
+            <div className="mb-8 space-y-3">
               {developer?.specialization && (
-                <p className="text-xl font-bold text-slate-700 dark:text-slate-200">
+                <div className="flex items-center gap-3 text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100">
+                  <span className="w-1 h-8 bg-gradient-to-b from-accent-violet to-accent-neon rounded-full" />
                   {developer.specialization}
-                </p>
+                </div>
               )}
               {developer?.tagline && (
-                <p className="text-xs font-black text-accent-violet dark:text-accent-neon uppercase tracking-[0.3em]">
-                  {developer.tagline}
-                </p>
+                <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm">
+                  <p className="text-xs md:text-sm font-black text-accent-violet dark:text-accent-neon uppercase tracking-[0.2em]">
+                    {developer.tagline}
+                  </p>
+                </div>
               )}
             </div>
           )}

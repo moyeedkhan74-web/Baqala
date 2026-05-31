@@ -29,7 +29,7 @@ exports.getDeveloperProfile = async (req, res) => {
     // 3. Fetch Developer's apps
     const apps = await App.find({ developer: user._id, status: 'approved' })
       .sort({ totalDownloads: -1 })
-      .select('title icon category averageRating reviewCount totalDownloads');
+      .select('_id title icon category averageRating reviewCount totalDownloads');
 
     res.json({
       developer: {

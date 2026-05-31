@@ -589,15 +589,15 @@ const AppDetail = () => {
                   {app.developer?.name || app.developerName}
                 </Link>
                 {app.developer?.specialization && (
-                  <p className="text-sm text-slate-600 dark:text-gray-400 mt-1 font-medium">{app.developer.specialization}</p>
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-100 mt-1.5 leading-tight">{app.developer.specialization}</p>
                 )}
                 {app.developer?.tagline && (
-                  <span className="text-[11px] font-bold text-accent-violet dark:text-accent-neon uppercase tracking-wider mt-1 block">
+                  <span className="text-[10px] font-black text-accent-violet dark:text-accent-neon uppercase tracking-[0.15em] mt-1 block">
                     {app.developer.tagline}
                   </span>
                 )}
                 {app.developer?.bio && (
-                  <p className="text-[13px] text-slate-600 dark:text-gray-400 mt-3 line-clamp-3 italic">
+                  <p className="text-[13px] text-slate-600 dark:text-gray-400 mt-4 line-clamp-3 italic leading-relaxed">
                     "{app.developer.bio}"
                   </p>
                 )}

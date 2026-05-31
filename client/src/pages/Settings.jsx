@@ -124,15 +124,18 @@ const Settings = () => {
             </div>
             
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">{formData.name || user?.name}</h3>
+            
             {formData.specialization && (
-              <h4 className="text-xl font-bold text-slate-900 dark:text-white mt-2">
+              <h4 className="text-base font-bold text-slate-800 dark:text-slate-200 mt-2">
                 {formData.specialization}
               </h4>
             )}
             {formData.tagline && (
-              <span className="text-[11px] font-black uppercase tracking-widest text-accent-violet dark:text-accent-neon mt-1">
-                {formData.tagline}
-              </span>
+              <div className="mt-1 inline-block px-3 py-1 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                <span className="text-[10px] font-black uppercase tracking-widest text-accent-violet dark:text-accent-neon">
+                  {formData.tagline}
+                </span>
+              </div>
             )}
             <div className="w-full h-[1px] bg-slate-200 dark:bg-white/10 my-6" />
             <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed italic line-clamp-4">
@@ -174,34 +177,34 @@ const Settings = () => {
 
               <div>
                 <label className="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2">
-                  Professional Specialization
+                  Field of Expertise
                 </label>
                 <input
                   type="text"
                   name="specialization"
                   value={formData.specialization}
                   onChange={handleInputChange}
-                  placeholder="e.g. Android UI Expert"
+                  placeholder="e.g. Android UI Architect"
                   className="input-field"
                   maxLength={100}
                 />
-                <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-tight italic">Shown on the app inspection view under your name</p>
+                <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-tight italic">Indicate your primary domain (e.g., Game Dev, Fintech, Utility Tools)</p>
               </div>
 
               <div>
                 <label className="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2">
-                  Meta Tagline
+                  Professional Headline
                 </label>
                 <input
                   type="text"
                   name="tagline"
                   value={formData.tagline}
                   onChange={handleInputChange}
-                  placeholder="e.g. Building the future of mobile design"
+                  placeholder="e.g. Crafting seamless digital experiences"
                   className="input-field"
                   maxLength={100}
                 />
-                <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-tight italic">Shown as a highlighted catchphrase on app inspection view</p>
+                <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-tight italic">A short, powerful catchphrase that defines your work</p>
               </div>
 
               <div>
