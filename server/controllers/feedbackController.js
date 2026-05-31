@@ -7,18 +7,24 @@ const populateUsers = async (feedbacks) => {
   if (!feedbacks || feedbacks.length === 0) return [];
   
   const userIds = [...new Set(feedbacks.map(f => f.user_id))];
-  const users = await User.find({ _id: { $in: userIds } }).select('name avatar');
-  
-  const userMap = {};
-  users.forEach(u => {
-    userMap[u._id.toString()] = u;
-  });
+  let userMap = {};
+
+  try {
+    // Attempt to pull names/avatars from MongoDB
+    const users = await User.find({ _id: { $in: userIds } }).select('name avatar');
+    users.forEach(u => {
+      userMap[u._id.toString()] = u;
+    });
+  } catch (mongoErr) {
+    // Resilience: Log the error but don't crash. Feedback text is still in Supabase.
+    console.error('[DATABASE RESILIENCE] MongoDB unreachable for feedback avatars:', mongoErr.message);
+  }
 
   return feedbacks.map(f => ({
     ...f,
     _id: f.id,
     app: f.app_id,
-    user: userMap[f.user_id] || { name: 'Unknown User' },
+    user: userMap[f.user_id] || { name: 'Baqala User', avatar: null },
     parent: f.parent_id,
     likedBy: f.liked_by || [],
     dislikedBy: f.disliked_by || [],
