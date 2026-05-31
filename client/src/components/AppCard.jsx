@@ -61,7 +61,7 @@ const AppCard = memo(({ app, featured = false }) => {
               </h2>
               {app.tagline && <p className="text-lg text-gray-700 dark:text-gray-300 font-bold mb-2">{app.tagline}</p>}
               <div className="flex flex-col mb-4">
-                <Link to={`/developer/${app.developer?._id || app.developer}`} className="inline-block text-lg text-accent-violet dark:text-accent-neon font-bold hover:underline transition-all">
+                <Link to={`/app/${app._id}`} className="inline-block text-sm text-slate-500 dark:text-gray-400 font-medium hover:text-accent-violet dark:hover:text-accent-neon transition-all">
                   {app.developerName || app.developer?.name || 'Unknown'}
                 </Link>
               </div>
@@ -115,13 +115,9 @@ const AppCard = memo(({ app, featured = false }) => {
                 {app.title}
               </h3>
               {app.tagline && <p className="hidden sm:block text-xs text-dark-600 dark:text-gray-400 font-semibold truncate">{app.tagline}</p>}
-              <Link 
-                to={`/developer/${app.developer?._id || app.developer}`} 
-                onClick={(e) => e.stopPropagation()}
-                className="text-[11px] sm:text-sm text-dark-500 dark:text-gray-400 font-semibold truncate mt-0.5 sm:mt-0 hover:text-accent-violet dark:hover:text-accent-neon transition-colors relative z-20"
-              >
+              <span className="text-[10px] sm:text-xs text-dark-400 dark:text-gray-500 font-medium truncate mt-0.5 sm:mt-0 block">
                 {app.developerName || app.developer?.name || 'Unknown'}
-              </Link>
+              </span>
             </div>
           </div>
 
