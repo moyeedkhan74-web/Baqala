@@ -18,11 +18,24 @@ const Navbar = () => {
   const [searching, setSearching] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const profileRef = useRef(null);
+
+  // Close profile on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Close menus on path change
   useEffect(() => {
     setMenuOpen(false);
     setMobileSearchOpen(false);
+    setProfileOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -162,29 +175,55 @@ const Navbar = () => {
                 <Link to="/developer" className={`px-5 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${isActive('/developer') ? 'bg-white dark:bg-white/10 text-accent-violet dark:text-white shadow-sm' : 'text-dark-500 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-white/5'}`}>
                   <HiViewGrid /> Dashboard
                 </Link>
+                <Link to="/upload" className={`px-5 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${isActive('/upload') ? 'bg-white dark:bg-white/10 text-accent-neon shadow-sm' : 'text-dark-500 dark:text-gray-400 hover:text-accent-neon hover:bg-accent-neon/10'}`}>
+                  <HiUpload /> Upload
+                </Link>
               </>
+            )}
+            {user && user.role === 'admin' && (
+              <Link to="/admin" className={`px-5 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${isActive('/admin') ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300' : 'text-dark-500 dark:text-gray-400 hover:text-rose-500'}`}>
+                <HiShieldCheck /> Admin
+              </Link>
             )}
           </div>
 
           {/* Controls */}
           <div className="flex items-center gap-2 sm:gap-4">
             {/* Mobile Search Trigger */}
-            <button onClick={() => setMobileSearchOpen(true)} className="min-[1024px]:hidden p-2.5 rounded-full bg-white/50 dark:bg-white/5 border border-dark-200/50 dark:border-white/10">
+            <button onClick={() => setMobileSearchOpen(true)} className="min-[1024px]:hidden p-2.5 rounded-full bg-white/50 dark:bg-white/5 border border-dark-200/50 dark:border-white/10" aria-label="Open search">
               <HiSearch className="w-5 h-5 dark:text-gray-300" />
             </button>
 
             {/* Theme Toggle */}
-            <button onClick={toggleTheme} className="hidden min-[900px]:flex p-2.5 rounded-full bg-white/50 dark:bg-white/5 border border-dark-200/50 dark:border-white/10">
+            <button onClick={toggleTheme} className="hidden min-[900px]:flex p-2.5 rounded-full bg-white/50 dark:bg-white/5 border border-dark-200/50 dark:border-white/10" aria-label="Toggle theme">
               {isDark ? <HiSun className="w-5 h-5 text-yellow-400" /> : <HiMoon className="w-5 h-5 text-accent-violet" />}
             </button>
 
             {/* Auth */}
-            <div className="hidden min-[900px]:flex items-center gap-4">
+            <div ref={profileRef} className="hidden min-[900px]:flex items-center gap-4 relative">
               {user ? (
-                <button onClick={() => setProfileOpen(!profileOpen)} className="flex items-center gap-2 pl-2 pr-4 py-1.5 rounded-full border border-dark-200/50 dark:border-white/10 bg-white/50 dark:bg-white/5">
-                  <div className="w-8 h-8 rounded-full bg-accent-violet flex items-center justify-center text-white font-bold text-xs">{user.name?.charAt(0)}</div>
-                  <span className="text-sm font-semibold dark:text-gray-200">{user.name}</span>
-                </button>
+                <>
+                  <button onClick={() => setProfileOpen(!profileOpen)} className="flex items-center gap-2 pl-2 pr-4 py-1.5 rounded-full border border-dark-200/50 dark:border-white/10 bg-white/50 dark:bg-white/5 hover:border-dark-300 transition-all">
+                    <div className="w-8 h-8 rounded-full bg-accent-violet flex items-center justify-center text-white font-bold text-xs">{user.name?.charAt(0).toUpperCase()}</div>
+                    <span className="text-sm font-semibold dark:text-gray-200 max-w-[100px] truncate">{user.name}</span>
+                  </button>
+
+                  <AnimatePresence>
+                    {profileOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute right-0 top-full mt-2 w-56 glass-panel p-2 z-[70] shadow-2xl origin-top-right"
+                      >
+                        <div className="p-3 border-b border-white/10 mb-2">
+                          <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-accent-violet mt-1">{user.role}</p>
+                        </div>
+                        <Link to="/settings" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-sm font-medium dark:text-gray-200"><HiCog /> Settings</Link>
+                        <button onClick={handleLogout} className="flex items-center gap-3 p-3 rounded-xl hover:bg-rose-500/10 text-sm font-medium text-rose-500 w-full"><HiLogout /> Sign Out</button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </>
               ) : (
                 <Link to="/login" className="btn-primary text-sm">Sign In</Link>
               )}
@@ -212,10 +251,22 @@ const Navbar = () => {
                <img src="/logo.png" className="h-12" alt="Logo" />
                <button onClick={() => setMenuOpen(false)} className="p-3"><HiX className="w-8 h-8 dark:text-white" /></button>
             </div>
-            <div className="flex-1 px-6 py-10 flex flex-col gap-6">
+            <div className="flex-1 px-6 py-10 flex flex-col gap-6 overflow-y-auto">
               <Link to="/" onClick={() => setMenuOpen(false)} className="text-4xl font-black dark:text-white">Explore</Link>
-              {user && <Link to="/developer" onClick={() => setMenuOpen(false)} className="text-4xl font-black dark:text-white">Dashboard</Link>}
+              {user && (
+                <>
+                  <Link to="/developer" onClick={() => setMenuOpen(false)} className="text-4xl font-black dark:text-white flex items-center gap-4"><HiViewGrid className="w-8 h-8 text-accent-violet" /> Dashboard</Link>
+                  <Link to="/upload" onClick={() => setMenuOpen(false)} className="text-4xl font-black dark:text-white flex items-center gap-4"><HiUpload className="w-8 h-8 text-accent-neon" /> Upload</Link>
+                </>
+              )}
+              {user && user.role === 'admin' && (
+                <Link to="/admin" onClick={() => setMenuOpen(false)} className="text-4xl font-black text-rose-500 flex items-center gap-4"><HiShieldCheck className="w-8 h-8" /> Admin</Link>
+              )}
+              
               <div className="h-px bg-white/10 my-4" />
+              
+              {user && <Link to="/settings" onClick={() => setMenuOpen(false)} className="text-2xl font-bold dark:text-white flex items-center gap-4"><HiCog className="text-slate-400" /> Settings</Link>}
+              
               <button onClick={toggleTheme} className="flex items-center justify-between w-full py-4 text-2xl font-bold dark:text-white">
                 Theme <span>{isDark ? <HiSun className="text-yellow-400" /> : <HiMoon className="text-accent-violet" />}</span>
               </button>
