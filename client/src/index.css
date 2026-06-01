@@ -236,33 +236,53 @@
   }
 }
 
-  /* ── Utilities ─────────────────────────────────── */
-  .glow-bg {
-    @apply absolute w-96 h-96 rounded-full blur-[120px] pointer-events-none opacity-30 dark:opacity-20;
+  /* ── Antigravity CSS Framework Utilities ────────── */
+  /* Main Grid */
+  .ag-grid {
+    display: grid;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
   }
 
-  .hide-scrollbar {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .hide-scrollbar::-webkit-scrollbar {
-    display: none;
+  /* Core Columns */
+  .ag-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+  .ag-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ag-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ag-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .ag-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+  /* Responsive Prefixes */
+  @media (min-width: 640px) {
+    .sm\:ag-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .sm\:ag-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   }
 
-  /* ── Animations ────────────────────────────────── */
-  @keyframes pulse-slow {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.85; }
+  @media (min-width: 768px) {
+    .md\:ag-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .md\:ag-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   }
-  .animate-pulse-slow {
-    animation: pulse-slow 2.5s ease-in-out infinite;
+
+  @media (min-width: 1024px) {
+    .lg\:ag-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .lg\:ag-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .lg\:ag-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   }
-  /* ── Skip Link ─────────────────────────────────── */
-  .skip-link {
-    @apply fixed top-4 left-4 z-[1000]
-           bg-accent-violet text-white font-bold px-6 py-3 rounded-xl
-           -translate-y-[200%] focus:translate-y-0
-           transition-transform duration-300
-           shadow-2xl outline-none ring-4 ring-accent-violet/30;
+
+  /* Gap System */
+  .ag-gap-sm { gap: 0.5rem; }
+  .ag-gap-md { gap: 1rem; }
+  .ag-gap-lg { gap: clamp(1rem, 3vw, 2rem); }
+
+  /* Premium UI Helpers */
+  .glass-morphic {
+    @apply bg-white/10 dark:bg-black/20 backdrop-blur-xl 
+           border border-white/20 dark:border-white/5 
+           shadow-2xl rounded-3xl;
   }
+
+  .ag-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
 }

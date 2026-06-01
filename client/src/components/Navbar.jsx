@@ -17,8 +17,8 @@ const Navbar = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const profileRef = useRef(null);
+  const drawerRef = useRef(null);
 
   // Close profile on click outside
   useEffect(() => {
@@ -26,15 +26,16 @@ const Navbar = () => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setProfileOpen(false);
       }
+      if (drawerRef.current && !drawerRef.current.contains(event.target) && menuOpen) {
+        setMenuOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [menuOpen]);
 
-  // Close menus on path change
   useEffect(() => {
     setMenuOpen(false);
-    setMobileSearchOpen(false);
     setProfileOpen(false);
   }, [location.pathname]);
 
@@ -73,7 +74,7 @@ const Navbar = () => {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
       setSearchFocused(false);
-      setMobileSearchOpen(false);
+      setMenuOpen(false);
     }
   };
 
@@ -190,7 +191,7 @@ const Navbar = () => {
           {/* Controls */}
           <div className="flex items-center gap-2 sm:gap-4">
             {/* Mobile Search Trigger */}
-            <button onClick={() => setMobileSearchOpen(true)} className="min-[1024px]:hidden p-2.5 rounded-full bg-white/50 dark:bg-white/5 border border-dark-200/50 dark:border-white/10" aria-label="Open search">
+            <button onClick={() => setMenuOpen(true)} className="min-[1024px]:hidden p-2.5 rounded-full bg-white/50 dark:bg-white/5 border border-dark-200/50 dark:border-white/10" aria-label="Open search">
               <HiSearch className="w-5 h-5 dark:text-gray-300" />
             </button>
 
@@ -241,35 +242,56 @@ const Navbar = () => {
       <AnimatePresence>
         {menuOpen && (
           <motion.div
+            ref={drawerRef}
             initial={{ y: '-100%' }}
             animate={{ y: 0 }}
             exit={{ y: '-100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-[60] bg-background-light dark:bg-background-dark min-[900px]:hidden flex flex-col"
+            className="fixed inset-0 z-[60] bg-background-light dark:bg-background-dark min-[900px]:hidden flex flex-col shadow-2xl"
           >
-            <div className="flex items-center justify-between h-20 px-4 border-b border-white/10">
+            <div className="flex items-center justify-between h-20 px-4 border-b border-slate-200 dark:border-white/10">
                <img src="/logo.png" className="h-12" alt="Logo" />
-               <button onClick={() => setMenuOpen(false)} className="p-3"><HiX className="w-8 h-8 dark:text-white" /></button>
+               <button onClick={() => setMenuOpen(false)} className="p-3 text-slate-500 hover:text-accent-violet transition-colors"><HiX className="w-8 h-8" /></button>
             </div>
-            <div className="flex-1 px-6 py-10 flex flex-col gap-6 overflow-y-auto">
-              <Link to="/" onClick={() => setMenuOpen(false)} className="text-4xl font-black dark:text-white">Explore</Link>
+            
+            <div className="flex-1 px-6 py-8 flex flex-col gap-6 overflow-y-auto">
+              {/* Mobile Search - Integrated into drawer */}
+              <form onSubmit={handleGlobalSearch} className="relative group mb-2">
+                <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-accent-violet transition-colors" />
+                <input 
+                  type="text" 
+                  placeholder="Search Baqala..." 
+                  value={searchQuery} 
+                  onChange={(e) => setSearchQuery(e.target.value)} 
+                  className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-lg dark:text-white outline-none focus:ring-2 focus:ring-accent-violet/50 transition-all font-bold placeholder:font-normal" 
+                />
+              </form>
+
+              <Link to="/" onClick={() => setMenuOpen(false)} className={`text-4xl font-black transition-colors ${isActive('/') ? 'text-accent-violet' : 'dark:text-white'}`}>Explore</Link>
               {user && (
                 <>
-                  <Link to="/developer" onClick={() => setMenuOpen(false)} className="text-4xl font-black dark:text-white flex items-center gap-4"><HiViewGrid className="w-8 h-8 text-accent-violet" /> Dashboard</Link>
-                  <Link to="/upload" onClick={() => setMenuOpen(false)} className="text-4xl font-black dark:text-white flex items-center gap-4"><HiUpload className="w-8 h-8 text-accent-neon" /> Upload</Link>
+                  <Link to="/developer" onClick={() => setMenuOpen(false)} className={`text-4xl font-black flex items-center gap-4 transition-colors ${isActive('/developer') ? 'text-accent-violet' : 'dark:text-white'}`}>
+                    <HiViewGrid className="w-8 h-8 text-accent-violet" /> Dashboard
+                  </Link>
+                  <Link to="/upload" onClick={() => setMenuOpen(false)} className={`text-4xl font-black flex items-center gap-4 transition-colors ${isActive('/upload') ? 'text-accent-neon' : 'dark:text-white'}`}>
+                    <HiUpload className="w-8 h-8 text-accent-neon" /> Upload
+                  </Link>
                 </>
               )}
               {user && user.role === 'admin' && (
-                <Link to="/admin" onClick={() => setMenuOpen(false)} className="text-4xl font-black text-rose-500 flex items-center gap-4"><HiShieldCheck className="w-8 h-8" /> Admin</Link>
+                <Link to="/admin" onClick={() => setMenuOpen(false)} className={`text-4xl font-black flex items-center gap-4 transition-colors ${isActive('/admin') ? 'text-rose-500' : 'text-rose-400'}`}>
+                  <HiShieldCheck className="w-8 h-8" /> Admin
+                </Link>
               )}
               
-              <div className="h-px bg-white/10 my-4" />
+              <div className="h-px bg-slate-200 dark:bg-white/10 my-4" />
               
-              {user && <Link to="/settings" onClick={() => setMenuOpen(false)} className="text-2xl font-bold dark:text-white flex items-center gap-4"><HiCog className="text-slate-400" /> Settings</Link>}
+              {user && <Link to="/settings" onClick={() => setMenuOpen(false)} className={`text-2xl font-bold flex items-center gap-4 transition-colors ${isActive('/settings') ? 'text-accent-violet' : 'dark:text-white'}`}><HiCog className="text-slate-400" /> Settings</Link>}
               
               <button onClick={toggleTheme} className="flex items-center justify-between w-full py-4 text-2xl font-bold dark:text-white">
                 Theme <span>{isDark ? <HiSun className="text-yellow-400" /> : <HiMoon className="text-accent-violet" />}</span>
               </button>
+
               <div className="mt-auto pb-12 flex flex-col gap-4">
                 {user ? (
                   <button onClick={handleLogout} className="btn-primary w-full py-4 text-xl">Sign Out</button>
@@ -277,35 +299,6 @@ const Navbar = () => {
                   <Link to="/login" onClick={() => setMenuOpen(false)} className="btn-primary w-full py-4 text-xl text-center">Sign In</Link>
                 )}
               </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Mobile Search Overlay */}
-      <AnimatePresence>
-        {mobileSearchOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -50 }}
-            className="fixed inset-0 z-[100] bg-white dark:bg-background-dark p-4 flex flex-col"
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <form onSubmit={handleGlobalSearch} className="flex-1 relative">
-                <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-6 h-6" />
-                <input autoFocus type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-14 pr-4 py-4 rounded-2xl bg-dark-100/50 dark:bg-white/5 border-none text-xl dark:text-white outline-none" />
-              </form>
-              <button onClick={() => setMobileSearchOpen(false)} className="p-3 text-slate-500 font-bold">Close</button>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              {searchResults.map(app => (
-                <Link key={app._id} to={`/app/${app._id}`} className="flex items-center gap-4 p-4 rounded-2xl bg-white/5">
-                  <img src={app.icon} className="w-16 h-16 rounded-xl" alt="" />
-                  <div>
-                    <p className="font-bold text-xl dark:text-white">{app.title}</p>
-                    <p className="text-sm text-slate-500">{app.category}</p>
-                  </div>
-                </Link>
-              ))}
             </div>
           </motion.div>
         )}
