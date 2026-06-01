@@ -382,12 +382,22 @@ const AppDetail = () => {
               </button>
             </div>
 
-            {/* Description */}
-            <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="glass-panel p-8 rounded-3xl">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">About this app</h2>
-              <div className="text-slate-600 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                {app.description}
-              </div>
+            {/* About This App Preview (Play Store Style) */}
+            <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+              <Link 
+                to={`/app/${app._id}/about`}
+                className="glass-panel p-8 rounded-[2rem] flex items-center justify-between group hover:bg-white/60 dark:hover:bg-white/10 transition-all border border-transparent hover:border-accent-violet/30"
+              >
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">About this app</h2>
+                    <HiArrowRight className="w-6 h-6 text-accent-violet group-hover:translate-x-2 transition-transform" />
+                  </div>
+                  <p className="text-slate-600 dark:text-gray-300 leading-relaxed line-clamp-3 font-medium">
+                    {app.description}
+                  </p>
+                </div>
+              </Link>
             </motion.section>
 
             {/* Ratings & Feedback */}
