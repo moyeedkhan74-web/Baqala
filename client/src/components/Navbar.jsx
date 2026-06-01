@@ -13,6 +13,7 @@ const Navbar = () => {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -37,6 +38,7 @@ const Navbar = () => {
   useEffect(() => {
     setMenuOpen(false);
     setProfileOpen(false);
+    setSearchOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -75,6 +77,7 @@ const Navbar = () => {
       setSearchQuery('');
       setSearchFocused(false);
       setMenuOpen(false);
+      setSearchOpen(false);
     }
   };
 
@@ -191,7 +194,7 @@ const Navbar = () => {
           {/* Controls */}
           <div className="flex items-center gap-2 sm:gap-4">
             {/* Mobile Search Trigger */}
-            <button onClick={() => setMenuOpen(true)} className="min-[1024px]:hidden p-2.5 rounded-full bg-white/50 dark:bg-white/5 border border-dark-200/50 dark:border-white/10" aria-label="Open search">
+            <button onClick={() => setSearchOpen(true)} className="min-[1024px]:hidden p-2.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10" aria-label="Open search">
               <HiSearch className="w-5 h-5 dark:text-gray-300" />
             </button>
 
@@ -293,17 +296,7 @@ const Navbar = () => {
                   </div>
                 )}
 
-                {/* Mobile Search */}
-                <form onSubmit={handleGlobalSearch} className="relative group">
-                  <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-accent-violet transition-colors" />
-                  <input 
-                    type="text" 
-                    placeholder="Search..." 
-                    value={searchQuery} 
-                    onChange={(e) => setSearchQuery(e.target.value)} 
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm dark:text-white outline-none focus:ring-2 focus:ring-accent-violet/50 transition-all font-bold" 
-                  />
-                </form>
+                {/* Mobile Search - Removed from here to avoid duplication */}
 
                 <div className="space-y-4">
                   <Link to="/" onClick={() => setMenuOpen(false)} className={`text-sm font-bold flex items-center gap-3 p-3 rounded-xl transition-all ${isActive('/') ? 'bg-accent-violet/10 text-accent-violet' : 'dark:text-gray-300 hover:bg-white/5'}`}>
@@ -344,6 +337,72 @@ const Navbar = () => {
               </div>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Search Overlay - New Dedicated Screen */}
+      <AnimatePresence>
+        {searchOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 1.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.1 }}
+            className="fixed inset-0 z-[100] bg-white dark:bg-dark-900 flex flex-col p-4"
+          >
+            <div className="flex items-center gap-4 mb-6">
+               <button onClick={() => setSearchOpen(false)} className="p-2"><HiArrowLeft className="w-6 h-6 dark:text-white" /></button>
+               <form onSubmit={handleGlobalSearch} className="flex-1 relative">
+                 <input 
+                   autoFocus
+                   type="text" 
+                   placeholder="Search apps & games..." 
+                   value={searchQuery} 
+                   onChange={(e) => setSearchQuery(e.target.value)}
+                   className="w-full bg-slate-100 dark:bg-white/5 border-none rounded-xl py-3 pl-4 pr-10 dark:text-white font-bold outline-none"
+                 />
+                 {searchQuery && <button type="button" onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"><HiX className="w-5 h-5" /></button>}
+               </form>
+            </div>
+
+            <div className="flex-1 overflow-y-auto">
+              {searching ? (
+                <div className="py-10 text-center flex flex-col items-center gap-4">
+                  <div className="w-8 h-8 border-4 border-accent-violet border-t-transparent rounded-full animate-spin" />
+                  <p className="text-slate-400 font-bold">Searching Baqala...</p>
+                </div>
+              ) : searchQuery && searchResults.length > 0 ? (
+                <div className="space-y-4">
+                  {searchResults.map(app => (
+                    <Link 
+                      key={app._id} 
+                      to={`/app/${app._id}`} 
+                      onClick={() => setSearchOpen(false)}
+                      className="flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5"
+                    >
+                      <img src={app.icon} className="w-12 h-12 rounded-xl object-cover shadow-sm" alt="" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold dark:text-white truncate">{app.title}</p>
+                        <p className="text-xs text-slate-500 font-bold">{app.category} • {app.developerName}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : searchQuery && !searching ? (
+                <div className="py-20 text-center text-slate-500 font-bold">
+                  No results match "{searchQuery}"
+                </div>
+              ) : (
+                <div className="py-10 text-center">
+                  <p className="text-sm text-slate-400 font-bold">Popular searches</p>
+                  <div className="flex flex-wrap justify-center gap-2 mt-4 text-xs font-bold">
+                    {['Games', 'Productivity', 'Tools', 'Featured'].map(tag => (
+                      <button key={tag} onClick={() => setSearchQuery(tag)} className="px-4 py-2 rounded-full bg-slate-100 dark:bg-white/5 dark:text-white">{tag}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </motion.nav>
