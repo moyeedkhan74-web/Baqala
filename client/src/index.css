@@ -205,6 +205,35 @@
            text-cyan-600 dark:text-accent-neon
            border border-cyan-200 dark:border-accent-neon/20;
   }
+/* Category Filters */
+.category-filters {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  gap: 8px;
+  padding-bottom: 8px; /* space for scrollbar */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* hide scrollbar on Firefox */
+}
+
+.category-filters::-webkit-scrollbar { 
+  display: none; 
+} /* hide on Chrome */
+
+.category-filters button {
+  scroll-snap-align: start;
+  flex-shrink: 0; /* prevent pills from shrinking */
+  white-space: nowrap;
+}
+
+/* Option B — wrap to multiple lines on tablet+ */
+@media (min-width: 768px) {
+  .category-filters {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}
 
   /* ── Utilities ─────────────────────────────────── */
   .glow-bg {

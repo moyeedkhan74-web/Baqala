@@ -85,26 +85,27 @@ const Home = () => {
           <HeroCarousel apps={featuredApps} />
         )}
 
-        {/* Filters */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 dark:border-white/10 pb-6 mb-10">
-          <div className="flex overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 w-full md:w-auto hide-scrollbar gap-2">
+        {/* Filters and Sorting */}
+        <div className="space-y-6 mb-10 border-b border-slate-200 dark:border-white/10 pb-8">
+          {/* Category Scroller */}
+          <div className="category-filters">
             <button
               onClick={() => setCategory('')}
-              className={`flex-shrink-0 px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
+              className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
                 !category
-                  ? 'bg-accent-violet text-white shadow-[0_4px_14px_-4px_rgba(139,92,246,0.5)]'
+                  ? 'bg-accent-violet text-white shadow-glow-violet'
                   : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-gray-400 hover:bg-slate-200 dark:hover:bg-white/10'
               }`}
             >
-              All
+              All Explore
             </button>
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setCategory(cat)}
-                className={`flex-shrink-0 px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
+                className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
                   category === cat
-                    ? 'bg-gradient-to-r from-accent-violet to-accent-neon text-white shadow-[0_4px_14px_-4px_rgba(139,92,246,0.5)]'
+                    ? 'bg-accent-violet text-white shadow-glow-violet'
                     : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-gray-400 hover:bg-slate-200 dark:hover:bg-white/10'
                 }`}
               >
@@ -113,17 +114,27 @@ const Home = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <HiAdjustments className="w-5 h-5 text-slate-400" />
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className="bg-transparent border-none text-slate-700 dark:text-white font-medium text-sm focus:ring-0 cursor-pointer hover:text-accent-violet dark:hover:text-accent-neon transition-colors appearance-none pr-4"
-            >
-              <option value="-createdAt" className="bg-white dark:bg-dark-900 text-slate-900 dark:text-white">Newest Arrivals</option>
-              <option value="-averageRating" className="bg-white dark:bg-dark-900 text-slate-900 dark:text-white">Top Rated</option>
-              <option value="-totalDownloads" className="bg-white dark:bg-dark-900 text-slate-900 dark:text-white">Most Popular</option>
-            </select>
+          {/* Sort Selector - On its own line */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+             <div className="flex items-center gap-2">
+                <HiTrendingUp className="w-5 h-5 text-accent-violet" />
+                <span className="text-sm font-bold border-l border-slate-200 dark:border-white/10 pl-3 ml-1 text-slate-500 dark:text-gray-400 uppercase tracking-widest">
+                  {sort === '-createdAt' ? 'Newest Arrivals' : sort === '-averageRating' ? 'Top Rated' : 'Most Popular'}
+                </span>
+             </div>
+             
+             <div className="flex items-center gap-3 bg-slate-100 dark:bg-white/5 px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10">
+                <HiAdjustments className="w-4 h-4 text-slate-400" />
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value)}
+                  className="bg-transparent border-none text-slate-700 dark:text-white font-bold text-xs focus:ring-0 cursor-pointer appearance-none outline-none"
+                >
+                  <option value="-createdAt" className="bg-white dark:bg-dark-900">Newest Arrivals</option>
+                  <option value="-averageRating" className="bg-white dark:bg-dark-900">Top Rated</option>
+                  <option value="-totalDownloads" className="bg-white dark:bg-dark-900">Most Popular</option>
+                </select>
+             </div>
           </div>
         </div>
 
