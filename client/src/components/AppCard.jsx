@@ -121,20 +121,19 @@ const AppCard = memo(({ app, featured = false }) => {
             </div>
           </div>
 
-          <div className="mt-auto pt-3 sm:pt-5 relative z-10">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
-              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center sm:justify-start">
-                <div className="flex items-center gap-0.5 sm:gap-1" aria-label={`Rating: ${app.averageRating?.toFixed(1) || '0.0'} stars`}>
-                  <HiStar className="text-yellow-500 w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
-                  <span className="text-[11px] sm:text-sm font-bold text-dark-800 dark:text-white">{app.averageRating?.toFixed(1) || '0.0'}</span>
+          <div className="mt-auto pt-4 sm:pt-5 relative z-10">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-1" aria-label={`Rating: ${app.averageRating?.toFixed(1) || '0.0'} stars`}>
+                  <HiStar className="text-yellow-500 w-4 h-4" aria-hidden="true" />
+                  <span className="text-sm font-bold text-dark-800 dark:text-white">{app.averageRating?.toFixed(1) || '0.0'}</span>
                 </div>
-                <div className="h-3 w-[1px] bg-dark-200 dark:bg-white/10 sm:hidden"></div>
-                <span className="text-[9px] sm:text-xs uppercase tracking-wider font-bold text-dark-400 dark:text-gray-500 truncate max-w-[70px] sm:max-w-none" aria-label={`Category: ${app.category}`}>
+                <span className="text-[10px] sm:text-xs uppercase tracking-wider font-bold text-dark-400 dark:text-gray-500" aria-label={`Category: ${app.category}`}>
                   {app.category}
                 </span>
               </div>
               <div 
-                className="w-full sm:w-auto justify-center bg-dark-100 dark:bg-white/5 hover:bg-dark-200 dark:hover:bg-white/15 text-dark-700 dark:text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-bold transition-colors flex items-center gap-1 border border-dark-200 dark:border-white/10 group-hover:border-accent-violet/30 dark:group-hover:border-accent-neon/50"
+                className="min-w-[56px] min-h-[44px] sm:min-h-0 bg-dark-100 dark:bg-white/5 hover:bg-dark-200 dark:hover:bg-white/15 text-dark-700 dark:text-white px-5 py-2.5 rounded-full text-xs font-bold transition-colors flex items-center justify-center border border-dark-200 dark:border-white/10 group-hover:border-accent-violet/30 dark:group-hover:border-accent-neon/50"
               >
                 Get
               </div>
