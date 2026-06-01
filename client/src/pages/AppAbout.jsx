@@ -62,36 +62,36 @@ const AppAbout = () => {
           </section>
 
           {/* Technical Specs */}
-          <section className="space-y-6">
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">App Info</h2>
-            <div className="grid grid-cols-1 gap-6">
+          <section className="space-y-8">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-white/5 pb-4">App Info</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-accent-violet/10 flex items-center justify-center text-accent-violet">
+                <div className="w-12 h-12 rounded-2xl bg-accent-violet/10 flex items-center justify-center text-accent-violet flex-shrink-0">
                    <HiTag className="w-6 h-6" />
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">Version</p>
-                  <p className="text-lg font-bold text-slate-900 dark:text-white">{app.version || '1.0.0'}</p>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Version</p>
+                  <p className="text-base font-bold text-slate-900 dark:text-white truncate">{app.version || '1.0.0'}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-accent-neon/10 flex items-center justify-center text-accent-neon">
+                <div className="w-12 h-12 rounded-2xl bg-accent-neon/10 flex items-center justify-center text-accent-neon flex-shrink-0">
                    <HiCalendar className="w-6 h-6" />
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">Last Updated</p>
-                  <p className="text-lg font-bold text-slate-900 dark:text-white">{new Date(app.updatedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Updated</p>
+                  <p className="text-base font-bold text-slate-900 dark:text-white truncate">{new Date(app.updatedAt).toLocaleDateString()}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-accent-emerald/10 flex items-center justify-center text-accent-emerald">
+                <div className="w-12 h-12 rounded-2xl bg-accent-emerald/10 flex items-center justify-center text-accent-emerald flex-shrink-0">
                    <HiShieldCheck className="w-6 h-6" />
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">Compatibility</p>
-                  <p className="text-lg font-bold text-slate-900 dark:text-white">Web, Android, iOS (Responsive)</p>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Status</p>
+                  <p className="text-base font-bold text-slate-900 dark:text-white truncate">Verified</p>
                 </div>
               </div>
             </div>

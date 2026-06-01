@@ -32,6 +32,7 @@ const AppDetail = () => {
   const [zoomScale, setZoomScale] = useState(1);
 
   const [downloading, setDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
   const [triggerElement, setTriggerElement] = useState(null);
 
   const lightboxOpen = lightboxIndex !== -1;
@@ -197,15 +198,19 @@ const AppDetail = () => {
 
   const handleDownload = async () => {
     setDownloading(true);
+    setDownloadProgress(0);
     try {
       toast.loading('Preparing your file...', { id: 'download-progress' });
 
       // Fetch the file through our backend proxy as a blob.
-      // This is the most reliable cross-origin silent download method.
       const proxyPath = `/apps/${id}/proxy-download`;
       const res = await api.get(proxyPath, {
         responseType: 'blob',
-        timeout: 120000 // 2 minutes for large files
+        timeout: 120000,
+        onDownloadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setDownloadProgress(percentCompleted);
+        }
       });
 
       // Create a local blob URL
@@ -214,11 +219,10 @@ const AppDetail = () => {
       });
       const blobUrl = window.URL.createObjectURL(blob);
 
-      // Trigger download from the same-origin blob URL
+      // Trigger download
       const link = document.createElement('a');
       link.href = blobUrl;
       
-      // Determine filename: check headers first, then app metadata
       let filename = app.fileName || `${app.title}-download`;
       const disposition = res.headers['content-disposition'];
       if (disposition) {
@@ -242,6 +246,7 @@ const AppDetail = () => {
       toast.error('Download sequence interrupted. Please check your network.', { id: 'download-progress' });
     } finally {
       setDownloading(false);
+      setDownloadProgress(0);
     }
   };
 
@@ -332,13 +337,29 @@ const AppDetail = () => {
                 </div>
               </div>
 
-              {/* Download Button (Non-sticky desktop position) */}
-              <div className="hidden md:flex flex-wrap gap-4">
+              {/* Download Button - Integrated into card for all devices */}
+              <div className="mt-8">
                 <button 
                   onClick={handleDownload} disabled={downloading}
-                  className="btn-primary w-full md:w-auto text-lg px-10 py-4 animate-pulse-slow disabled:opacity-70"
+                  className="btn-primary w-full md:w-auto text-lg px-12 py-4 animate-pulse-slow disabled:opacity-90 relative overflow-hidden group shadow-glow-violet"
                 >
-                  {downloading ? 'Downloading...' : 'Install Now'}
+                  {downloading && (
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${downloadProgress}%` }}
+                      className="absolute inset-0 bg-white/20 z-0 h-full"
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    {downloading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Installing {downloadProgress}%
+                      </>
+                    ) : (
+                      <>Install Now</>
+                    )}
+                  </span>
                 </button>
               </div>
             </div>
@@ -372,15 +393,6 @@ const AppDetail = () => {
               </motion.section>
             )}
 
-            {/* Sticky Download Bar (Mobile Only) */}
-            <div className="md:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white/80 dark:bg-background-dark/80 backdrop-blur-3xl border-t border-dark-200/50 dark:border-white/10 p-4">
-              <button 
-                onClick={handleDownload} disabled={downloading}
-                className="btn-primary w-full py-4 text-xl font-black shadow-glow-violet animate-pulse-slow"
-              >
-                {downloading ? 'Preparing...' : 'Install Now'}
-              </button>
-            </div>
 
             {/* About This App Preview (Play Store Style) */}
             <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
