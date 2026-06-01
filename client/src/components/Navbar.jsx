@@ -255,6 +255,22 @@ const Navbar = () => {
             </div>
             
             <div className="flex-1 px-6 py-8 flex flex-col gap-6 overflow-y-auto">
+              {/* User Profile Info - Added as requested */}
+              {user && (
+                <div className="flex items-center gap-4 p-4 rounded-3xl bg-slate-100/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 mb-2">
+                  <div className="w-16 h-16 rounded-2xl bg-accent-violet flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-accent-violet/20">
+                    {user.name?.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xl font-black text-slate-900 dark:text-white truncate">{user.name}</p>
+                    <p className="text-sm font-bold text-slate-500 truncate">{user.email}</p>
+                    <div className="mt-1 inline-block px-2 py-0.5 rounded-md bg-accent-violet/10 text-accent-violet text-[10px] font-black uppercase tracking-widest">
+                       {user.role}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Mobile Search - Integrated into drawer */}
               <form onSubmit={handleGlobalSearch} className="relative group mb-2">
                 <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-accent-violet transition-colors" />
