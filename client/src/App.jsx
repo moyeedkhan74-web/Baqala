@@ -62,6 +62,19 @@ function App() {
     initializeApp();
   }, []);
 
+  // Safe Analytics Tracking
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'page_view', {
+          page_path: location.pathname,
+        });
+      }
+    } catch (e) {
+      // Silently catch ad-blocker errors
+    }
+  }, [location.pathname]);
+
   const handleRetry = () => {
     setIsLoading(true);
     setError(null);
