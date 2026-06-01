@@ -74,6 +74,9 @@ function App() {
     } catch (e) {
       // Silently catch ad-blocker errors
     }
+    
+    // Global Scroll To Top on navigation - Fixed as requested
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, [location.pathname]);
 
   const handleRetry = () => {
