@@ -95,14 +95,8 @@ function App() {
         Skip to main content
       </a>
       <div className="min-h-screen flex flex-col relative overflow-hidden bg-background-light dark:bg-background-dark transition-colors duration-500">
-        {/* Global animated ambient background lights & interactive particles */}
+        {/* Global interactive particles */}
         <ParticlesBackground />
-        
-        {/* Highly vibrant ambient background orbs */}
-        <div className="glow-bg bg-accent-magenta/20 dark:bg-accent-magenta/15 top-[-10%] right-1/4 animate-pulse absolute z-0 w-[500px] h-[500px] pointer-events-none" style={{ animationDuration: '5s' }} />
-        <div className="glow-bg bg-accent-violet/20 dark:bg-accent-violet/15 top-1/4 left-1/4 animate-pulse absolute z-0 w-[600px] h-[600px] pointer-events-none" style={{ animationDuration: '7s' }} />
-        <div className="glow-bg bg-accent-neon/20 dark:bg-accent-neon/15 bottom-0 right-1/3 animate-pulse absolute z-0 w-[700px] h-[700px] pointer-events-none" style={{ animationDuration: '6s', animationDelay: '1s' }} />
-        <div className="glow-bg bg-accent-sun/20 dark:bg-accent-sun/10 bottom-1/4 left-10 animate-pulse absolute z-0 w-[400px] h-[400px] pointer-events-none" style={{ animationDuration: '8s', animationDelay: '2s' }} />
         
         <div className="relative z-20 w-full flex flex-col flex-1">
           <Navbar />
