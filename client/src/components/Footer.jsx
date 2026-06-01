@@ -3,44 +3,48 @@ import { HiOutlineSparkles } from 'react-icons/hi';
 
 const Footer = ({ className = '' }) => {
   return (
-    <footer className={`border-t border-white/5 bg-background-dark/80 backdrop-blur-xl mt-auto py-12 ${className}`}>
+    <footer className={`border-t border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-dark-900 mt-auto py-16 ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8 pb-8 border-b border-white/5">
-          <div className="md:col-span-1">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12 mb-12 pb-12 border-b border-slate-200 dark:border-white/5">
+          <div className="col-span-2 lg:col-span-1">
             <Link to="/" className="flex items-center gap-3 mb-6 group">
-              <img src="/logo.png" alt="Baqala Logo" className="h-12 sm:h-16 w-auto object-contain transition-transform duration-500 group-hover:scale-110 scale-125 origin-left" />
+              <img src="/logo.png" alt="Baqala Logo" className="h-12 w-auto object-contain transition-transform duration-500 group-hover:scale-105" />
             </Link>
-            <p className="text-sm text-gray-500 leading-relaxed">
+            <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed max-w-xs">
               The premium destination to discover, download, and share the most innovative digital experiences.
             </p>
           </div>
           
-          <div>
-            <h3 className="text-white font-semibold tracking-wide uppercase text-xs mb-4">Platform</h3>
-            <ul className="space-y-3 text-sm text-gray-400">
-              <li><Link to="/about" className="hover:text-accent-neon transition-colors">About Us</Link></li>
-              <li><Link to="/" className="hover:text-accent-neon transition-colors">Explore Apps</Link></li>
-              <li><a href="#" className="hover:text-accent-neon transition-colors">Top Charts</a></li>
+          <div className="col-span-1">
+            <h3 className="text-slate-900 dark:text-white font-black tracking-[0.2em] uppercase text-[10px] mb-6">Platform</h3>
+            <ul className="space-y-4 text-sm font-bold text-slate-500 dark:text-gray-400">
+              <li><Link to="/about" className="hover:text-accent-violet transition-colors">About Us</Link></li>
+              <li><Link to="/" className="hover:text-accent-violet transition-colors">Explore Apps</Link></li>
+              <li><a href="#" className="hover:text-accent-violet transition-colors">Top Charts</a></li>
             </ul>
           </div>
-
-          <div>
-            <h3 className="text-white font-semibold tracking-wide uppercase text-xs mb-4">Developers</h3>
-            <ul className="space-y-3 text-sm text-gray-400">
-              <li><Link to="/upload" className="hover:text-accent-neon transition-colors">Publish an App</Link></li>
-              <li><Link to="/developer" className="hover:text-accent-neon transition-colors">Dashboard</Link></li>
-              <li><Link to="/revenue-share" className="hover:text-accent-neon transition-colors">Revenue Share</Link></li>
+ 
+          <div className="col-span-1">
+            <h3 className="text-slate-900 dark:text-white font-black tracking-[0.2em] uppercase text-[10px] mb-6">Developers</h3>
+            <ul className="space-y-4 text-sm font-bold text-slate-500 dark:text-gray-400">
+              <li><Link to="/upload" className="hover:text-accent-violet transition-colors">Publish App</Link></li>
+              <li><Link to="/developer" className="hover:text-accent-violet transition-colors">Dashboard</Link></li>
+              <li><Link to="/revenue-share" className="hover:text-accent-violet transition-colors">Revenue</Link></li>
             </ul>
           </div>
-
-          <div>
-            <h3 className="text-white font-semibold tracking-wide uppercase text-xs mb-4">Legal</h3>
-            <ul className="space-y-3 text-sm text-gray-400">
-              <li><Link to="/privacy-policy" className="hover:text-accent-neon transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/terms-of-service" className="hover:text-accent-neon transition-colors">Terms of Service</Link></li>
-              <li><Link to="/cookie-policy" className="hover:text-accent-neon transition-colors">Cookie Policy</Link></li>
-              <li><Link to="/contact" className="hover:text-accent-neon transition-colors">Contact Us</Link></li>
-            </ul>
+ 
+          <div className="col-span-2 lg:col-span-1">
+            <h3 className="text-slate-900 dark:text-white font-black tracking-[0.2em] uppercase text-[10px] mb-6">Legal & Support</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <ul className="space-y-4 text-sm font-bold text-slate-500 dark:text-gray-400">
+                <li><Link to="/privacy-policy" className="hover:text-accent-violet transition-colors">Privacy</Link></li>
+                <li><Link to="/terms-of-service" className="hover:text-accent-violet transition-colors">Terms</Link></li>
+              </ul>
+              <ul className="space-y-4 text-sm font-bold text-slate-500 dark:text-gray-400">
+                <li><Link to="/cookie-policy" className="hover:text-accent-violet transition-colors">Cookies</Link></li>
+                <li><Link to="/contact" className="hover:text-accent-violet transition-colors">Contact</Link></li>
+              </ul>
+            </div>
           </div>
         </div>
         
