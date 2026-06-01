@@ -254,49 +254,49 @@ const Navbar = () => {
                <button onClick={() => setMenuOpen(false)} className="p-3 text-slate-500 hover:text-accent-violet transition-colors"><HiX className="w-8 h-8" /></button>
             </div>
             
-            <div className="flex-1 px-6 py-8 flex flex-col gap-6 overflow-y-auto">
+            <div className="flex-1 px-6 py-6 flex flex-col gap-4 overflow-y-auto">
               {/* User Profile Info - Added as requested */}
               {user && (
-                <div className="flex items-center gap-4 p-4 rounded-3xl bg-slate-100/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 mb-2">
-                  <div className="w-16 h-16 rounded-2xl bg-accent-violet flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-accent-violet/20">
+                <div className="flex items-center gap-4 p-6 rounded-[2rem] bg-slate-100/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 mb-2 shadow-glass">
+                  <div className="w-14 h-14 rounded-2xl bg-accent-violet flex items-center justify-center text-white text-xl font-black shadow-lg shadow-accent-violet/20 flex-shrink-0">
                     {user.name?.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xl font-black text-slate-900 dark:text-white truncate">{user.name}</p>
-                    <p className="text-sm font-bold text-slate-500 truncate">{user.email}</p>
-                    <div className="mt-1 inline-block px-2 py-0.5 rounded-md bg-accent-violet/10 text-accent-violet text-[10px] font-black uppercase tracking-widest">
+                    <p className="text-lg font-black text-slate-900 dark:text-white truncate leading-tight">{user.name}</p>
+                    <p className="text-xs font-bold text-slate-500 truncate mb-1">{user.email}</p>
+                    <div className="inline-block px-2 py-0.5 rounded-md bg-accent-violet/10 text-accent-violet text-[9px] font-black uppercase tracking-widest">
                        {user.role}
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Mobile Search - Integrated into drawer */}
-              <form onSubmit={handleGlobalSearch} className="relative group mb-2">
+              {/* Mobile Search */}
+              <form onSubmit={handleGlobalSearch} className="relative group mb-1">
                 <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-accent-violet transition-colors" />
                 <input 
                   type="text" 
                   placeholder="Search Baqala..." 
                   value={searchQuery} 
                   onChange={(e) => setSearchQuery(e.target.value)} 
-                  className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-lg dark:text-white outline-none focus:ring-2 focus:ring-accent-violet/50 transition-all font-bold placeholder:font-normal" 
+                  className="w-full pl-12 pr-4 py-3 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-base dark:text-white outline-none focus:ring-2 focus:ring-accent-violet/50 transition-all font-bold" 
                 />
               </form>
 
-              <Link to="/" onClick={() => setMenuOpen(false)} className={`text-4xl font-black transition-colors ${isActive('/') ? 'text-accent-violet' : 'dark:text-white'}`}>Explore</Link>
+              <Link to="/" onClick={() => setMenuOpen(false)} className={`text-2xl font-black transition-colors ${isActive('/') ? 'text-accent-violet' : 'dark:text-white'}`}>Explore</Link>
               {user && (
                 <>
-                  <Link to="/developer" onClick={() => setMenuOpen(false)} className={`text-4xl font-black flex items-center gap-4 transition-colors ${isActive('/developer') ? 'text-accent-violet' : 'dark:text-white'}`}>
-                    <HiViewGrid className="w-8 h-8 text-accent-violet" /> Dashboard
+                  <Link to="/developer" onClick={() => setMenuOpen(false)} className={`text-2xl font-black flex items-center gap-4 transition-colors ${isActive('/developer') ? 'text-accent-violet' : 'dark:text-white'}`}>
+                    <HiViewGrid className="w-6 h-6 text-accent-violet" /> Dashboard
                   </Link>
-                  <Link to="/upload" onClick={() => setMenuOpen(false)} className={`text-4xl font-black flex items-center gap-4 transition-colors ${isActive('/upload') ? 'text-accent-neon' : 'dark:text-white'}`}>
-                    <HiUpload className="w-8 h-8 text-accent-neon" /> Upload
+                  <Link to="/upload" onClick={() => setMenuOpen(false)} className={`text-2xl font-black flex items-center gap-4 transition-colors ${isActive('/upload') ? 'text-accent-neon' : 'dark:text-white'}`}>
+                    <HiUpload className="w-6 h-6 text-accent-neon" /> Upload
                   </Link>
                 </>
               )}
               {user && user.role === 'admin' && (
-                <Link to="/admin" onClick={() => setMenuOpen(false)} className={`text-4xl font-black flex items-center gap-4 transition-colors ${isActive('/admin') ? 'text-rose-500' : 'text-rose-400'}`}>
-                  <HiShieldCheck className="w-8 h-8" /> Admin
+                <Link to="/admin" onClick={() => setMenuOpen(false)} className={`text-2xl font-black flex items-center gap-4 transition-colors ${isActive('/admin') ? 'text-rose-500' : 'text-rose-400'}`}>
+                  <HiShieldCheck className="w-6 h-6" /> Admin
                 </Link>
               )}
               
