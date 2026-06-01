@@ -278,7 +278,7 @@ const AppDetail = () => {
         {/* Hero Section */}
         <motion.article 
           initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
-          className="glass-panel p-6 md:p-12 rounded-[2rem] relative overflow-hidden mb-8 md:mb-12"
+          className="bg-white dark:bg-dark-900 p-6 md:p-12 rounded-[2rem] border border-slate-200 dark:border-white/10 relative overflow-hidden mb-8 md:mb-12 shadow-xl"
         >
           <div className="relative z-10 flex flex-col md:flex-row gap-6 md:gap-10 items-start md:items-center">
             <div className="flex items-center gap-6 w-full md:w-auto">
@@ -394,11 +394,10 @@ const AppDetail = () => {
             )}
 
 
-            {/* About This App Preview (Play Store Style) */}
             <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
               <Link 
                 to={`/app/${app._id}/about`}
-                className="glass-panel p-8 rounded-[2rem] flex items-center justify-between group hover:bg-white/60 dark:hover:bg-white/10 transition-all border border-transparent hover:border-accent-violet/30"
+                className="bg-white dark:bg-dark-900 p-8 rounded-[2rem] flex items-center justify-between group hover:bg-slate-50 dark:hover:bg-white/5 transition-all border border-slate-200 dark:border-white/10 shadow-lg"
               >
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-4">
@@ -662,7 +661,7 @@ const AppDetail = () => {
         {lightboxOpen && lightboxSrc && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[1000] flex items-center justify-center bg-black backdrop-blur-2xl touch-none"
+            className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/95 touch-none"
             onClick={() => { setLightboxIndex(-1); setZoomScale(1); }}
             id="lightbox-modal"
             onTouchStart={(e) => {

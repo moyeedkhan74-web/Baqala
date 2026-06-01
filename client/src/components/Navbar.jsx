@@ -93,7 +93,7 @@ const Navbar = () => {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ type: 'spring', stiffness: 100, damping: 20 }}
-      className="fixed top-0 left-0 right-0 z-50 bg-white/50 dark:bg-background-dark/80 backdrop-blur-2xl border-b border-dark-200/50 dark:border-white/5 shadow-glass transition-colors duration-500"
+      className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-dark-900 border-b border-slate-200 dark:border-white/10 shadow-lg transition-colors duration-500"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
@@ -135,7 +135,7 @@ const Navbar = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className="absolute top-full left-0 right-0 mt-2 glass-panel p-2 z-[60] shadow-2xl overflow-hidden origin-top"
+                  className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-dark-900 p-2 z-[60] shadow-2xl border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden origin-top"
                 >
                   {searching ? (
                     <div className="p-4 text-center text-sm text-slate-500 flex items-center justify-center gap-2">
@@ -167,7 +167,7 @@ const Navbar = () => {
           </div>
 
           {/* Desktop Nav Links (Hidden < 900px) */}
-          <div className="hidden min-[900px]:flex items-center gap-1 bg-dark-100/50 dark:bg-white/5 p-1 rounded-full border border-dark-200/50 dark:border-white/10 backdrop-blur-md">
+          <div className="hidden min-[900px]:flex items-center gap-1 bg-slate-100 dark:bg-white/5 p-1 rounded-full border border-slate-200 dark:border-white/10">
             <Link to="/" className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${isActive('/') ? 'bg-white dark:bg-white/10 text-accent-violet dark:text-white shadow-sm' : 'text-dark-500 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-white/5'}`}>
               Explore
             </Link>
@@ -213,9 +213,9 @@ const Navbar = () => {
                     {profileOpen && (
                       <motion.div
                         initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute right-0 top-full mt-3 w-[300px] glass-panel p-4 z-[70] shadow-2xl origin-top-right border-white/20 dark:bg-dark-900/95"
+                        className="absolute right-0 top-full mt-3 w-[300px] bg-white dark:bg-dark-800 p-4 z-[70] shadow-2xl origin-top-right border border-slate-200 dark:border-white/20 rounded-[2rem]"
                       >
-                        <div className="flex items-center gap-4 p-3 border-b border-white/10 mb-3 bg-white/5 rounded-2xl">
+                        <div className="flex items-center gap-4 p-3 border-b border-slate-100 dark:border-white/10 mb-3 bg-slate-50 dark:bg-white/5 rounded-2xl">
                           <div className="w-12 h-12 rounded-xl bg-accent-violet flex items-center justify-center text-white font-black text-xl shadow-lg ring-2 ring-white/10">
                             {user.name?.charAt(0).toUpperCase()}
                           </div>
@@ -257,7 +257,7 @@ const Navbar = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMenuOpen(false)}
-              className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-sm min-[900px]:hidden"
+              className="fixed inset-0 z-[55] bg-slate-900/80 min-[900px]:hidden"
             />
             
             {/* The "Box" (Drawer) */}
