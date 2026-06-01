@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { HiMenu, HiX, HiLogout, HiUpload, HiViewGrid, HiShieldCheck, HiOutlineSparkles, HiMoon, HiSun, HiSearch, HiCog } from 'react-icons/hi';
+import { HiMenu, HiX, HiLogout, HiUpload, HiViewGrid, HiShieldCheck, HiMoon, HiSun, HiSearch, HiCog } from 'react-icons/hi';
 import api from '../api/axios';
 
 const Navbar = () => {
@@ -17,6 +17,13 @@ const Navbar = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+
+  // Close menus on path change
+  useEffect(() => {
+    setMenuOpen(false);
+    setMobileSearchOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -53,6 +60,7 @@ const Navbar = () => {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
       setSearchFocused(false);
+      setMobileSearchOpen(false);
     }
   };
 
@@ -62,10 +70,11 @@ const Navbar = () => {
     <>
       <a 
         href="#main-content" 
-        className="fixed top-[-100px] left-4 z-[100] bg-accent-violet text-white px-4 py-2 rounded-lg transition-all focus:top-4 outline-none ring-2 ring-accent-neon"
+        className="fixed top-[-100px] left-4 z-[1000] bg-accent-violet text-white px-4 py-2 rounded-lg transition-all focus:top-4 outline-none ring-2 ring-accent-neon"
       >
         Skip to content
       </a>
+      
       <motion.nav 
       initial={{ y: -100 }}
       animate={{ y: 0 }}
@@ -77,11 +86,11 @@ const Navbar = () => {
           
           {/* Brand */}
           <Link to="/" className="flex items-center gap-3 group shrink-0">
-            <img src="/logo.png" alt="Baqala Logo" className="h-16 sm:h-20 w-auto object-contain transition-transform duration-500 group-hover:scale-[1.1] drop-shadow-[0_0_15px_rgba(34,211,238,0.3)] scale-110 origin-left" />
+            <img src="/logo.png" alt="Baqala Logo" className="h-14 sm:h-16 w-auto object-contain transition-transform duration-500 group-hover:scale-[1.1] drop-shadow-[0_0_15px_rgba(34,211,238,0.3)]" />
           </Link>
 
-          {/* Global Search Bar (Desktop) */}
-          <div className="hidden lg:block flex-1 max-w-md mx-6 relative">
+          {/* Desktop Search (Hidden < 1024px) */}
+          <div className="hidden min-[1024px]:block flex-1 max-w-md mx-6 relative">
             <form onSubmit={handleGlobalSearch} className="relative group/search">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <HiSearch className="h-4 w-4 text-gray-400 group-focus-within/search:text-accent-violet transition-colors" />
@@ -121,191 +130,131 @@ const Navbar = () => {
                     </div>
                   ) : searchResults.length > 0 ? (
                     <div className="space-y-1">
-                      {searchResults.map((app) => (
+                      {searchResults.slice(0, 5).map((app) => (
                         <Link
                           key={app._id}
                           to={`/app/${app._id}`}
                           className="flex items-center gap-3 p-2 rounded-xl hover:bg-dark-100 dark:hover:bg-white/5 transition-colors group"
-                          onClick={() => setSearchFocused(false)}
                         >
-                          <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-slate-200 dark:border-white/10">
-                             <img 
-                              src={app.icon || '/placeholder-icon.png'} 
-                              alt="" 
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
+                          <img src={app.icon || '/logo.png'} className="w-10 h-10 rounded-lg object-cover" alt="" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-accent-violet dark:group-hover:text-accent-neon transition-colors">{app.title}</p>
-                            <p className="text-[10px] text-slate-500 dark:text-gray-400 truncate uppercase tracking-wider">{app.developerName || 'Unknown'}</p>
+                            <p className="text-sm font-bold truncate dark:text-white">{app.title}</p>
+                            <p className="text-[10px] text-slate-500 truncate">{app.developerName}</p>
                           </div>
                         </Link>
                       ))}
-                      <div className="pt-2 mt-2 border-t border-slate-200 dark:border-white/10">
-                        <button
-                          onClick={handleGlobalSearch}
-                          className="w-full text-center py-2 text-xs font-bold text-accent-violet dark:text-accent-neon hover:underline"
-                        >
-                          See all results for "{searchQuery}"
-                        </button>
-                      </div>
                     </div>
                   ) : (
-                    <div className="p-4 text-center text-sm text-slate-500">
-                      No apps matching "{searchQuery}"
-                    </div>
+                    <div className="p-4 text-center text-sm text-slate-500">No results found</div>
                   )}
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          {/* Desktop Nav Links */}
-          <div className="hidden md:flex items-center gap-1 bg-dark-100/50 dark:bg-white/5 p-1 rounded-full border border-dark-200/50 dark:border-white/10 backdrop-blur-md shrink-0">
-            <Link to="/" className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${isActive('/') ? 'bg-white dark:bg-white/10 text-accent-violet dark:text-white shadow-[0_8px_32px_rgba(0,0,0,0.05)] dark:shadow-glass cursor-default' : 'text-dark-500 dark:text-gray-400 hover:text-dark-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'}`}>
+          {/* Desktop Nav Links (Hidden < 900px) */}
+          <div className="hidden min-[900px]:flex items-center gap-1 bg-dark-100/50 dark:bg-white/5 p-1 rounded-full border border-dark-200/50 dark:border-white/10 backdrop-blur-md">
+            <Link to="/" className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${isActive('/') ? 'bg-white dark:bg-white/10 text-accent-violet dark:text-white shadow-sm' : 'text-dark-500 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-white/5'}`}>
               Explore
             </Link>
             {user && (
               <>
-                <Link to="/developer" className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 flex items-center gap-2 ${isActive('/developer') ? 'bg-white dark:bg-white/10 text-accent-violet dark:text-white shadow-[0_8px_32px_rgba(0,0,0,0.05)] dark:shadow-glass cursor-default' : 'text-dark-500 dark:text-gray-400 hover:text-dark-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'}`}>
-                  <HiViewGrid className="w-4 h-4" /> Dashboard
-                </Link>
-                <Link to="/upload" className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 flex items-center gap-2 ${isActive('/upload') ? 'bg-white dark:bg-white/10 text-accent-neon shadow-[0_0_20px_-5px_rgba(34,211,238,0.2)] cursor-default' : 'text-dark-500 dark:text-gray-400 hover:text-accent-neon hover:bg-accent-neon/10'}`}>
-                  <HiUpload className="w-4 h-4" /> Upload
+                <Link to="/developer" className={`px-5 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${isActive('/developer') ? 'bg-white dark:bg-white/10 text-accent-violet dark:text-white shadow-sm' : 'text-dark-500 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-white/5'}`}>
+                  <HiViewGrid /> Dashboard
                 </Link>
               </>
             )}
-            {user && user.role === 'admin' && (
-              <Link to="/admin" className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 flex items-center gap-2 ${isActive('/admin') ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30 shadow-[0_8px_32px_rgba(0,0,0,0.05)] dark:shadow-glass cursor-default' : 'text-dark-500 dark:text-gray-400 hover:text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-500/10'}`}>
-                <HiShieldCheck className="w-4 h-4" /> Admin
-              </Link>
-            )}
           </div>
 
-          {/* Auth Section */}
-          <div className="hidden md:flex items-center gap-4">
-            
+          {/* Controls */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* Mobile Search Trigger */}
+            <button onClick={() => setMobileSearchOpen(true)} className="min-[1024px]:hidden p-2.5 rounded-full bg-white/50 dark:bg-white/5 border border-dark-200/50 dark:border-white/10">
+              <HiSearch className="w-5 h-5 dark:text-gray-300" />
+            </button>
+
             {/* Theme Toggle */}
-            <motion.button 
-              whileTap={{ scale: 0.9 }} 
-              onClick={toggleTheme} 
-              aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
-              className="p-2 rounded-full border border-dark-200/50 dark:border-white/10 bg-white/50 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 transition-colors shadow-sm"
-            >
+            <button onClick={toggleTheme} className="hidden min-[900px]:flex p-2.5 rounded-full bg-white/50 dark:bg-white/5 border border-dark-200/50 dark:border-white/10">
               {isDark ? <HiSun className="w-5 h-5 text-yellow-400" /> : <HiMoon className="w-5 h-5 text-accent-violet" />}
-            </motion.button>
+            </button>
 
-            {user ? (
-              <div className="relative">
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setProfileOpen(!profileOpen)}
-                  className="flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-full border border-dark-200/50 dark:border-white/10 bg-white/50 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 hover:border-dark-300 dark:hover:border-white/20 transition-all"
-                >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-accent-emerald to-accent-neon flex items-center justify-center text-background-dark font-bold text-sm shadow-[0_0_20px_-5px_rgba(16,185,129,0.5)]">
-                    {user.name?.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="text-sm font-semibold text-dark-800 dark:text-gray-200">{user.name}</span>
-                </motion.button>
+            {/* Auth */}
+            <div className="hidden min-[900px]:flex items-center gap-4">
+              {user ? (
+                <button onClick={() => setProfileOpen(!profileOpen)} className="flex items-center gap-2 pl-2 pr-4 py-1.5 rounded-full border border-dark-200/50 dark:border-white/10 bg-white/50 dark:bg-white/5">
+                  <div className="w-8 h-8 rounded-full bg-accent-violet flex items-center justify-center text-white font-bold text-xs">{user.name?.charAt(0)}</div>
+                  <span className="text-sm font-semibold dark:text-gray-200">{user.name}</span>
+                </button>
+              ) : (
+                <Link to="/login" className="btn-primary text-sm">Sign In</Link>
+              )}
+            </div>
 
-                <AnimatePresence>
-                  {profileOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-3 w-56 glass-panel p-2 z-50 origin-top-right"
-                    >
-                      <div className="p-3 border-b border-dark-200/50 dark:border-white/10 mb-2">
-                        <p className="text-xs text-dark-500 dark:text-gray-400 truncate">{user.email}</p>
-                        <span className="badge-neon mt-2 scale-90 origin-left">{user.role}</span>
-                      </div>
-                      <Link
-                        to="/settings"
-                        onClick={() => setProfileOpen(false)}
-                        className="w-full px-4 py-2.5 text-left text-sm font-medium text-dark-700 dark:text-gray-200 hover:bg-dark-100 dark:hover:bg-white/5 rounded-xl flex items-center gap-2 transition-colors"
-                      >
-                        <HiCog className="w-4 h-4 text-accent-violet" /> Settings
-                      </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="w-full px-4 py-2.5 text-left text-sm font-medium text-rose-500 dark:text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-500/10 rounded-xl flex items-center gap-2 transition-colors"
-                      >
-                        <HiLogout className="w-4 h-4" /> Sign Out
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            ) : (
-              <>
-                <Link to="/login" className="text-sm font-semibold text-dark-600 dark:text-gray-300 hover:text-dark-900 dark:hover:text-white transition-colors px-2">Sign In</Link>
-                <Link to="/register" className="btn-primary text-sm shadow-[0_0_20px_-5px_rgba(139,92,246,0.5)]">Get Started</Link>
-              </>
-            )}
+            {/* Hamburger (Mobile) */}
+            <button onClick={() => setMenuOpen(!menuOpen)} className="min-[900px]:hidden p-2.5 rounded-xl bg-white/50 dark:bg-white/5 border border-dark-200/50 dark:border-white/10 min-w-[44px] min-h-[44px] flex items-center justify-center">
+              {menuOpen ? <HiX className="w-6 h-6 dark:text-white" /> : <HiMenu className="w-6 h-6 dark:text-white" />}
+            </button>
           </div>
-
-          {/* Mobile menu toggle */}
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
-            className="md:hidden p-2 text-dark-600 dark:text-gray-300 hover:text-dark-900 dark:hover:text-white rounded-xl bg-white/50 dark:bg-white/5 border border-dark-200/50 dark:border-white/10"
-          >
-            {menuOpen ? <HiX className="w-6 h-6" /> : <HiMenu className="w-6 h-6" />}
-          </motion.button>
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+      {/* Mobile Drawer */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="md:hidden overflow-hidden bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-3xl border-b border-dark-200/50 dark:border-white/10"
+            initial={{ y: '-100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '-100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed inset-0 z-[60] bg-background-light dark:bg-background-dark min-[900px]:hidden flex flex-col"
           >
-            <div className="px-4 py-6 flex flex-col gap-2">
-              <div className="flex justify-between items-center px-2 mb-2">
-                <span className="text-dark-600 dark:text-gray-400 font-medium text-sm text-center align-middle h-full pt-1.5">Theme Preference</span>
-                <button 
-                  onClick={toggleTheme} 
-                  aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
-                  className="p-2 rounded-xl bg-white/50 dark:bg-white/5 border border-dark-200 dark:border-white/10 shadow-sm"
-                >
-                  {isDark ? <HiSun className="w-5 h-5 text-yellow-500" /> : <HiMoon className="w-5 h-5 text-accent-violet" />}
-                </button>
+            <div className="flex items-center justify-between h-20 px-4 border-b border-white/10">
+               <img src="/logo.png" className="h-12" alt="Logo" />
+               <button onClick={() => setMenuOpen(false)} className="p-3"><HiX className="w-8 h-8 dark:text-white" /></button>
+            </div>
+            <div className="flex-1 px-6 py-10 flex flex-col gap-6">
+              <Link to="/" onClick={() => setMenuOpen(false)} className="text-4xl font-black dark:text-white">Explore</Link>
+              {user && <Link to="/developer" onClick={() => setMenuOpen(false)} className="text-4xl font-black dark:text-white">Dashboard</Link>}
+              <div className="h-px bg-white/10 my-4" />
+              <button onClick={toggleTheme} className="flex items-center justify-between w-full py-4 text-2xl font-bold dark:text-white">
+                Theme <span>{isDark ? <HiSun className="text-yellow-400" /> : <HiMoon className="text-accent-violet" />}</span>
+              </button>
+              <div className="mt-auto pb-12 flex flex-col gap-4">
+                {user ? (
+                  <button onClick={handleLogout} className="btn-primary w-full py-4 text-xl">Sign Out</button>
+                ) : (
+                  <Link to="/login" onClick={() => setMenuOpen(false)} className="btn-primary w-full py-4 text-xl text-center">Sign In</Link>
+                )}
               </div>
-              <Link to="/" onClick={() => setMenuOpen(false)} className="p-3 bg-white/50 dark:bg-white/5 rounded-xl text-dark-800 dark:text-gray-300 font-medium">Explore</Link>
-              {user && (
-                <>
-                  <Link to="/developer" onClick={() => setMenuOpen(false)} className="p-3 bg-white/50 dark:bg-white/5 rounded-xl text-dark-800 dark:text-gray-300 font-medium flex items-center gap-2"><HiViewGrid /> Dashboard</Link>
-                  <Link to="/upload" onClick={() => setMenuOpen(false)} className="p-3 bg-cyan-100 dark:bg-accent-neon/10 text-cyan-600 dark:text-accent-neon rounded-xl font-medium flex items-center gap-2 border border-cyan-200 dark:border-accent-neon/20"><HiUpload /> Upload App</Link>
-                </>
-              )}
-              {user && user.role === 'admin' && (
-                <Link to="/admin" onClick={() => setMenuOpen(false)} className="p-3 bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-xl font-medium flex items-center gap-2 border border-rose-200 dark:border-rose-500/20"><HiShieldCheck /> Admin Panel</Link>
-              )}
-              
-              {user && (
-                <Link to="/settings" onClick={() => setMenuOpen(false)} className="p-3 bg-white/50 dark:bg-white/5 rounded-xl text-dark-800 dark:text-gray-300 font-medium flex items-center gap-2">
-                  <HiCog className="text-accent-violet" /> Settings
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Search Overlay */}
+      <AnimatePresence>
+        {mobileSearchOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -50 }}
+            className="fixed inset-0 z-[100] bg-white dark:bg-background-dark p-4 flex flex-col"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <form onSubmit={handleGlobalSearch} className="flex-1 relative">
+                <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-6 h-6" />
+                <input autoFocus type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-14 pr-4 py-4 rounded-2xl bg-dark-100/50 dark:bg-white/5 border-none text-xl dark:text-white outline-none" />
+              </form>
+              <button onClick={() => setMobileSearchOpen(false)} className="p-3 text-slate-500 font-bold">Close</button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {searchResults.map(app => (
+                <Link key={app._id} to={`/app/${app._id}`} className="flex items-center gap-4 p-4 rounded-2xl bg-white/5">
+                  <img src={app.icon} className="w-16 h-16 rounded-xl" alt="" />
+                  <div>
+                    <p className="font-bold text-xl dark:text-white">{app.title}</p>
+                    <p className="text-sm text-slate-500">{app.category}</p>
+                  </div>
                 </Link>
-              )}
-              <div className="h-px bg-dark-200/50 dark:bg-white/10 my-2" />
-              
-              {user ? (
-                <button onClick={handleLogout} className="p-3 bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-xl font-medium flex items-center justify-center gap-2 text-left w-full">
-                  <HiLogout /> Sign Out
-                </button>
-              ) : (
-                <div className="grid grid-cols-2 gap-3 mt-2">
-                  <Link to="/login" onClick={() => setMenuOpen(false)} className="btn-secondary text-center text-sm py-3">Sign In</Link>
-                  <Link to="/register" onClick={() => setMenuOpen(false)} className="btn-primary text-center text-sm py-3">Get Started</Link>
-                </div>
-              )}
+              ))}
             </div>
           </motion.div>
         )}
