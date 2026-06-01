@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { HiMenu, HiX, HiLogout, HiUpload, HiViewGrid, HiShieldCheck, HiMoon, HiSun, HiSearch, HiCog } from 'react-icons/hi';
+import { HiMenu, HiX, HiLogout, HiUpload, HiViewGrid, HiShieldCheck, HiMoon, HiSun, HiSearch, HiCog, HiArrowLeft } from 'react-icons/hi';
 import api from '../api/axios';
 
 const Navbar = () => {
