@@ -20,7 +20,7 @@ const Home = () => {
   
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [category, setCategory] = useState('');
-  const [sort, setSort] = useState('-createdAt');
+  const [sort, setSort] = useState('newest');
   const [debouncedSearch, setDebouncedSearch] = useState(search);
 
   useEffect(() => {
@@ -58,7 +58,7 @@ const Home = () => {
     }
   };
 
-  const standardApps = apps?.length > 0 ? apps.slice(1) : [];
+  const isFiltered = !!(search || category || sort !== 'newest');
 
   return (
     <div className="min-h-screen pb-24">
@@ -119,7 +119,7 @@ const Home = () => {
              <div className="flex items-center gap-2">
                 <HiTrendingUp className="w-5 h-5 text-accent-violet" />
                 <span className="text-sm font-bold border-l border-slate-200 dark:border-white/10 pl-3 ml-1 text-slate-500 dark:text-gray-400 uppercase tracking-widest">
-                  {sort === '-createdAt' ? 'Newest Arrivals' : sort === '-averageRating' ? 'Top Rated' : 'Most Popular'}
+                  {sort === 'newest' ? 'Newest Arrivals' : sort === 'rating' ? 'Top Rated' : 'Most Popular'}
                 </span>
              </div>
              
@@ -130,9 +130,9 @@ const Home = () => {
                   onChange={(e) => setSort(e.target.value)}
                   className="bg-transparent border-none text-slate-700 dark:text-white font-bold text-xs focus:ring-0 cursor-pointer appearance-none outline-none"
                 >
-                  <option value="-createdAt" className="bg-white dark:bg-dark-900">Newest Arrivals</option>
-                  <option value="-averageRating" className="bg-white dark:bg-dark-900">Top Rated</option>
-                  <option value="-totalDownloads" className="bg-white dark:bg-dark-900">Most Popular</option>
+                  <option value="newest" className="bg-white dark:bg-dark-900">Newest Arrivals</option>
+                  <option value="rating" className="bg-white dark:bg-dark-900">Top Rated</option>
+                  <option value="downloads" className="bg-white dark:bg-dark-900">Most Popular</option>
                 </select>
              </div>
           </div>
@@ -146,7 +146,7 @@ const Home = () => {
         ) : apps?.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="flex flex-col items-center justify-center text-center glass-panel rounded-3xl"
+            className="flex flex-col items-center justify-center text-center rounded-3xl"
             style={{ padding: 'clamp(2rem, 8vw, 6rem)' }}
           >
             <div className="w-20 h-20 bg-slate-100 dark:bg-dark-800 rounded-full flex items-center justify-center border border-slate-200 dark:border-white/10 mb-6">
@@ -157,55 +157,81 @@ const Home = () => {
           </motion.div>
         ) : (
           <AnimatePresence>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 md:space-y-12">
-              <div role="main" id="main-content">
-                {myApps?.length > 0 && !search && !category && (
-                  <section className="mb-10 md:mb-16" aria-label="Your Uploaded Projects">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-2">
-                        <HiCollection className="w-6 h-6 text-accent-violet" aria-hidden="true" />
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Your Uploaded Projects</h2>
-                      </div>
-                      <Link to="/developer" className="text-accent-violet dark:text-accent-neon text-sm hover:underline font-medium">Manage All</Link>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
+              {/* Your Uploaded Projects */}
+              {myApps?.length > 0 && !search && !category && (
+                <section className="mb-4" aria-label="Your Uploaded Projects">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                      <HiCollection className="w-6 h-6 text-accent-violet" aria-hidden="true" />
+                      <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Your Projects</h2>
                     </div>
-                    <div className="app-grid">
-                      {myApps.map((app) => (
-                        <motion.div key={app._id}>
-                          <AppCard app={app} />
-                        </motion.div>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                <section aria-label="App Discovery Grid">
-                  {(!search && !category && sort === '-createdAt' && apps.length > 0) && (
-                    <div className="flex items-center gap-2 mb-6">
-                      <HiTrendingUp className="w-6 h-6 text-accent-emerald" aria-hidden="true" />
-                      <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Trending Now</h2>
-                    </div>
-                  )}
-
-                  {apps.length > 0 ? (
-                    <div className="app-grid">
-                      {((!search && !category && sort === '-createdAt') ? standardApps : apps).map((app, index) => (
-                        <motion.div
-                          key={app._id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                        >
-                          <AppCard app={app} />
-                        </motion.div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="py-12 md:py-24 text-center">
-                       <p className="text-slate-500">No apps available in this section.</p>
-                    </div>
-                  )}
+                    <Link to="/developer" className="text-accent-violet text-sm hover:underline font-bold">Manage All</Link>
+                  </div>
+                  <div className="app-grid">
+                    {myApps.map((app) => (
+                      <motion.div key={app._id}><AppCard app={app} /></motion.div>
+                    ))}
+                  </div>
                 </section>
-              </div>
+              )}
+
+              {/* Filtered Results - Simple flat grid */}
+              {isFiltered ? (
+                <section aria-label="Filtered Results">
+                  <div className="flex items-center gap-2 mb-6">
+                    <HiTrendingUp className="w-6 h-6 text-accent-violet" />
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                      {search ? `Results for "${search}"` : category ? category : 'All Apps'}
+                    </h2>
+                    <span className="text-sm text-slate-400 ml-2">({apps.length} apps)</span>
+                  </div>
+                  <div className="app-grid">
+                    {apps.map((app, index) => (
+                      <motion.div key={app._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }}>
+                        <AppCard app={app} />
+                      </motion.div>
+                    ))}
+                  </div>
+                </section>
+              ) : (
+                // Unfiltered: Group by category like Play Store
+                <div className="space-y-14">
+                  {/* All apps - show them grouped by available categories */}
+                  {(() => {
+                    const grouped = {};
+                    apps.forEach(app => {
+                      const cat = app.category || 'Other';
+                      if (!grouped[cat]) grouped[cat] = [];
+                      grouped[cat].push(app);
+                    });
+                    const catEntries = Object.entries(grouped);
+                    if (catEntries.length === 0) return (
+                      <div className="py-12 text-center text-slate-500">No apps available yet.</div>
+                    );
+                    return catEntries.map(([cat, catApps]) => (
+                      <section key={cat} aria-label={cat}>
+                        <div className="flex items-center justify-between mb-6">
+                          <h2 className="text-xl font-black text-slate-900 dark:text-white">{cat}</h2>
+                          <button
+                            onClick={() => setCategory(cat)}
+                            className="text-accent-violet text-sm font-bold hover:underline"
+                          >
+                            See all →
+                          </button>
+                        </div>
+                        <div className="app-grid">
+                          {catApps.map((app, index) => (
+                            <motion.div key={app._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }}>
+                              <AppCard app={app} />
+                            </motion.div>
+                          ))}
+                        </div>
+                      </section>
+                    ));
+                  })()}
+                </div>
+              )}
             </motion.div>
           </AnimatePresence>
         )}
