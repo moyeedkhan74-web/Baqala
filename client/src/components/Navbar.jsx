@@ -213,14 +213,23 @@ const Navbar = () => {
                     {profileOpen && (
                       <motion.div
                         initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute right-0 top-full mt-2 w-56 glass-panel p-2 z-[70] shadow-2xl origin-top-right"
+                        className="absolute right-0 top-full mt-3 w-[300px] glass-panel p-4 z-[70] shadow-2xl origin-top-right border-white/20 dark:bg-dark-900/95"
                       >
-                        <div className="p-3 border-b border-white/10 mb-2">
-                          <p className="text-xs text-slate-500 truncate">{user.email}</p>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-accent-violet mt-1">{user.role}</p>
+                        <div className="flex items-center gap-4 p-3 border-b border-white/10 mb-3 bg-white/5 rounded-2xl">
+                          <div className="w-12 h-12 rounded-xl bg-accent-violet flex items-center justify-center text-white font-black text-xl shadow-lg ring-2 ring-white/10">
+                            {user.name?.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-black dark:text-white truncate">{user.name}</p>
+                            <p className="text-[10px] font-bold text-slate-500 truncate">{user.email}</p>
+                          </div>
                         </div>
-                        <Link to="/settings" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-sm font-medium dark:text-gray-200"><HiCog /> Settings</Link>
-                        <button onClick={handleLogout} className="flex items-center gap-3 p-3 rounded-xl hover:bg-rose-500/10 text-sm font-medium text-rose-500 w-full"><HiLogout /> Sign Out</button>
+                        <div className="space-y-1">
+                          <Link to="/developer" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-xs font-bold dark:text-gray-200 transition-colors"><HiViewGrid className="text-accent-violet" /> Developer Dashboard</Link>
+                          <Link to="/settings" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-xs font-bold dark:text-gray-200 transition-colors"><HiCog className="text-slate-400" /> Account Settings</Link>
+                          <div className="h-px bg-white/5 my-2" />
+                          <button onClick={handleLogout} className="flex items-center gap-3 p-3 rounded-xl hover:bg-rose-500/10 text-xs font-bold text-rose-500 w-full transition-colors"><HiLogout /> Sign Out Information</button>
+                        </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -257,16 +266,19 @@ const Navbar = () => {
             <div className="flex-1 px-6 py-6 flex flex-col gap-4 overflow-y-auto">
               {/* User Profile Info - Added as requested */}
               {user && (
-                <div className="flex items-center gap-4 p-6 rounded-[2rem] bg-slate-100/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 mb-2 shadow-glass">
-                  <div className="w-14 h-14 rounded-2xl bg-accent-violet flex items-center justify-center text-white text-xl font-black shadow-lg shadow-accent-violet/20 flex-shrink-0">
+                <div className="flex items-center gap-6 p-8 rounded-[2.5rem] bg-white dark:bg-dark-900 border-2 border-slate-200 dark:border-white/10 mb-4 shadow-2xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <HiCog className="w-20 h-20 rotate-12" />
+                  </div>
+                  <div className="w-16 h-16 rounded-2xl bg-accent-violet flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-accent-violet/30 flex-shrink-0 z-10">
                     {user.name?.charAt(0).toUpperCase()}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-lg font-black text-slate-900 dark:text-white truncate leading-tight">{user.name}</p>
-                    <p className="text-xs font-bold text-slate-500 truncate mb-1">{user.email}</p>
-                    <div className="inline-block px-2 py-0.5 rounded-md bg-accent-violet/10 text-accent-violet text-[9px] font-black uppercase tracking-widest">
-                       {user.role}
-                    </div>
+                  <div className="flex-1 min-w-0 z-10">
+                    <p className="text-xl font-black text-slate-900 dark:text-white truncate leading-tight mb-1">{user.name}</p>
+                    <p className="text-sm font-bold text-slate-500 truncate mb-2">{user.email}</p>
+                    <Link to="/settings" onClick={() => setMenuOpen(false)} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-violet/10 text-accent-violet text-[10px] font-black uppercase tracking-widest hover:bg-accent-violet/20 transition-all">
+                       <HiCog className="w-3 h-3" /> Manage Account
+                    </Link>
                   </div>
                 </div>
               )}
@@ -283,20 +295,20 @@ const Navbar = () => {
                 />
               </form>
 
-              <Link to="/" onClick={() => setMenuOpen(false)} className={`text-2xl font-black transition-colors ${isActive('/') ? 'text-accent-violet' : 'dark:text-white'}`}>Explore</Link>
+              <Link to="/" onClick={() => setMenuOpen(false)} className={`text-lg font-bold flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 transition-all ${isActive('/') ? 'text-accent-violet border border-accent-violet/30' : 'dark:text-white border border-transparent'}`}>Explore Applications</Link>
               {user && (
                 <>
-                  <Link to="/developer" onClick={() => setMenuOpen(false)} className={`text-2xl font-black flex items-center gap-4 transition-colors ${isActive('/developer') ? 'text-accent-violet' : 'dark:text-white'}`}>
-                    <HiViewGrid className="w-6 h-6 text-accent-violet" /> Dashboard
+                  <Link to="/developer" onClick={() => setMenuOpen(false)} className={`text-lg font-bold flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 transition-all ${isActive('/developer') ? 'text-accent-violet border border-accent-violet/30' : 'dark:text-white border border-transparent'}`}>
+                    <HiViewGrid className="w-5 h-5 text-accent-violet" /> My Dashboard
                   </Link>
-                  <Link to="/upload" onClick={() => setMenuOpen(false)} className={`text-2xl font-black flex items-center gap-4 transition-colors ${isActive('/upload') ? 'text-accent-neon' : 'dark:text-white'}`}>
-                    <HiUpload className="w-6 h-6 text-accent-neon" /> Upload
+                  <Link to="/upload" onClick={() => setMenuOpen(false)} className={`text-lg font-bold flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 transition-all ${isActive('/upload') ? 'text-accent-neon border border-accent-neon/30' : 'dark:text-white border border-transparent'}`}>
+                    <HiUpload className="w-5 h-5 text-accent-neon" /> Upload Project
                   </Link>
                 </>
               )}
               {user && user.role === 'admin' && (
-                <Link to="/admin" onClick={() => setMenuOpen(false)} className={`text-2xl font-black flex items-center gap-4 transition-colors ${isActive('/admin') ? 'text-rose-500' : 'text-rose-400'}`}>
-                  <HiShieldCheck className="w-6 h-6" /> Admin
+                <Link to="/admin" onClick={() => setMenuOpen(false)} className={`text-lg font-bold flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 transition-all ${isActive('/admin') ? 'text-rose-500 border border-rose-500/30' : 'text-rose-400 border border-transparent'}`}>
+                  <HiShieldCheck className="w-5 h-5" /> Administrator
                 </Link>
               )}
               
