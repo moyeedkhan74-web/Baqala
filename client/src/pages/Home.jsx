@@ -167,9 +167,9 @@ const Home = () => {
                       </div>
                       <Link to="/developer" className="text-accent-violet dark:text-accent-neon text-sm hover:underline font-medium">Manage All</Link>
                     </div>
-                    <div className="flex gap-6 overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 hide-scrollbar">
+                    <div className="app-grid">
                       {myApps.map((app) => (
-                        <motion.div key={app._id} className="min-w-[280px]">
+                        <motion.div key={app._id}>
                           <AppCard app={app} />
                         </motion.div>
                       ))}
