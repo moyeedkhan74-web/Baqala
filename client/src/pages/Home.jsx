@@ -146,7 +146,8 @@ const Home = () => {
         ) : apps?.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="py-32 flex flex-col items-center justify-center text-center glass-panel rounded-3xl"
+            className="flex flex-col items-center justify-center text-center glass-panel rounded-3xl"
+            style={{ padding: 'clamp(2rem, 8vw, 6rem)' }}
           >
             <div className="w-20 h-20 bg-slate-100 dark:bg-dark-800 rounded-full flex items-center justify-center border border-slate-200 dark:border-white/10 mb-6">
               <HiSearch className="w-10 h-10 text-slate-400 dark:text-gray-500" aria-hidden="true" />
@@ -156,10 +157,10 @@ const Home = () => {
           </motion.div>
         ) : (
           <AnimatePresence>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-16">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 md:space-y-12">
               <div role="main" id="main-content">
                 {myApps?.length > 0 && !search && !category && (
-                  <section className="mb-12" aria-label="Your Uploaded Projects">
+                  <section className="mb-10 md:mb-16" aria-label="Your Uploaded Projects">
                     <div className="flex items-center justify-between mb-6">
                       <div className="flex items-center gap-2">
                         <HiCollection className="w-6 h-6 text-accent-violet" aria-hidden="true" />
@@ -178,25 +179,31 @@ const Home = () => {
                 )}
 
                 <section aria-label="App Discovery Grid">
-                  {(!search && !category && sort === '-createdAt') && (
+                  {(!search && !category && sort === '-createdAt' && apps.length > 0) && (
                     <div className="flex items-center gap-2 mb-6">
                       <HiTrendingUp className="w-6 h-6 text-accent-emerald" aria-hidden="true" />
                       <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Trending Now</h2>
                     </div>
                   )}
 
-                  <div className="app-grid">
-                    {((!search && !category && sort === '-createdAt') ? standardApps : apps).map((app, index) => (
-                      <motion.div
-                        key={app._id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                      >
-                        <AppCard app={app} />
-                      </motion.div>
-                    ))}
-                  </div>
+                  {apps.length > 0 ? (
+                    <div className="app-grid">
+                      {((!search && !category && sort === '-createdAt') ? standardApps : apps).map((app, index) => (
+                        <motion.div
+                          key={app._id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                        >
+                          <AppCard app={app} />
+                        </motion.div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-12 md:py-24 text-center">
+                       <p className="text-slate-500">No apps available in this section.</p>
+                    </div>
+                  )}
                 </section>
               </div>
             </motion.div>
