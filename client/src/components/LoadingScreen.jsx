@@ -14,7 +14,7 @@ const LoadingScreen = ({ isLoading, error, onRetry }) => {
     const warmingTimer = setTimeout(() => setShowWarming(true), 3000);
 
     const generateSparkles = () => {
-      const newSparkles = [...Array(30)].map((_, i) => ({
+      const newSparkles = [...Array(15)].map((_, i) => ({
         id: i,
         x: Math.random() * 100,
         y: Math.random() * 100,
@@ -164,13 +164,9 @@ const LoadingScreen = ({ isLoading, error, onRetry }) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.8 }}
             >
-              <motion.h1
-                className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-6"
-                animate={{ backgroundPosition: ['0%', '100%'] }}
-                transition={{ duration: 3, repeat: Infinity }}
-              >
+              <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-6">
                 Baqala
-              </motion.h1>
+              </h1>
               <motion.p
                 className="text-xl md:text-2xl font-light text-gray-300 tracking-wide"
                 animate={{ opacity: [0.6, 1, 0.6] }}
