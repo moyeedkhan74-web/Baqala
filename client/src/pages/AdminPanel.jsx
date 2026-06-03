@@ -116,7 +116,14 @@ const AdminPanel = () => {
                 ) : pendingApps.map(app => (
                   <div key={app._id} className="glass-panel p-6 rounded-2xl flex flex-col md:flex-row md:items-center gap-6 border-l-4 border-l-rose-500 bg-white/5 hover:bg-white/10 transition-colors">
                     <div className="flex items-center gap-4 flex-1">
-                      <img src={app.icon} className="w-16 h-16 rounded-xl object-cover shadow-glass border border-white/10" />
+                      <img 
+                        src={app.icon} 
+                        className="w-16 h-16 rounded-xl object-cover shadow-glass border border-white/10" 
+                        width="64"
+                        height="64"
+                        loading="lazy"
+                        decoding="async"
+                      />
                       <div>
                         <p className="text-xl font-bold text-white">{app.title}</p>
                         <p className="text-sm font-medium text-gray-400 mt-1">{app.developer?.name} <span className="text-white/20 mx-2">|</span> {app.category} <span className="text-white/20 mx-2">|</span> v{app.version}</p>
