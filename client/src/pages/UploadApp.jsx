@@ -147,7 +147,15 @@ const UploadApp = () => {
         {/* Stepper */}
         <div className="flex justify-between items-center mb-10 relative">
           <div className="absolute top-1/2 left-0 w-full h-1 bg-white/10 -z-10 -translate-y-1/2 rounded-full" />
-          <div className="absolute top-1/2 left-0 h-1 bg-gradient-to-r from-accent-violet to-accent-neon -z-10 -translate-y-1/2 rounded-full transition-all duration-500" style={{ width: `${((step - 1) / 2) * 100}%` }} />
+          <div 
+            className="absolute top-1/2 left-0 h-1 bg-gradient-to-r from-accent-violet to-accent-neon -z-10 -translate-y-1/2 rounded-full" 
+            style={{ 
+              transform: `scaleX(${(step - 1) / 2})`, 
+              transformOrigin: 'left',
+              transition: 'transform 0.5s ease-in-out',
+              width: '100%'
+            }} 
+          />
           
           {steps.map((s) => (
             <div key={s.num} className="flex flex-col items-center gap-2">
@@ -257,9 +265,14 @@ const UploadApp = () => {
                   {loading && (
                     <div className="w-full bg-dark-800 rounded-full h-3 mb-2 overflow-hidden border border-white/10 relative">
                       <div 
-                        className="bg-gradient-to-r from-accent-violet to-accent-neon h-3 rounded-full transition-all duration-300 shadow-glow-violet" 
-                        style={{ width: `${Math.round(uploadProgress)}%` }}
-                      ></div>
+                        className="bg-gradient-to-r from-accent-violet to-accent-neon h-3 rounded-full shadow-glow-violet" 
+                        style={{ 
+                          transform: `scaleX(${uploadProgress / 100})`, 
+                          transformOrigin: 'left',
+                          transition: 'transform 0.3s ease-out',
+                          width: '100%'
+                        }} 
+                      />
                       <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-20 pointer-events-none"></div>
                     </div>
                   )}

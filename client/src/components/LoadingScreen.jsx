@@ -14,7 +14,7 @@ const LoadingScreen = ({ isLoading, error, onRetry }) => {
     const warmingTimer = setTimeout(() => setShowWarming(true), 3000);
 
     const generateSparkles = () => {
-      const newSparkles = [...Array(15)].map((_, i) => ({
+      const newSparkles = [...Array(8)].map((_, i) => ({
         id: i,
         x: Math.random() * 100,
         y: Math.random() * 100,
@@ -131,8 +131,8 @@ const LoadingScreen = ({ isLoading, error, onRetry }) => {
                 'linear-gradient(0deg, transparent 24%, rgba(124, 58, 250, 0.05) 25%, rgba(124, 58, 250, 0.05) 26%, transparent 27%, transparent 74%, rgba(124, 58, 250, 0.05) 75%, rgba(124, 58, 250, 0.05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(124, 58, 250, 0.05) 25%, rgba(124, 58, 250, 0.05) 26%, transparent 27%, transparent 74%, rgba(124, 58, 250, 0.05) 75%, rgba(124, 58, 250, 0.05) 76%, transparent 77%, transparent)',
               backgroundSize: '50px 50px',
             }}
-            animate={{ y: [0, 50] }}
-            transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+            animate={{ y: 0 }}
+            transition={{ duration: 0 }}
           />
 
           {/* Radial gradient orbs */}
