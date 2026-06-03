@@ -12,10 +12,10 @@ const pageTransition = {
   duration: 0.2
 };
 
-const AnimatedLayout = ({ children }) => {
+const AnimatedLayout = ({ children, skipInitial = false }) => {
   return (
     <motion.div
-      initial="initial"
+      initial={skipInitial ? "in" : "initial"}
       animate="in"
       exit="out"
       variants={pageVariants}

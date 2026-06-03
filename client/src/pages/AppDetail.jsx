@@ -739,7 +739,11 @@ const AppDetail = () => {
               {isScreenshot && (
                 <div className="absolute bottom-[-40px] flex gap-2">
                   {app.screenshots.map((_, i) => (
-                    <div key={i} className={`h-2 rounded-full transition-all ${lightboxIndex === i ? 'w-6 bg-accent-violet' : 'w-2 bg-white/30'}`} />
+                    <div 
+                      key={i} 
+                      className={`h-2 w-2 rounded-full transition-all duration-300 ${lightboxIndex === i ? 'bg-accent-violet scale-[2.5]' : 'bg-white/30 scale-100'}`} 
+                      style={{ transformOrigin: 'center' }}
+                    />
                   ))}
                 </div>
               )}

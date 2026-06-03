@@ -66,8 +66,8 @@ const Register = () => {
             {/* Role Switcher */}
             <div className="flex bg-dark-900/50 p-1.5 rounded-2xl glass-panel border-white/5 relative">
               <div 
-                className="absolute inset-y-1.5 w-[calc(50%-6px)] bg-gradient-to-r from-accent-violet to-accent-neon rounded-xl transition-all duration-300 ease-in-out shadow-glow-violet"
-                style={{ left: formData.role === 'user' ? '6px' : 'calc(50%)' }}
+                className="absolute inset-y-1.5 w-[calc(50%-6px)] bg-gradient-to-r from-accent-violet to-accent-neon rounded-xl transition-transform duration-300 ease-in-out shadow-glow-violet"
+                style={{ transform: formData.role === 'user' ? 'translateX(6px)' : 'translateX(calc(100% + 6px))' }}
               />
               <button 
                 type="button" onClick={() => setFormData({ ...formData, role: 'user' })}
