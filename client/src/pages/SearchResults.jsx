@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
-import AppCard from '../components/AppCard';
+const AppCard = lazy(() => import('../components/AppCard'));
 import SEOHead from '../components/SEOHead';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiSearch, HiXCircle } from 'react-icons/hi';
+const SkeletonCard = lazy(() => import('../components/Skeleton').then(m => ({ default: m.SkeletonCard })));
 
 const SearchResults = () => {
   const [searchParams] = useSearchParams();
@@ -58,24 +59,28 @@ const SearchResults = () => {
 
       <AnimatePresence mode="wait">
         {loading ? (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
-          >
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="glass-panel h-[360px] animate-pulse rounded-3xl bg-dark-100/50 dark:bg-white/5" />
-            ))}
-          </motion.div>
+          <Suspense fallback={<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"><div className="h-64 bg-white/5 animate-pulse rounded-2xl" /></div>}>
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            >
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="glass-panel h-[360px] animate-pulse rounded-3xl bg-dark-100/50 dark:bg-white/5" />
+              ))}
+            </motion.div>
+          </Suspense>
         ) : apps.length > 0 ? (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
-          >
-            {apps.map((app, index) => (
-              <AppCard key={app._id} app={app} index={index} />
-            ))}
-          </motion.div>
+          <Suspense fallback={<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"><div className="h-64 bg-white/5 animate-pulse rounded-2xl" /></div>}>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            >
+              {apps.map((app, index) => (
+                <AppCard key={app._id} app={app} index={index} />
+              ))}
+            </motion.div>
+          </Suspense>
         ) : (
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}

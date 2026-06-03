@@ -62,7 +62,7 @@ const AdminPanel = () => {
         <div className="flex flex-wrap gap-2 mb-10 p-2 glass-panel rounded-2xl w-max">
           {tabs.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-colors transition-opacity duration-300 ${
                 tab === t.id ? 'bg-gradient-to-r from-rose-600 to-rose-400 text-white shadow-[0_0_15px_rgba(251,113,133,0.4)]'
                 : 'text-gray-400 hover:text-white hover:bg-white/10'}`}>
               <t.icon className="w-5 h-5" /> {t.label}

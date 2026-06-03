@@ -143,7 +143,7 @@ const Navbar = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-dark-900 p-2 z-[60] shadow-2xl border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden origin-top"
+                  className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-dark-900 p-2 z-[60] shadow-2xl border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden"
                 >
                   {searching ? (
                     <div className="p-4 text-center text-sm text-slate-500 flex items-center justify-center gap-2">
