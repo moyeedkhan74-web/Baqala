@@ -4,11 +4,8 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   build: {
-    target: 'esnext',
-    minify: 'esbuild',
     chunkSizeWarningLimit: 1000,
     cssCodeSplit: true,
-    cssMinify: true,
     rollupOptions: {
       output: {
         manualChunks(id) {
