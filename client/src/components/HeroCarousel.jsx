@@ -47,9 +47,9 @@ const HeroCarousel = ({ apps }) => {
             
             {/* App Icon */}
             <motion.div 
-              initial={{ y: 20, opacity: 0 }}
+              initial={{ y: 0, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: 0 }}
               className="w-32 h-32 md:w-48 md:h-48 flex-shrink-0"
               onClick={() => navigate(`/app/${currentApp._id}`)}
             >
@@ -78,7 +78,7 @@ const HeroCarousel = ({ apps }) => {
               </motion.div>
 
               <motion.h2 
-                initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }}
+                initial={{ y: 0, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.05 }}
                 className="text-4xl md:text-5xl font-extrabold mb-4 hover:text-accent-magenta cursor-pointer transition-colors line-clamp-1"
                 onClick={() => navigate(`/app/${currentApp._id}`)}
               >
@@ -93,7 +93,7 @@ const HeroCarousel = ({ apps }) => {
               </motion.p>
               
               <motion.button 
-                initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.6 }}
+                initial={{ y: 0, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15 }}
                 onClick={() => navigate(`/app/${currentApp._id}`)}
                 className="btn-primary flex items-center gap-2 group/btn"
                 aria-label={`Get ${currentApp.title} application`}

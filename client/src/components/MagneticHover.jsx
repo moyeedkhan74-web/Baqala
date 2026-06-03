@@ -9,26 +9,36 @@ const MagneticHover = ({ children, className = '', damping = 15, stiffness = 150
   // Disable magnetism on mobile to save performance and prevent UX jank
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
-  const handleMouse = (e) => {
+  const rectRef = useRef(null);
+
+  const handleMouseEnter = () => {
     if (isMobile) return;
+    rectRef.current = ref.current.getBoundingClientRect();
     if (!isReady) setIsReady(true);
+  };
+
+  const handleMouse = (e) => {
+    if (isMobile || !rectRef.current) return;
     
     const { clientX, clientY } = e;
-    const { height, width, left, top } = ref.current.getBoundingClientRect();
+    const { height, width, left, top } = rectRef.current;
+    
     const middleX = clientX - (left + width / 2);
     const middleY = clientY - (top + height / 2);
-    // Multiply by a smaller fraction for subtle magnetism
+    
     setPosition({ x: middleX * 0.15, y: middleY * 0.15 });
   };
 
   const reset = () => {
     setPosition({ x: 0, y: 0 });
+    rectRef.current = null;
   };
 
   return (
     <motion.div
       className={className}
       ref={ref}
+      onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouse}
       onMouseLeave={reset}
       animate={isReady && !isMobile ? { x: position.x, y: position.y } : { x: 0, y: 0 }}

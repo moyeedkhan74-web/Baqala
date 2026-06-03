@@ -11,25 +11,25 @@ import CookieBanner from './components/CookieBanner';
 const ParticlesBackground = lazy(() => import('./components/ParticlesBackground'));
 import api from './api/axios';
 
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import AppDetail from './pages/AppDetail';
-import DeveloperDashboard from './pages/DeveloperDashboard';
-import UploadApp from './pages/UploadApp';
-import EditApp from './pages/EditApp';
-import AdminPanel from './pages/AdminPanel';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import TermsOfService from './pages/TermsOfService';
-import CookiePolicy from './pages/CookiePolicy';
-import RevenueShare from './pages/RevenueShare';
-import Contact from './pages/Contact';
-import SearchResults from './pages/SearchResults';
-import CategoryPage from './pages/CategoryPage';
-import DeveloperProfile from './pages/DeveloperProfile';
-import Settings from './pages/Settings';
-import About from './pages/About';
-import AppAbout from './pages/AppAbout';
+const Home = lazy(() => import('./pages/Home'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const AppDetail = lazy(() => import('./pages/AppDetail'));
+const DeveloperDashboard = lazy(() => import('./pages/DeveloperDashboard'));
+const UploadApp = lazy(() => import('./pages/UploadApp'));
+const EditApp = lazy(() => import('./pages/EditApp'));
+const AdminPanel = lazy(() => import('./pages/AdminPanel'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const CookiePolicy = lazy(() => import('./pages/CookiePolicy'));
+const RevenueShare = lazy(() => import('./pages/RevenueShare'));
+const Contact = lazy(() => import('./pages/Contact'));
+const SearchResults = lazy(() => import('./pages/SearchResults'));
+const CategoryPage = lazy(() => import('./pages/CategoryPage'));
+const DeveloperProfile = lazy(() => import('./pages/DeveloperProfile'));
+const Settings = lazy(() => import('./pages/Settings'));
+const About = lazy(() => import('./pages/About'));
+const AppAbout = lazy(() => import('./pages/AppAbout'));
 
 function App() {
   const location = useLocation();
@@ -110,7 +110,7 @@ function App() {
           <main id="main-content" className="flex-1 w-full flex flex-col">
             <AnimatePresence mode="wait">
               <Routes location={location} key={location.pathname}>
-                <Route path="/" element={<AnimatedLayout><Home /></AnimatedLayout>} />
+                <Route path="/" element={<AnimatedLayout skipInitial><Home /></AnimatedLayout>} />
                 <Route path="/login" element={<AnimatedLayout><Login /></AnimatedLayout>} />
                 <Route path="/register" element={<AnimatedLayout><Register /></AnimatedLayout>} />
                 <Route path="/app/:id" element={<AnimatedLayout><AppDetail /></AnimatedLayout>} />
