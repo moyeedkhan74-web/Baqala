@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
 
 @tailwind base;
 @tailwind components;
@@ -58,8 +58,9 @@
   .glass-panel {
     @apply bg-white/80 dark:bg-surface-dark/80 backdrop-blur-2xl
            border border-slate-200/70 dark:border-white/5
-           shadow-[0_4px_24px_-6px_rgba(0,0,0,0.07)] dark:shadow-glass-colorful
-           transition-all duration-300;
+           shadow-[0_4px_24px_-6px_rgba(0,0,0,0.07)] dark:shadow-glass-colorful;
+    transition-property: color, background-color, border-color, box-shadow;
+    transition-duration: 300ms;
     padding: clamp(1rem, 3vw, 2rem);
   }
 
@@ -108,13 +109,14 @@
     @apply relative inline-flex items-center justify-center overflow-hidden
            bg-gradient-to-r from-accent-violet to-accent-magenta
            text-white font-bold px-6 py-3 rounded-2xl
-           transition-all duration-300
            shadow-[0_8px_24px_-6px_rgba(139,92,246,0.5)]
            hover:shadow-[0_12px_32px_-6px_rgba(139,92,246,0.65)]
            hover:brightness-110
            active:scale-95
            disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none
            z-10;
+    transition-property: color, background-color, box-shadow, transform, filter;
+    transition-duration: 300ms;
   }
 
   .btn-secondary {
@@ -123,31 +125,34 @@
            text-slate-700 dark:text-white font-semibold
            px-6 py-3 rounded-2xl
            border border-slate-200 dark:border-white/10
-           transition-all duration-300
            hover:bg-slate-50 dark:hover:bg-white/10
            hover:border-slate-300 dark:hover:border-white/20
            shadow-sm active:scale-95
            disabled:opacity-50 disabled:cursor-not-allowed;
+    transition-property: color, background-color, border-color, box-shadow, transform;
+    transition-duration: 300ms;
   }
 
   .btn-success {
     @apply inline-flex items-center justify-center
            bg-gradient-to-r from-emerald-500 to-teal-500
            text-white font-semibold px-6 py-3 rounded-2xl
-           transition-all duration-300
            shadow-[0_8px_24px_-6px_rgba(16,185,129,0.4)]
            hover:shadow-[0_12px_32px_-6px_rgba(16,185,129,0.6)]
            hover:brightness-110 active:scale-95;
+    transition-property: color, background-color, box-shadow, transform, filter;
+    transition-duration: 300ms;
   }
 
   .btn-danger {
     @apply inline-flex items-center justify-center
            bg-gradient-to-r from-rose-500 to-red-500
            text-white font-semibold px-6 py-3 rounded-2xl
-           transition-all duration-300
            shadow-[0_8px_24px_-6px_rgba(244,63,94,0.4)]
            hover:shadow-[0_12px_32px_-6px_rgba(244,63,94,0.6)]
            hover:brightness-110 active:scale-95;
+    transition-property: color, background-color, box-shadow, transform, filter;
+    transition-duration: 300ms;
   }
 
   /* ── Forms ─────────────────────────────────────── */
@@ -159,8 +164,9 @@
            placeholder-slate-400 dark:placeholder-dark-500
            focus:outline-none
            focus:ring-2 focus:ring-accent-violet/30 dark:focus:ring-accent-violet/40
-           focus:border-accent-violet/60
-           transition-all duration-300;
+           focus:border-accent-violet/60;
+    transition-property: border-color, box-shadow;
+    transition-duration: 300ms;
   }
 
   .select-field {
@@ -171,8 +177,9 @@
            focus:outline-none
            focus:ring-2 focus:ring-accent-violet/30
            focus:border-accent-violet/60
-           transition-all duration-300
            appearance-none;
+    transition-property: border-color, box-shadow;
+    transition-duration: 300ms;
   }
 
   /* ── Badges ────────────────────────────────────── */

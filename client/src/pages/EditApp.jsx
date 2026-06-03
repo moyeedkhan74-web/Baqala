@@ -394,7 +394,15 @@ const EditApp = () => {
                 {saving && activeTab === 'payload' && (
                   <div className="mb-6">
                     <div className="w-full bg-dark-800 rounded-full h-2 mb-2">
-                      <div className="bg-accent-neon h-2 rounded-full transition-all duration-300 shadow-glow-neon" style={{ width: `${uploadProgress}%` }} />
+                      <div 
+                        className="bg-accent-neon h-2 rounded-full shadow-glow-neon" 
+                        style={{ 
+                          transform: `scaleX(${uploadProgress / 100})`, 
+                          transformOrigin: 'left',
+                          transition: 'transform 0.3s ease-out',
+                          width: '100%' 
+                        }} 
+                      />
                     </div>
                     <p className="text-xs font-bold text-accent-neon animate-pulse">{Math.round(uploadProgress)}% OVERWRITING PAYLOAD...</p>
                   </div>

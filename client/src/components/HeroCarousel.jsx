@@ -111,7 +111,8 @@ const HeroCarousel = ({ apps }) => {
           <button
             key={idx}
             onClick={() => setCurrentIndex(idx)}
-            className={`transition-all duration-300 rounded-full ${currentIndex === idx ? 'w-8 h-2 bg-accent-magenta' : 'w-2 h-2 bg-dark-400 dark:bg-gray-500 hover:bg-dark-200 dark:hover:bg-gray-400'}`}
+            className={`rounded-full ${currentIndex === idx ? 'w-8 h-2 bg-accent-magenta' : 'w-2 h-2 bg-dark-400 dark:bg-gray-500 hover:bg-dark-200 dark:hover:bg-gray-400'}`}
+            style={{ transition: 'background-color 0.3s, opacity 0.3s' }}
             aria-label={`Go to slide ${idx + 1} - ${featuredApps[idx].title}`}
             aria-current={currentIndex === idx ? 'true' : 'false'}
           />
