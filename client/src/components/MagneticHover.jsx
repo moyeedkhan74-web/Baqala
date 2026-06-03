@@ -26,6 +26,7 @@ const MagneticHover = ({ children, className = '', damping = 15, stiffness = 150
       onMouseLeave={reset}
       animate={{ x: position.x, y: position.y }}
       transition={{ type: 'spring', stiffness, damping, mass: 0.5 }}
+      style={{ willChange: 'transform' }}
     >
       {children}
     </motion.div>

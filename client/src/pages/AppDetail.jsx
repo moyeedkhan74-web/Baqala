@@ -350,8 +350,9 @@ const AppDetail = () => {
                 >
                   {downloading && (
                     <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${downloadProgress}%` }}
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: downloadProgress / 100 }}
+                      style={{ transformOrigin: 'left', willChange: 'transform' }}
                       className="absolute inset-0 bg-white/20 z-0 h-full"
                     />
                   )}
