@@ -318,7 +318,7 @@ const AppDetail = () => {
               <Link to={`/developer/${app.developer?._id || app.developer}`} className="hidden md:flex items-center gap-3 mb-6 group">
                 <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20 bg-slate-100 flex items-center justify-center">
                    {app.developer?.avatar ? (
-                     <img src={app.developer.avatar} alt="" className="w-full h-full object-cover" />
+                     <img src={app.developer.avatar} alt="" className="w-full h-full object-cover" width="32" height="32" loading="lazy" decoding="async" />
                    ) : (
                      <span className="text-xs font-bold text-accent-violet">{(app.developer?.name || app.developerName || 'D').charAt(0)}</span>
                    )}

@@ -158,7 +158,15 @@ const Navbar = () => {
                           to={`/app/${app._id}`}
                           className="flex items-center gap-3 p-2 rounded-xl hover:bg-dark-100 dark:hover:bg-white/5 transition-colors group"
                         >
-                          <img src={app.icon || '/logo.png'} className="w-10 h-10 rounded-lg object-cover" alt="" />
+                          <img 
+                            src={app.icon || '/logo.png'} 
+                            className="w-10 h-10 rounded-lg object-cover" 
+                            alt="" 
+                            width="40"
+                            height="40"
+                            loading="lazy"
+                            decoding="async"
+                          />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold truncate dark:text-white">{app.title}</p>
                             <p className="text-[10px] text-slate-500 truncate">{app.developerName}</p>
@@ -393,7 +401,15 @@ const Navbar = () => {
                       onClick={() => setSearchOpen(false)}
                       className="flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5"
                     >
-                      <img src={app.icon} className="w-12 h-12 rounded-xl object-cover shadow-sm" alt="" />
+                      <img 
+                        src={app.icon} 
+                        className="w-12 h-12 rounded-xl object-cover shadow-sm" 
+                        alt="" 
+                        width="48"
+                        height="48"
+                        loading="lazy"
+                        decoding="async"
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="font-bold dark:text-white truncate">{app.title}</p>
                         <p className="text-xs text-slate-500 font-bold">{app.category} • {app.developerName}</p>

@@ -127,6 +127,10 @@ const DeveloperDashboard = () => {
                               <img 
                                 src={app.icon} 
                                 className="w-14 h-14 rounded-xl object-cover relative z-10 border border-white/10 shadow-2xl" 
+                                width="56"
+                                height="56"
+                                loading="lazy"
+                                decoding="async"
                                 onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(app.title)}&background=random&size=128`; }}
                               />
                           </div>
