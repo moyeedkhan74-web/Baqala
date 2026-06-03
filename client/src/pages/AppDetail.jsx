@@ -291,6 +291,11 @@ const AppDetail = () => {
                 <img 
                   src={getImageUrl(app.icon)} 
                   alt={`${app.title} app icon`}
+                  fetchpriority="high"
+                  loading="eager"
+                  width="192"
+                  height="192"
+                  decoding="async"
                   className="w-full h-full object-cover rounded-2xl md:rounded-[2rem] border-2 border-white/20 shadow-glass relative z-10" 
                   onError={(e) => { 
                     e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(app.title)}&background=random&size=256`; 
@@ -384,7 +389,11 @@ const AppDetail = () => {
                     >
                       <img 
                         src={getImageUrl(s)} 
-                        alt=""
+                        alt={`Screenshot ${i + 1} of ${app.title}`}
+                        width="250"
+                        height="500"
+                        loading="lazy"
+                        decoding="async"
                         className="h-72 md:h-96 w-auto object-cover rounded-2xl border border-slate-200 dark:border-white/10 shadow-glass snap-center cursor-zoom-in" 
                       />
                     </motion.button>
@@ -475,7 +484,14 @@ const AppDetail = () => {
                         <div className="flex-shrink-0">
                           <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white dark:border-white/10 bg-slate-100 flex items-center justify-center shadow-lg">
                             {fb.user?.avatar ? (
-                              <img src={fb.user.avatar} alt={fb.user.name} className="w-full h-full object-cover" />
+                              <img 
+                                src={fb.user.avatar} 
+                                alt={`${fb.user.name}'s avatar`} 
+                                width="56"
+                                height="56"
+                                loading="lazy"
+                                className="w-full h-full object-cover" 
+                              />
                             ) : (
                               <span className="text-xl font-bold text-accent-violet">{(fb.user?.name || 'U').charAt(0)}</span>
                             )}
@@ -539,7 +555,14 @@ const AppDetail = () => {
                                 <div key={rep._id} className="flex gap-4">
                                   <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/50 bg-slate-50 dark:bg-white/5 flex items-center justify-center flex-shrink-0">
                                     {rep.user?.avatar ? (
-                                      <img src={rep.user.avatar} alt={rep.user.name} className="w-full h-full object-cover" />
+                                      <img 
+                                        src={rep.user.avatar} 
+                                        alt={`${rep.user.name}'s avatar`} 
+                                        width="40"
+                                        height="40"
+                                        loading="lazy"
+                                        className="w-full h-full object-cover" 
+                                      />
                                     ) : (
                                       <span className="text-sm font-bold text-accent-violet">{(rep.user?.name || 'U').charAt(0)}</span>
                                     )}
@@ -590,7 +613,14 @@ const AppDetail = () => {
                   <div className="absolute -inset-1 bg-gradient-to-r from-accent-violet to-accent-emerald rounded-full blur opacity-25 group-hover:opacity-60 transition duration-500"></div>
                   <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-white bg-white dark:bg-dark-800">
                     {app.developer?.avatar ? (
-                      <img src={app.developer.avatar} alt={app.developer.name} className="w-full h-full object-cover" />
+                      <img 
+                        src={app.developer.avatar} 
+                        alt={`${app.developer.name}'s developer avatar`} 
+                        width="80"
+                        height="80"
+                        loading="lazy"
+                        className="w-full h-full object-cover" 
+                      />
                     ) : (
                       <div className="w-full h-full bg-slate-100 flex items-center justify-center text-accent-violet text-3xl font-bold">
                         {(app.developer?.name || app.developerName || 'D').charAt(0).toUpperCase()}

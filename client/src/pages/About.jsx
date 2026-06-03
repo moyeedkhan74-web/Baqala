@@ -153,7 +153,11 @@ const About = () => {
               <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-white dark:border-white/20 bg-slate-200 mx-auto relative z-10 shadow-2xl">
                  <img 
                     src="/team/khan_sahab.jpg" 
-                    alt="Khan_Sahab" 
+                    alt="Khan_Sahab - Visionary Architect" 
+                    width="160"
+                    height="160"
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.target.onerror = null;

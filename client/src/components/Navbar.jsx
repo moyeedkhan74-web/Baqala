@@ -85,12 +85,7 @@ const Navbar = () => {
 
   return (
     <>
-      <a 
-        href="#main-content" 
-        className="fixed top-[-100px] left-4 z-[1000] bg-accent-violet text-white px-4 py-2 rounded-lg transition-all focus:top-4 outline-none ring-2 ring-accent-neon"
-      >
-        Skip to content
-      </a>
+
       
       <motion.nav 
       initial={{ y: -100 }}
@@ -103,7 +98,15 @@ const Navbar = () => {
           
           {/* Brand */}
           <Link to="/" className="flex items-center gap-3 group shrink-0">
-            <img src="/logo.png" alt="Baqala Logo" className="h-14 sm:h-16 w-auto object-contain transition-transform duration-500 group-hover:scale-[1.1] drop-shadow-[0_0_15px_rgba(34,211,238,0.3)]" />
+            <img 
+              src="/logo.png" 
+              alt="Baqala Logo" 
+              width="64"
+              height="64"
+              loading="eager"
+              decoding="async"
+              className="h-14 sm:h-16 w-auto object-contain transition-transform duration-500 group-hover:scale-[1.1] drop-shadow-[0_0_15px_rgba(34,211,238,0.3)]" 
+            />
           </Link>
 
           {/* Desktop Search (Hidden < 1024px) */}
@@ -115,6 +118,7 @@ const Navbar = () => {
               <input
                 type="text"
                 placeholder="Search Baqala..."
+                aria-label="Search Baqala"
                 value={searchQuery}
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
@@ -125,6 +129,7 @@ const Navbar = () => {
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
+                  aria-label="Clear search"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-accent-violet transition-colors"
                 >
                   <HiX className="h-4 w-4" />
@@ -243,7 +248,7 @@ const Navbar = () => {
             </div>
 
             {/* Hamburger (Mobile) */}
-            <button onClick={() => setMenuOpen(!menuOpen)} className="min-[900px]:hidden p-2.5 rounded-xl bg-white/50 dark:bg-white/5 border border-dark-200/50 dark:border-white/10 min-w-[44px] min-h-[44px] flex items-center justify-center">
+            <button onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle mobile menu" className="min-[900px]:hidden p-2.5 rounded-xl bg-white/50 dark:bg-white/5 border border-dark-200/50 dark:border-white/10 min-w-[44px] min-h-[44px] flex items-center justify-center">
               {menuOpen ? <HiX className="w-6 h-6 dark:text-white" /> : <HiMenu className="w-6 h-6 dark:text-white" />}
             </button>
           </div>
@@ -273,8 +278,16 @@ const Navbar = () => {
               className="fixed top-0 right-0 bottom-0 z-[60] w-[280px] sm:w-[320px] h-full bg-white dark:bg-dark-900 min-[900px]:hidden flex flex-col shadow-2xl border-l border-white/10"
             >
               <div className="flex items-center justify-between h-20 px-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
-                 <img src="/logo.png" className="h-10" alt="Logo" />
-                 <button onClick={() => setMenuOpen(false)} className="p-2 text-slate-500 hover:text-accent-violet transition-colors"><HiX className="w-6 h-6" /></button>
+                 <img 
+                   src="/logo.png" 
+                   className="h-10 w-auto" 
+                   alt="Baqala Logo" 
+                   width="40"
+                   height="40"
+                   loading="lazy"
+                   decoding="async"
+                 />
+                 <button onClick={() => setMenuOpen(false)} aria-label="Close menu" className="p-2 text-slate-500 hover:text-accent-violet transition-colors"><HiX className="w-6 h-6" /></button>
               </div>
               
               <div className="flex-1 px-6 py-8 flex flex-col gap-6 overflow-y-auto">
@@ -350,17 +363,18 @@ const Navbar = () => {
             className="fixed inset-0 z-[100] bg-white dark:bg-dark-900 flex flex-col p-4"
           >
             <div className="flex items-center gap-4 mb-6">
-               <button onClick={() => setSearchOpen(false)} className="p-2"><HiArrowLeft className="w-6 h-6 dark:text-white" /></button>
+               <button onClick={() => setSearchOpen(false)} aria-label="Back to page" className="p-2"><HiArrowLeft className="w-6 h-6 dark:text-white" /></button>
                <form onSubmit={handleGlobalSearch} className="flex-1 relative">
                  <input 
                    autoFocus
                    type="text" 
                    placeholder="Search apps & games..." 
+                   aria-label="Search Baqala"
                    value={searchQuery} 
                    onChange={(e) => setSearchQuery(e.target.value)}
                    className="w-full bg-slate-100 dark:bg-white/5 border-none rounded-xl py-3 pl-4 pr-10 dark:text-white font-bold outline-none"
                  />
-                 {searchQuery && <button type="button" onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"><HiX className="w-5 h-5" /></button>}
+                 {searchQuery && <button type="button" onClick={() => setSearchQuery('')} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"><HiX className="w-5 h-5" /></button>}
                </form>
             </div>
 

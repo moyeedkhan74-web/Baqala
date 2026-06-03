@@ -1,14 +1,14 @@
 // Baqala Deployment Trigger: CORS & Upload Final
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import AnimatedLayout from './components/AnimatedLayout';
-import ParticlesBackground from './components/ParticlesBackground';
 import LoadingScreen from './components/LoadingScreen';
 import CookieBanner from './components/CookieBanner';
+const ParticlesBackground = lazy(() => import('./components/ParticlesBackground'));
 import api from './api/axios';
 
 import Home from './pages/Home';
@@ -94,13 +94,15 @@ function App() {
       <CookieBanner />
       <a 
         href="#main-content" 
-        className="skip-link"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[1000] focus:bg-accent-violet focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-neon"
       >
         Skip to main content
       </a>
       <div className="min-h-screen flex flex-col relative overflow-hidden bg-background-light dark:bg-background-dark transition-colors duration-500">
         {/* Global interactive particles */}
-        <ParticlesBackground />
+        <Suspense fallback={null}>
+          <ParticlesBackground />
+        </Suspense>
         
         <div className="relative z-20 w-full flex flex-col flex-1">
           <Navbar />

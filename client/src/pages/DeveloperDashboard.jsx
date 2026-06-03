@@ -43,7 +43,7 @@ const DeveloperDashboard = () => {
             <h1 className="text-4xl font-extrabold text-white tracking-tight mb-2">
               Architect <span className="gradient-text">Dashboard</span>
             </h1>
-            <p className="text-gray-400 text-lg">Manage your digital portfolio and monitor telemetry.</p>
+            <p className="text-gray-300 text-lg">Manage your digital portfolio and monitor telemetry.</p>
           </div>
           <Link to="/upload" className="btn-primary shadow-glow-violet flex items-center gap-2">
             <HiPlus className="w-5 h-5" /> Deploy New App
@@ -69,7 +69,7 @@ const DeveloperDashboard = () => {
                   </div>
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm font-semibold">{stat.label}</p>
+                  <p className="text-gray-300 text-sm font-semibold">{stat.label}</p>
                   <p className="text-3xl font-bold text-white tracking-tight">{stat.value}</p>
                 </div>
               </div>
@@ -138,7 +138,7 @@ const DeveloperDashboard = () => {
                       </td>
                       <td className="p-6 text-center">
                         <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-                          app.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_15px_rgba(52,211,153,0.1)]' : 
+                          app.status === 'approved' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_15px_rgba(52,211,153,0.1)]' : 
                           app.status === 'rejected' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 
                           'bg-yellow-500/10 text-yellow-400 border-yellow-500/20 shadow-[0_0_15px_rgba(234,179,8,0.1)]'
                         }`}>

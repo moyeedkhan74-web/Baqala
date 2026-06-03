@@ -50,6 +50,10 @@ const AppCard = memo(({ app, featured = false }) => {
               <img 
                 src={getImageUrl(app.icon)} 
                 alt={`${app.title} app icon`}
+                width="192"
+                height="192"
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover rounded-3xl shadow-glass relative z-10 border border-white/50 dark:border-white/20 bg-white dark:bg-dark-800" 
                 onError={(e) => { e.target.src = fallbackIcon; }}
               />
@@ -105,6 +109,10 @@ const AppCard = memo(({ app, featured = false }) => {
               <img 
                 src={getImageUrl(app.icon)} 
                 alt={`${app.title} app icon`}
+                width="64"
+                height="64"
+                loading="lazy"
+                decoding="async"
                 className="w-12 h-12 sm:w-16 sm:h-16 rounded-[12px] sm:rounded-2xl object-cover border border-white/50 dark:border-white/10 shadow-glass relative z-10 bg-white dark:bg-dark-800" 
                 onError={(e) => { e.target.src = fallbackIcon; }}
               />

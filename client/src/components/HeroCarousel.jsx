@@ -56,7 +56,12 @@ const HeroCarousel = ({ apps }) => {
               <img 
                 src={currentApp?.iconUrl || currentApp?.icon} 
                 className="w-full h-full object-cover rounded-3xl shadow-glow-violet md:shadow-[0_0_40px_-10px_rgba(139,92,246,0.6)] border border-white/20 cursor-pointer transform hover:scale-105 transition-transform" 
-                alt={`${currentApp.title} app icon`} 
+                alt={`${currentApp.title} app icon`}
+                fetchpriority="high"
+                loading="eager"
+                width="192"
+                height="192"
+                decoding="async"
               />
             </motion.div>
 
