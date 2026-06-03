@@ -8,7 +8,15 @@ const Footer = ({ className = '' }) => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12 mb-12 pb-12 border-b border-slate-200 dark:border-white/5">
           <div className="col-span-2 lg:col-span-1">
             <Link to="/" className="flex items-center gap-3 mb-6 group">
-              <img src="/logo.png" alt="Baqala Logo" className="h-12 w-auto object-contain transition-transform duration-500 group-hover:scale-105" />
+              <img 
+                src="/logo.png" 
+                alt="Baqala Logo" 
+                width="48"
+                height="48"
+                loading="lazy"
+                decoding="async"
+                className="h-12 w-auto object-contain transition-transform duration-500 group-hover:scale-105" 
+              />
             </Link>
             <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed max-w-xs">
               The premium destination to discover, download, and share the most innovative digital experiences.

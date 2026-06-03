@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import AppCard from '../components/AppCard';
-import HeroCarousel from '../components/HeroCarousel';
+const HeroCarousel = lazy(() => import('../components/HeroCarousel'));
 import SEOHead from '../components/SEOHead';
 import { SkeletonCard } from '../components/Skeleton';
 import { HiSearch, HiX, HiAdjustments, HiTrendingUp, HiCollection } from 'react-icons/hi';
@@ -74,7 +74,7 @@ const Home = () => {
             <h1 className="heading-hero">
               Discover <span className="gradient-text">Extraordinary</span> Apps
             </h1>
-            <p className="text-slate-500 dark:text-gray-400 text-lg max-w-2xl">
+            <p className="text-slate-600 dark:text-gray-300 text-lg max-w-2xl">
               Immerse yourself in the next generation of digital tools, games, and productivity software.
             </p>
           </div>
@@ -82,7 +82,9 @@ const Home = () => {
 
         {/* Featured Carousel */}
         {!search && !category && sort === '-createdAt' && featuredApps?.length > 0 && (
-          <HeroCarousel apps={featuredApps} />
+          <Suspense fallback={<div className="w-full h-[400px] md:h-[500px] bg-slate-100 dark:bg-white/5 animate-pulse rounded-[2.5rem] mb-12" />}>
+            <HeroCarousel apps={featuredApps} />
+          </Suspense>
         )}
 
         {/* Filters and Sorting */}
@@ -94,7 +96,7 @@ const Home = () => {
               className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
                 !category
                   ? 'bg-accent-violet text-white shadow-glow-violet'
-                  : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-gray-400 hover:bg-slate-200 dark:hover:bg-white/10'
+                  : 'bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/10'
               }`}
             >
               All Explore

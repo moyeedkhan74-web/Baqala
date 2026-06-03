@@ -77,7 +77,15 @@ const DeveloperProfile = () => {
           <div className="absolute -inset-1 bg-gradient-to-r from-accent-violet to-accent-neon rounded-[32px] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
           <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-[28px] overflow-hidden border border-white/20 bg-white dark:bg-dark-800 shadow-glass">
             {developer.avatar ? (
-              <img src={developer.avatar} alt={developer.name} className="w-full h-full object-cover" />
+              <img 
+                src={developer.avatar} 
+                alt={`${developer.name}'s profile avatar`} 
+                width="160"
+                height="160"
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-cover" 
+              />
             ) : (
               <div className="w-full h-full bg-gradient-to-tr from-accent-violet to-accent-magenta flex items-center justify-center text-white text-5xl font-bold">
                 {(developer?.name || 'Developer').charAt(0).toUpperCase()}
