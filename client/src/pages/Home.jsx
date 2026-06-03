@@ -3,12 +3,11 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
-import AppCard from '../components/AppCard';
+const AppCard = lazy(() => import('../components/AppCard'));
 const HeroCarousel = lazy(() => import('../components/HeroCarousel'));
 import SEOHead from '../components/SEOHead';
-import { SkeletonCard } from '../components/Skeleton';
+const SkeletonCard = lazy(() => import('../components/Skeleton').then(m => ({ default: m.SkeletonCard })));
 import { HiSearch, HiX, HiAdjustments, HiTrendingUp, HiCollection } from 'react-icons/hi';
-import toast from 'react-hot-toast';
 
 const Home = () => {
   const [apps, setApps] = useState([]);
@@ -52,6 +51,7 @@ const Home = () => {
       setFeaturedApps(results[2].data.apps || []);
       if (user && results[3]) setMyApps(results[3].data.apps);
     } catch {
+      const { default: toast } = await import('react-hot-toast');
       toast.error('Failed to load apps');
     } finally {
       setLoading(false);

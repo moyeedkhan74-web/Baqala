@@ -36,7 +36,7 @@ const StarRating = ({ rating = 0, size = 'md', interactive = false, onRate = nul
               star <= Math.round(currentDisplayRating)
                 ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.4)]'
                 : 'text-white/10'
-            } transition-all duration-200`}
+            } transition-opacity transition-colors duration-200`}
           />
         </button>
       ))}

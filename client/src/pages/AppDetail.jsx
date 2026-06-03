@@ -346,7 +346,7 @@ const AppDetail = () => {
               <div className="mt-8">
                 <button 
                   onClick={handleDownload} disabled={downloading}
-                  className="btn-primary w-full md:w-auto text-lg px-12 py-4 animate-pulse-slow disabled:opacity-90 relative overflow-hidden group shadow-glow-violet"
+                  className="btn-primary w-full md:w-auto text-lg px-12 py-4 disabled:opacity-90 relative overflow-hidden group shadow-glow-violet"
                 >
                   {downloading && (
                     <motion.div 
@@ -741,7 +741,7 @@ const AppDetail = () => {
                   {app.screenshots.map((_, i) => (
                     <div 
                       key={i} 
-                      className={`h-2 w-2 rounded-full transition-all duration-300 ${lightboxIndex === i ? 'bg-accent-violet scale-[2.5]' : 'bg-white/30 scale-100'}`} 
+                      className={`h-2 w-2 rounded-full transition-[transform,opacity] duration-300 ${lightboxIndex === i ? 'bg-accent-violet scale-[2.5] opacity-100' : 'bg-white/30 scale-100 opacity-50'}`} 
                       style={{ transformOrigin: 'center' }}
                     />
                   ))}
