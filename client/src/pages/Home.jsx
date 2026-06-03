@@ -189,8 +189,14 @@ const Home = () => {
                     <span className="text-sm text-slate-400 ml-2">({apps.length} apps)</span>
                   </div>
                   <div className="app-grid">
-                    {apps.map((app, index) => (
-                      <motion.div key={app._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }}>
+                    {apps.slice(0, 12).map((app, index) => (
+                      <motion.div 
+                        key={app._id} 
+                        initial={{ opacity: 0, y: 20 }} 
+                        animate={{ opacity: 1, y: 0 }} 
+                        transition={{ delay: Math.min(index * 0.04, 0.4) }}
+                        style={{ willChange: 'transform, opacity' }}
+                      >
                         <AppCard app={app} />
                       </motion.div>
                     ))}
@@ -223,8 +229,14 @@ const Home = () => {
                           </button>
                         </div>
                         <div className="app-grid">
-                          {catApps.map((app, index) => (
-                            <motion.div key={app._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }}>
+                          {catApps.slice(0, 8).map((app, index) => (
+                            <motion.div 
+                              key={app._id} 
+                              initial={{ opacity: 0, y: 20 }} 
+                              animate={{ opacity: 1, y: 0 }} 
+                              transition={{ delay: Math.min(index * 0.04, 0.4) }}
+                              style={{ willChange: 'transform, opacity' }}
+                            >
                               <AppCard app={app} />
                             </motion.div>
                           ))}

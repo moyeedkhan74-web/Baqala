@@ -99,6 +99,7 @@ const AppCard = memo(({ app, featured = false }) => {
         <motion.article 
           whileHover={{ y: -8, scale: 1.02 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          style={{ willChange: 'transform' }}
           className="relative p-3 sm:p-5 rounded-2xl glass-panel overflow-hidden h-full flex flex-col hover:shadow-[0_8px_32px_rgba(139,92,246,0.15)] dark:hover:shadow-[0_8px_32px_rgba(139,92,246,0.2)]"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-accent-violet/5 to-accent-emerald/5 dark:from-accent-violet/10 dark:to-accent-emerald/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0" />
