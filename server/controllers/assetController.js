@@ -1,17 +1,5 @@
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
-const fs = require('fs');
-const path = require('path');
-
-const auditLog = (msg) => {
-  const logMsg = `[${new Date().toISOString()}] ${msg}\n`;
-  fs.appendFileSync(path.join(__dirname, '..', 'b2-audit.log'), logMsg);
-};
-
-const { Readable } = require('stream');
-const { extractB2Key } = require('../utils/b2Storage');
-
-// ... rest of config ...
 
 const s3ConfigPrivate = {
   region: process.env.B2_PRIVATE_REGION || 'us-east-005',
@@ -40,13 +28,18 @@ const log = (msg) => {
   console.log(`[ASSET PROXY] ${msg}`);
 };
 
+/**
+ * Proxy asset via signed URL redirect.
+ * Instead of streaming the file through Render (which can timeout on free tier),
+ * we generate a short-lived signed URL and redirect the browser to it.
+ * The browser then fetches the image directly from B2.
+ */
 exports.proxyAsset = async (req, res) => {
   const { folder, filename } = req.params;
+  // Use the raw key directly — no scrubbing needed since the URL path IS the key
   const key = `${folder}/${filename}`;
   
   try {
-    // Logic Swap Check: Binaries (apps) are in the PUBLIC bucket (Old Account)
-    // Images (icons, screenshots) are in the PRIVATE bucket (New Account)
     const isBinary = folder === 'apps';
     const isAvatar = folder === 'avatars';
     const s3 = isBinary ? publicS3 : privateS3;
@@ -60,35 +53,25 @@ exports.proxyAsset = async (req, res) => {
         bucket = process.env.B2_PRIVATE_BUCKET;
     }
 
-    // Use extractB2Key logic to ensure we are looking for the scrubbed version
-    const scrubbedKey = extractB2Key(`/api/assets/${key}`);
-    
-    log(`Requesting asset: ${key} -> scrubbed as: ${scrubbedKey} from bucket: ${bucket}`);
-    auditLog(`Fetching: ${scrubbedKey || key} from ${bucket}`);
+    log(`Generating signed URL for: ${key} from bucket: ${bucket}`);
 
     const command = new GetObjectCommand({
       Bucket: bucket,
-      Key: scrubbedKey || key,
+      Key: key,
+      ResponseContentDisposition: isBinary ? `attachment; filename="${filename}"` : 'inline',
     });
 
-    const response = await s3.send(command);
-    log(`Successfully fetched from B2: ${key} (Type: ${response.ContentType})`);
+    // Generate a signed URL valid for 1 hour
+    const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
 
-    // Set headers for browser rendering
-    // For binaries, we might want to force attachment, but proxy is usually for viewing
-    res.set('Content-Type', response.ContentType || (isBinary ? 'application/octet-stream' : 'image/webp'));
-    res.set('Content-Disposition', isBinary ? `attachment; filename="${filename}"` : 'inline');
-    res.set('Cache-Control', 'public, max-age=31536000'); // 1 year
-
-    // Stream the body to response
-    if (response.Body instanceof Readable) {
-      response.Body.pipe(res);
-    } else {
-      const body = await response.Body.transformToByteArray();
-      res.send(Buffer.from(body));
-    }
+    // Set cache headers so the browser caches the redirect target
+    res.set('Cache-Control', 'public, max-age=3500');
+    
+    // Redirect the browser to the signed URL — it fetches directly from B2
+    res.redirect(302, signedUrl);
   } catch (error) {
-    log(`ERROR fetching asset ${key}: ${error.message}`);
-    res.status(404).send('Asset not found');
+    log(`ERROR generating signed URL for ${key}: ${error.message}`);
+    res.status(404).json({ message: 'Asset not found', error: error.message });
   }
 };
+
