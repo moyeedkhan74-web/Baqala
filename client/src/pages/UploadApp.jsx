@@ -115,7 +115,8 @@ const UploadApp = () => {
       
       // Raw files (icon & screenshots) to be processed by 'sharp' on server memory
       finalFormData.append('icon', files.icon);
-      files.screenshots.forEach(ss => finalFormData.append('screenshots', ss));
+      const maxScreenshots = files.screenshots.slice(0, 5);
+      maxScreenshots.forEach(ss => finalFormData.append('screenshots', ss));
 
       await api.post('/apps', finalFormData);
 

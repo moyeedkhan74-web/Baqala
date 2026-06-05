@@ -53,7 +53,7 @@ const uploadImages = multer({
 }).fields([
   { name: 'file', maxCount: 1 },
   { name: 'icon', maxCount: 1 },
-  { name: 'screenshots', maxCount: 5 }
+  { name: 'screenshots', maxCount: 10 }
 ]);
 
 const uploadAll = multer({
@@ -65,7 +65,7 @@ const uploadAll = multer({
 }).fields([
   { name: 'appFile', maxCount: 1 },
   { name: 'icon', maxCount: 1 },
-  { name: 'screenshots', maxCount: 5 }
+  { name: 'screenshots', maxCount: 10 }
 ]);
 
 const handleUploadError = (uploadFn) => (req, res, next) => {
