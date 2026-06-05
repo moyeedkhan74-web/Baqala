@@ -60,7 +60,7 @@ const UploadApp = () => {
         const chunk = file.slice(start, end);
         
         const chunkFormData = new FormData();
-        chunkFormData.append('chunk', chunk);
+        chunkFormData.append('chunk', chunk, 'chunk.bin');
         chunkFormData.append('chunkIndex', i);
         chunkFormData.append('uploadId', uploadId);
         chunkFormData.append('filePath', filePath);
