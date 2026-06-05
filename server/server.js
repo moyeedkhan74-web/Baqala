@@ -83,6 +83,51 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/contact', require('./routes/contact'));
 app.use('/api/feedback', require('./routes/feedback'));
 
+// ONE-TIME MIGRATION: Fix broken cdn.baqala.com URLs in the database
+// Hit this endpoint ONCE after deploy, then remove it.
+app.get('/api/fix-cdn-urls', async (req, res) => {
+  try {
+    const App = require('./models/App');
+    const User = require('./models/User');
+    const BROKEN_CDN = 'https://cdn.baqala.com/file/baqalaaa/';
+    const RENDER_PROXY = `${process.env.RENDER_EXTERNAL_URL || 'https://baqala-kwt6.onrender.com'}/api/assets/`;
+    
+    const apps = await App.find({
+      $or: [
+        { icon: { $regex: 'cdn\\.baqala\\.com' } },
+        { screenshots: { $regex: 'cdn\\.baqala\\.com' } }
+      ]
+    });
+
+    let fixedCount = 0;
+    for (const app of apps) {
+      let changed = false;
+      if (app.icon && app.icon.includes('cdn.baqala.com')) {
+        app.icon = app.icon.replace(BROKEN_CDN, RENDER_PROXY);
+        changed = true;
+      }
+      if (app.screenshots && app.screenshots.length > 0) {
+        app.screenshots = app.screenshots.map(url => {
+          if (url.includes('cdn.baqala.com')) {
+            changed = true;
+            return url.replace(BROKEN_CDN, RENDER_PROXY);
+          }
+          return url;
+        });
+      }
+      if (changed) {
+        await app.save();
+        fixedCount++;
+      }
+    }
+
+    res.json({ message: `Migration complete. Fixed ${fixedCount} app(s).`, fixedCount });
+  } catch (err) {
+    console.error('Migration error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ 
