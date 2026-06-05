@@ -155,21 +155,17 @@ exports.uploadToB2 = async (reqOrFilePath, fileBuffer, contentType, isPrivate = 
 
     await s3.send(command);
     
-    // CDN Configuration
-    const CDN_DOMAIN = 'cdn.baqala.com'; // User's Cloudflare domain
+    // CDN/Proxy Configuration
+    // Use Render's native proxy endpoint instead of broken Cloudflare CDN to ensure images appear
+    const baseUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 5000}`;
 
     let url;
     if (scrubbedPath.toLowerCase().includes('apps/')) {
       // Binaries still use direct B2 for signed/attachment downloads
       url = `https://${process.env.B2_ENDPOINT}/${process.env.B2_BUCKET_NAME}/${scrubbedPath}`;
     } else if (!isPrivate) {
-      // Production: Use Cloudflare CDN
-      // Development: Use local proxy
-      if (process.env.NODE_ENV === 'production') {
-        url = `https://${CDN_DOMAIN}/file/${process.env.B2_PRIVATE_BUCKET}/${scrubbedPath}`;
-      } else {
-        url = `http://localhost:${process.env.PORT || 5000}/api/assets/${scrubbedPath}`;
-      }
+      // Proxy images via backend to handle private bucket auth transparently
+      url = `${baseUrl}/api/assets/${scrubbedPath}`;
     } else {
       url = `https://${endpoint}/${bucket}/${scrubbedPath}`;
     }
@@ -296,18 +292,14 @@ exports.completeMultipartUpload = async (filePath, uploadId, parts, isPrivate = 
     });
     await s3.send(command);
     
-    // CDN Configuration
-    const CDN_DOMAIN = 'cdn.baqala.com';
+    // CDN/Proxy Configuration
+    const baseUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 5000}`;
 
     let url;
     if (scrubbedPath.toLowerCase().includes('apps/')) {
       url = `https://${process.env.B2_ENDPOINT}/${process.env.B2_BUCKET_NAME}/${scrubbedPath}`;
     } else if (!isPrivate) {
-      if (process.env.NODE_ENV === 'production') {
-        url = `https://${CDN_DOMAIN}/file/${process.env.B2_PRIVATE_BUCKET}/${scrubbedPath}`;
-      } else {
-        url = `http://localhost:${process.env.PORT || 5000}/api/assets/${scrubbedPath}`;
-      }
+      url = `${baseUrl}/api/assets/${scrubbedPath}`;
     } else {
       url = `https://${endpoint}/${bucket}/${scrubbedPath}`;
     }
