@@ -161,7 +161,7 @@ exports.createApp = async (req, res, next) => {
       : description.substring(0, 200);
       
     const category = Array.isArray(req.body.category) 
-      ? req.body.category.slice(0, 3) 
+      ? req.body.category.slice(0, 5) 
       : [req.body.category || 'Other'];
     const version = req.body.version || '1.0.0';
     const platform = req.body.platform || 'Cross-platform';
@@ -535,7 +535,7 @@ exports.updateApp = async (req, res) => {
     if (shortDescription !== undefined) app.shortDescription = shortDescription;
     if (tagline !== undefined) app.tagline = tagline;
     if (category) {
-      app.category = Array.isArray(category) ? category.slice(0, 3) : [category];
+      app.category = Array.isArray(category) ? category.slice(0, 5) : [category];
     }
     if (version) app.version = version;
     if (platform) app.platform = platform;

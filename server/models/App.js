@@ -26,7 +26,10 @@ const appSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Category is required'],
     enum: [
-      'Games', 'Tools', 'Utilities', 'Productivity', 'Entertainment', 'Social', 'Education', 'Other'
+      'Games', 'Social', 'Productivity', 'Education',
+      'Entertainment', 'Tools', 'Finance', 'Health',
+      'Music', 'Photography', 'Shopping', 'Travel',
+      'Food', 'Sports', 'News', 'Developer Tools', 'Other'
     ]
   }],
   developer: {

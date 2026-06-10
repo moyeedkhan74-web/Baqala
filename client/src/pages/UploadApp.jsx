@@ -23,7 +23,12 @@ const UploadApp = () => {
   });
   const [files, setFiles] = useState({ appFile: null, icon: null, screenshots: [] });
 
-  const categories = ['Games', 'Productivity', 'Social', 'Entertainment', 'Tools', 'Education'];
+  const categories = [
+    'Games', 'Social', 'Productivity', 'Education',
+    'Entertainment', 'Tools', 'Finance', 'Health',
+    'Music', 'Photography', 'Shopping', 'Travel',
+    'Food', 'Sports', 'News', 'Developer Tools', 'Other'
+  ];
   const platforms = ['Windows', 'macOS', 'Linux', 'Android', 'Cross-platform'];
 
   const handleNext = () => setStep(step + 1);
@@ -195,7 +200,7 @@ const UploadApp = () => {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-400 mb-2">Categories (Select up to 3)</label>
+                    <label className="block text-sm font-semibold text-gray-400 mb-2">Categories (Select up to 5)</label>
                     <div className="flex flex-wrap gap-2">
                       {categories.map(c => (
                         <button
@@ -205,10 +210,10 @@ const UploadApp = () => {
                             const current = Array.isArray(formData.category) ? formData.category : [formData.category];
                             if (current.includes(c)) {
                               setFormData({ ...formData, category: current.filter(cat => cat !== c) });
-                            } else if (current.length < 3) {
+                            } else if (current.length < 5) {
                               setFormData({ ...formData, category: [...current, c] });
                             } else {
-                              toast.error('Maximum 3 categories allowed');
+                              toast.error('Maximum 5 categories allowed');
                             }
                           }}
                           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
