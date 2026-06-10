@@ -282,9 +282,14 @@ const EditApp = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Classification (Select up to 3)</label>
+                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Classification (Select up to 5)</label>
                   <div className="flex flex-wrap gap-2">
-                    {['Games', 'Productivity', 'Social', 'Entertainment', 'Tools', 'Education', 'Utilities', 'Other'].map(c => (
+                    {[
+                      'Games', 'Social', 'Productivity', 'Education',
+                      'Entertainment', 'Tools', 'Finance', 'Health',
+                      'Music', 'Photography', 'Shopping', 'Travel',
+                      'Food', 'Sports', 'News', 'Developer Tools', 'Other'
+                    ].map(c => (
                       <button
                         key={c}
                         type="button"
@@ -292,10 +297,10 @@ const EditApp = () => {
                           const current = Array.isArray(formData.category) ? formData.category : [formData.category];
                           if (current.includes(c)) {
                             setFormData({ ...formData, category: current.filter(cat => cat !== c) });
-                          } else if (current.length < 3) {
+                          } else if (current.length < 5) {
                             setFormData({ ...formData, category: [...current, c] });
                           } else {
-                            toast.error('Maximum 3 categories allowed');
+                            toast.error('Maximum 5 categories allowed');
                           }
                         }}
                         className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
