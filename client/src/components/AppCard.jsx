@@ -75,7 +75,9 @@ const AppCard = memo(({ app, featured = false }) => {
               
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mb-8">
                 <span className="badge-primary text-sm px-4 py-1.5" aria-label={`Rating: ${app.averageRating?.toFixed(1) || '0.0'} stars`}><HiStar className="inline mr-1 text-yellow-500" aria-hidden="true" /> {app.averageRating?.toFixed(1) || '0.0'}</span>
-                <span className="badge-neon text-sm px-4 py-1.5" aria-label={`Category: ${app.category}`}>{app.category}</span>
+                <span className="badge-neon text-sm px-4 py-1.5" aria-label={`Category: ${Array.isArray(app.category) ? app.category[0] : app.category}`}>
+                  {Array.isArray(app.category) ? app.category[0] : app.category}
+                </span>
                 <span className="badge-success text-sm px-4 py-1.5" aria-label={`${((app.totalDownloads || 0) / 1000).toFixed(1)}k plus downloads`}><HiDownload className="inline mr-1" aria-hidden="true" /> {((app.totalDownloads || 0) / 1000).toFixed(1)}k+</span>
               </div>
               
@@ -136,8 +138,8 @@ const AppCard = memo(({ app, featured = false }) => {
                   <HiStar className="text-yellow-500 w-4 h-4" aria-hidden="true" />
                   <span className="text-sm font-bold text-dark-800 dark:text-white">{app.averageRating?.toFixed(1) || '0.0'}</span>
                 </div>
-                <span className="text-[10px] sm:text-xs uppercase tracking-wider font-bold text-dark-400 dark:text-gray-500" aria-label={`Category: ${app.category}`}>
-                  {app.category}
+                <span className="text-[10px] sm:text-xs uppercase tracking-wider font-bold text-dark-400 dark:text-gray-500" aria-label={`Category: ${Array.isArray(app.category) ? app.category[0] : app.category}`}>
+                  {Array.isArray(app.category) ? app.category[0] : app.category}
                 </span>
               </div>
               <div 

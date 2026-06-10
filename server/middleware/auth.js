@@ -17,7 +17,19 @@ const auth = async (req, res, next) => {
     }
 
     if (user.isBanned) {
-      return res.status(403).json({ message: 'Your account has been banned.' });
+      if (user.banUntil && new Date(user.banUntil) <= new Date()) {
+        // Auto-lift ban
+        user.isBanned = false;
+        user.banUntil = null;
+        user.banReason = null;
+        await user.save();
+      } else {
+        return res.status(403).json({ 
+          message: `Your account has been banned. Reason: ${user.banReason || 'No reason provided'}`, 
+          banUntil: user.banUntil,
+          reason: user.banReason
+        });
+      }
     }
 
     req.user = user;

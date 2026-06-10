@@ -22,13 +22,13 @@ const appSchema = new mongoose.Schema({
     maxlength: [100, 'Tagline cannot exceed 100 characters'],
     default: ''
   },
-  category: {
+  category: [{
     type: String,
     required: [true, 'Category is required'],
     enum: [
       'Games', 'Tools', 'Utilities', 'Productivity', 'Entertainment', 'Social', 'Education', 'Other'
     ]
-  },
+  }],
   developer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

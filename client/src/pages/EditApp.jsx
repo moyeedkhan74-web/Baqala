@@ -29,7 +29,7 @@ const EditApp = () => {
   // Form states
   const [formData, setFormData] = useState({
     title: '', description: '', shortDescription: '', 
-    tagline: '', category: '', platform: '', version: '', 
+    tagline: '', category: [], platform: '', version: '', 
     developerName: '', tags: ''
   });
   
@@ -49,7 +49,7 @@ const EditApp = () => {
         description: appData.description || '',
         shortDescription: appData.shortDescription || '',
         tagline: appData.tagline || '',
-        category: appData.category || '',
+        category: Array.isArray(appData.category) ? appData.category : [appData.category || 'Other'],
         platform: appData.platform || '',
         version: appData.version || '',
         developerName: appData.developerName || '',
@@ -282,10 +282,32 @@ const EditApp = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Classification</label>
-                  <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="select-field">
-                    {['Games', 'Social', 'Productivity', 'Tools', 'Entertainment', 'Other'].map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Classification (Select up to 3)</label>
+                  <div className="flex flex-wrap gap-2">
+                    {['Games', 'Productivity', 'Social', 'Entertainment', 'Tools', 'Education', 'Utilities', 'Other'].map(c => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => {
+                          const current = Array.isArray(formData.category) ? formData.category : [formData.category];
+                          if (current.includes(c)) {
+                            setFormData({ ...formData, category: current.filter(cat => cat !== c) });
+                          } else if (current.length < 3) {
+                            setFormData({ ...formData, category: [...current, c] });
+                          } else {
+                            toast.error('Maximum 3 categories allowed');
+                          }
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                          (Array.isArray(formData.category) ? formData.category : [formData.category]).includes(c)
+                            ? 'bg-accent-violet border-accent-violet text-white shadow-glow-violet'
+                            : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/30'
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Platform Matrix</label>

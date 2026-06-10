@@ -1,22 +1,20 @@
 const express = require('express');
-const {
-  getPendingApps, updateAppStatus, getAllUsers,
-  toggleBanUser, getDashboardStats, getAllApps,
-  toggleFeaturedApp
+const { 
+  getAllApps, 
+  getAllUsers, 
+  deleteApp, 
+  banUser 
 } = require('../controllers/adminController');
-const { auth } = require('../middleware/auth');
-const { authorize } = require('../middleware/role');
+const requireAdmin = require('../middleware/requireAdmin');
 
 const router = express.Router();
 
-router.use(auth, authorize('admin'));
+// All routes protected by admin middleware
+router.use(requireAdmin);
 
-router.get('/stats', getDashboardStats);
 router.get('/apps', getAllApps);
-router.get('/apps/pending', getPendingApps);
-router.put('/apps/:id/status', updateAppStatus);
-router.put('/apps/:id/toggle-featured', toggleFeaturedApp);
 router.get('/users', getAllUsers);
-router.put('/users/:id/ban', toggleBanUser);
+router.delete('/apps/:id', deleteApp);
+router.post('/users/:id/ban', banUser);
 
 module.exports = router;

@@ -2,189 +2,116 @@ const App = require('../models/App');
 const User = require('../models/User');
 const Review = require('../models/Review');
 const Download = require('../models/Download');
+const { deleteFromB2, extractB2Key } = require('../utils/b2Storage');
 
-exports.getPendingApps = async (req, res) => {
+// GET /api/admin/apps
+exports.getAllApps = async (req, res) => {
   try {
-    const apps = await App.find({ status: 'pending' })
-      .populate('developer', 'name email avatar')
+    const apps = await App.find({})
+      .select('title developerName status category icon developer')
+      .populate('developer', 'name')
       .sort({ createdAt: -1 });
     res.json({ apps });
   } catch (error) {
-    console.error('Get pending apps error:', error);
-    res.status(500).json({ message: 'Server error.' });
+    console.error('Admin get apps error:', error);
+    res.status(500).json({ message: 'Server error fetching apps.' });
   }
 };
 
-exports.updateAppStatus = async (req, res) => {
+// GET /api/admin/users
+exports.getAllUsers = async (req, res) => {
   try {
-    const { status, rejectionReason } = req.body;
-    if (!['approved', 'rejected'].includes(status)) {
-      return res.status(400).json({ message: 'Status must be approved or rejected.' });
-    }
+    const users = await User.find({})
+      .select('name email role isBanned banUntil avatar createdAt')
+      .sort({ createdAt: -1 });
+    res.json({ users });
+  } catch (error) {
+    console.error('Admin get users error:', error);
+    res.status(500).json({ message: 'Server error fetching users.' });
+  }
+};
 
-    const updates = { status };
-    if (status === 'rejected' && rejectionReason) {
-      updates.rejectionReason = rejectionReason;
-    }
-
-    const app = await App.findByIdAndUpdate(req.params.id, updates, { new: true })
-      .populate('developer', 'name email avatar');
-
+// DELETE /api/admin/apps/:id
+exports.deleteApp = async (req, res) => {
+  try {
+    const app = await App.findById(req.params.id);
     if (!app) {
       return res.status(404).json({ message: 'App not found.' });
     }
 
-    res.json({ app });
-  } catch (error) {
-    console.error('Update app status error:', error);
-    res.status(500).json({ message: 'Server error.' });
-  }
-};
-
-exports.getAllUsers = async (req, res) => {
-  try {
-    const { page = 1, limit = 20, role, search } = req.query;
-    const query = {};
-
-    if (role) query.role = role;
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } }
-      ];
+    // 1. Delete binary from B2 (B2_BUCKET_NAME)
+    if (app.fileUrl) {
+      const binaryKey = extractB2Key(app.fileUrl);
+      if (binaryKey) {
+        await deleteFromB2(binaryKey, true); // true = public bucket/binary account
+      }
     }
 
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    const [users, total] = await Promise.all([
-      User.find(query).sort({ createdAt: -1 }).skip(skip).limit(parseInt(limit)),
-      User.countDocuments(query)
-    ]);
-
-    res.json({
-      users,
-      pagination: {
-        current: parseInt(page),
-        pages: Math.ceil(total / parseInt(limit)),
-        total
+    // 2. Delete icon + screenshots from B2 (B2_IMAGES_BUCKET)
+    if (app.icon) {
+      const iconKey = extractB2Key(app.icon);
+      if (iconKey) {
+        await deleteFromB2(iconKey, false); // false = private bucket/images account
       }
-    });
+    }
+
+    if (app.screenshots && app.screenshots.length > 0) {
+      for (const screenshotUrl of app.screenshots) {
+        const screenshotKey = extractB2Key(screenshotUrl);
+        if (screenshotKey) {
+          await deleteFromB2(screenshotKey, false);
+        }
+      }
+    }
+
+    // 3. Delete from MongoDB
+    await App.findByIdAndDelete(req.params.id);
+
+    // 4. Delete related Reviews and Downloads
+    await Review.deleteMany({ app: req.params.id });
+    await Download.deleteMany({ app: req.params.id });
+
+    res.json({ message: 'App and all associated data deleted successfully.' });
   } catch (error) {
-    console.error('Get all users error:', error);
-    res.status(500).json({ message: 'Server error.' });
+    console.error('Admin delete app error:', error);
+    res.status(500).json({ message: 'Server error during app deletion.' });
   }
 };
 
-exports.toggleBanUser = async (req, res) => {
+// POST /api/admin/users/:id/ban
+exports.banUser = async (req, res) => {
   try {
+    const { weeks, reason } = req.body;
     const user = await User.findById(req.params.id);
+
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
     }
 
     if (user.role === 'admin') {
-      return res.status(400).json({ message: 'Cannot ban an admin.' });
+      return res.status(403).json({ message: 'Cannot ban another admin.' });
     }
 
-    user.isBanned = !user.isBanned;
+    const banDuration = parseInt(weeks) || 1;
+    const banUntil = new Date();
+    banUntil.setDate(banUntil.getDate() + (banDuration * 7));
+
+    user.isBanned = true;
+    user.banUntil = banUntil;
+    user.banReason = reason || 'No reason provided';
     await user.save();
 
-    res.json({ user, message: user.isBanned ? 'User banned.' : 'User unbanned.' });
-  } catch (error) {
-    console.error('Toggle ban error:', error);
-    res.status(500).json({ message: 'Server error.' });
-  }
-};
-
-exports.getDashboardStats = async (req, res) => {
-  try {
-    const [
-      totalUsers,
-      totalDevelopers,
-      totalApps,
-      pendingApps,
-      approvedApps,
-      totalDownloads,
-      totalReviews
-    ] = await Promise.all([
-      User.countDocuments({ role: 'user' }),
-      User.countDocuments({ role: 'developer' }),
-      App.countDocuments(),
-      App.countDocuments({ status: 'pending' }),
-      App.countDocuments({ status: 'approved' }),
-      Download.countDocuments(),
-      Review.countDocuments()
-    ]);
-
-    // Recent activity
-    const recentApps = await App.find()
-      .populate('developer', 'name')
-      .sort({ createdAt: -1 })
-      .limit(5);
-
-    res.json({
-      stats: {
-        totalUsers,
-        totalDevelopers,
-        totalApps,
-        pendingApps,
-        approvedApps,
-        totalDownloads,
-        totalReviews
-      },
-      recentApps
-    });
-  } catch (error) {
-    console.error('Dashboard stats error:', error);
-    res.status(500).json({ message: 'Server error.' });
-  }
-};
-
-exports.getAllApps = async (req, res) => {
-  try {
-    const { status, page = 1, limit = 20, search, category, platform } = req.query;
-    const query = { status: { $in: ['approved', 'pending'] } };
-    if (search) query.$text = { $search: search };
-    if (category) query.category = category;
-    if (platform) query.platform = platform;
-    if (req.query.featured === 'true') query.isFeatured = true;
-
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    const [apps, total] = await Promise.all([
-      App.find(query)
-        .populate('developer', 'name email avatar')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(parseInt(limit)),
-      App.countDocuments(query)
-    ]);
-
-    res.json({
-      apps,
-      pagination: {
-        current: parseInt(page),
-        pages: Math.ceil(total / parseInt(limit)),
-        total
+    res.json({ 
+      message: `User banned for ${banDuration} week(s).`, 
+      user: {
+        _id: user._id,
+        isBanned: user.isBanned,
+        banUntil: user.banUntil,
+        banReason: user.banReason
       }
     });
   } catch (error) {
-    console.error('Get all apps error:', error);
-    res.status(500).json({ message: 'Server error.' });
-  }
-};
-
-exports.toggleFeaturedApp = async (req, res) => {
-  try {
-    const app = await App.findById(req.params.id);
-    if (!app) return res.status(404).json({ message: 'App not found.' });
-
-    app.isFeatured = !app.isFeatured;
-    await app.save();
-
-    res.json({ app, message: app.isFeatured ? 'App featured.' : 'App unfeatured.' });
-  } catch (error) {
-    console.error('Toggle feature app error:', error);
-    res.status(500).json({ message: 'Server error.' });
+    console.error('Admin ban user error:', error);
+    res.status(500).json({ message: 'Server error banning user.' });
   }
 };

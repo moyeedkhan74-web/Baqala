@@ -13,19 +13,23 @@ const CategoryPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchCategoryApps = async () => {
+      // Small delay on loading to avoid flicker if API is fast, 
+      // but here we want to BE fast.
       setLoading(true);
       try {
         const { data } = await api.get(`/apps?category=${name}`);
-        setApps(data.apps || []);
+        if (isMounted) setApps(data.apps || []);
       } catch (err) {
         console.error('Failed to fetch category apps:', err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchCategoryApps();
+    return () => { isMounted = false; };
   }, [name]);
 
   const categoryTitle = name.charAt(0).toUpperCase() + name.slice(1);
