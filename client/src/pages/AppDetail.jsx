@@ -334,8 +334,15 @@ const AppDetail = () => {
                   <span className="text-slate-800 dark:text-white md:text-lg">{app.averageRating?.toFixed(1) || '0.0'}</span> 
                   <span className="text-slate-400 dark:text-gray-500">({app.reviewCount || 0})</span>
                 </div>
-                <div className="flex items-center gap-2 text-slate-600 dark:text-gray-300">
-                  <HiFolder className="w-5 h-5 text-accent-violet" /> {app.category}
+                <div className="flex items-center gap-2 flex-wrap min-w-0">
+                  <HiFolder className="w-5 h-5 text-accent-violet flex-shrink-0" /> 
+                  <div className="flex flex-wrap gap-2">
+                    {(Array.isArray(app.category) ? app.category : [app.category]).map((c, i) => (
+                      <span key={i} className="text-slate-600 dark:text-gray-300 bg-slate-100 dark:bg-white/5 px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-200 dark:border-white/10">
+                        {c}
+                      </span>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 text-slate-600 dark:text-gray-300">
                   <HiDownload className="w-5 h-5 text-accent-emerald" /> {(app.totalDownloads / 1000).toFixed(1)}k+

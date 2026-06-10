@@ -160,7 +160,9 @@ exports.createApp = async (req, res, next) => {
       ? String(req.body.shortDescription).substring(0, 200) 
       : description.substring(0, 200);
       
-    const category = req.body.category || 'Other';
+    const category = Array.isArray(req.body.category) 
+      ? req.body.category.slice(0, 3) 
+      : [req.body.category || 'Other'];
     const version = req.body.version || '1.0.0';
     const platform = req.body.platform || 'Cross-platform';
     const developerName = req.body.developerName || (req.user ? req.user.name : 'Unknown');
@@ -414,7 +416,8 @@ exports.getApps = async (req, res) => {
         .populate('developer', 'name avatar')
         .sort(sortOption)
         .skip(skip)
-        .limit(parseInt(limit)),
+        .limit(parseInt(limit))
+        .select('-description'), // Performance Optimization: Exclude heavy description
       App.countDocuments(query)
     ]);
 
@@ -531,7 +534,9 @@ exports.updateApp = async (req, res) => {
     if (description) app.description = description;
     if (shortDescription !== undefined) app.shortDescription = shortDescription;
     if (tagline !== undefined) app.tagline = tagline;
-    if (category) app.category = category;
+    if (category) {
+      app.category = Array.isArray(category) ? category.slice(0, 3) : [category];
+    }
     if (version) app.version = version;
     if (platform) app.platform = platform;
     if (developerName) app.developerName = developerName;
