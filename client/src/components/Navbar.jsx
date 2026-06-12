@@ -198,8 +198,8 @@ const Navbar = () => {
               </>
             )}
             {user && user.role === 'admin' && (
-              <Link to="/admin" className={`px-5 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${isActive('/admin') ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300' : 'text-dark-500 dark:text-gray-400 hover:text-rose-500'}`}>
-                <HiShieldCheck /> Admin
+              <Link to="/admin" className={`px-5 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 bg-rose-500 text-white shadow-lg hover:bg-rose-600 animate-pulse`}>
+                <HiShieldCheck className="w-5 h-5" /> Admin Portal
               </Link>
             )}
           </div>
