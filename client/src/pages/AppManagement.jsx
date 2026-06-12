@@ -14,7 +14,7 @@ import {
   ArrowUpDown
 } from 'lucide-react';
 import api from '../api/axios';
-import { cn } from '../utils/cn';
+import { cn } from '../utils/cn.js';
 
 const AppManagement = () => {
   const [activeTab, setActiveTab] = useState('all');

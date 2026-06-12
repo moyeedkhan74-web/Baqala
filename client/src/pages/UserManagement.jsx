@@ -13,7 +13,7 @@ import {
   Trash2
 } from 'lucide-react';
 import api from '../api/axios';
-import { cn } from '../utils/cn';
+import { cn } from '../utils/cn.js';
 
 const UserManagement = () => {
   const [activeTab, setActiveTab] = useState('all');

@@ -11,7 +11,7 @@ import {
   CheckCircle2,
   XCircle
 } from 'lucide-react';
-import { cn } from '../utils/cn';
+import { cn } from '../utils/cn.js';
 
 const ModerationQueue = () => {
   const [reports, setReports] = useState([
