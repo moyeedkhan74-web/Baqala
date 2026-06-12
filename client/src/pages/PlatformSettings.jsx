@@ -10,7 +10,7 @@ import {
   AlertTriangle,
   Server
 } from 'lucide-react';
-import { cn } from '../utils/cn';
+import { cn } from '../utils/cn.js';
 
 const PlatformSettings = () => {
   const [saveLoading, setSaveLoading] = useState(false);
