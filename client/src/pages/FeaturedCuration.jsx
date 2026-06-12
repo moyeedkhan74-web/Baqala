@@ -11,7 +11,7 @@ import {
   MousePointer2,
   Trophy
 } from 'lucide-react';
-import { cn } from '../utils/cn';
+import { cn } from '../utils/cn.js';
 
 const FeaturedCuration = () => {
   const [featuredApps, setFeaturedApps] = useState([

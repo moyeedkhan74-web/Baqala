@@ -21,6 +21,16 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://baqala-lovat.vercel.app/apps/6a233a6adb802db8ba768ebb</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://baqala-lovat.vercel.app/apps/6a2332136cba34e69250a43e</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://baqala-lovat.vercel.app/apps/69f73f70d880e3deb2d571a9</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
