@@ -242,6 +242,9 @@ const Navbar = () => {
                         </div>
                         <div className="space-y-1">
                           <Link to="/developer" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-xs font-bold dark:text-gray-200 transition-colors"><HiViewGrid className="text-accent-violet" /> Developer Dashboard</Link>
+                          {user.role === 'admin' && (
+                            <Link to="/admin" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-rose-500/10 text-xs font-bold text-rose-500 transition-colors"><HiShieldCheck /> Admin Portal</Link>
+                          )}
                           <Link to="/settings" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-xs font-bold dark:text-gray-200 transition-colors"><HiCog className="text-slate-400" /> Account Settings</Link>
                           <div className="h-px bg-white/5 my-2" />
                           <button onClick={handleLogout} className="flex items-center gap-3 p-3 rounded-xl hover:bg-rose-500/10 text-xs font-bold text-rose-500 w-full transition-colors"><HiLogout /> Sign Out Information</button>
