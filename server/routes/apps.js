@@ -5,7 +5,8 @@ const {
   removeScreenshot, removeAllScreenshots, uploadTemp, searchApps
 } = require('../controllers/appController');
 const { initUpload, uploadChunk, combineChunks } = require('../controllers/chunkController');
-const { auth, optionalAuth } = require('../middleware/auth');
+const { auth, optionalAuth, softAuth } = require('../middleware/auth');
+const requireOwner = require('../middleware/requireOwner');
 const { uploadApp, uploadChunked, uploadImages, uploadAll } = require('../middleware/upload');
 const { body, validationResult } = require('express-validator');
 const { downloadLimiter, generalLimiter } = require('../middleware/rateLimiter');
@@ -47,10 +48,10 @@ router.post('/:id/images', auth, uploadImages, uploadAppImages);
 // --- Resource Routes (Individual) ---
 router.get('/:id', generalLimiter, getApp);
 router.get('/:id/download', downloadLimiter, getAppDownloadLink);
-router.get('/:id/proxy-download', downloadLimiter, optionalAuth, proxyDownload);
-router.put('/:id', auth, updateApp);
-router.delete('/:id', auth, deleteApp);
-router.delete('/:id/screenshot', auth, removeScreenshot);
-router.delete('/:id/screenshots', auth, removeAllScreenshots);
+router.get('/:id/proxy-download', downloadLimiter, softAuth, proxyDownload);
+router.put('/:id', auth, requireOwner, updateApp);
+router.delete('/:id', auth, requireOwner, deleteApp);
+router.delete('/:id/screenshot', auth, requireOwner, removeScreenshot);
+router.delete('/:id/screenshots', auth, requireOwner, removeAllScreenshots);
 
 module.exports = router;

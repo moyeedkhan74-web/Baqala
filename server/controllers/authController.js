@@ -104,6 +104,10 @@ exports.getProfile = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
+    // Defensive check: explicitly remove protected fields
+    const PROTECTED_FIELDS = ['role', 'password', 'googleId', 'firebaseUid', 'isBanned', 'banUntil', 'banReason'];
+    PROTECTED_FIELDS.forEach(f => delete req.body[f]);
+
     const { name, bio, tagline, specialization, avatar } = req.body;
     const updates = {};
     if (name) updates.name = name;
@@ -225,7 +229,19 @@ exports.firebaseLogin = async (req, res) => {
       }
 
       if (user.isBanned) {
-        return res.status(403).json({ message: 'Your account has been banned.' });
+        if (user.banUntil && new Date(user.banUntil) <= new Date()) {
+          // Auto-lift expired ban
+          user.isBanned = false;
+          user.banUntil = null;
+          user.banReason = null;
+          await user.save();
+        } else {
+          return res.status(403).json({ 
+            message: `Your account has been banned. Reason: ${user.banReason || 'No reason provided'}`, 
+            banUntil: user.banUntil,
+            reason: user.banReason
+          });
+        }
       }
     } else {
       // Auto-create user for Google sign-in
@@ -290,7 +306,19 @@ exports.firebaseRegister = async (req, res) => {
     if (existingUser) {
       // If exists, just login them
       if (existingUser.isBanned) {
-        return res.status(403).json({ message: 'Your account has been banned.' });
+        if (existingUser.banUntil && new Date(existingUser.banUntil) <= new Date()) {
+          // Auto-lift expired ban
+          existingUser.isBanned = false;
+          existingUser.banUntil = null;
+          existingUser.banReason = null;
+          await existingUser.save();
+        } else {
+          return res.status(403).json({ 
+            message: `Your account has been banned. Reason: ${existingUser.banReason || 'No reason provided'}`, 
+            banUntil: existingUser.banUntil,
+            reason: existingUser.banReason
+          });
+        }
       }
       if (!existingUser.firebaseUid) {
         existingUser.firebaseUid = uid;
