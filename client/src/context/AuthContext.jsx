@@ -28,6 +28,23 @@ export const AuthProvider = ({ children }) => {
     if (token && savedUser) {
       try {
         setUser(JSON.parse(savedUser));
+        // Re-fetch the latest profile from backend to pick up role changes
+        api.get('/auth/profile', { headers: { Authorization: `Bearer ${token}` } })
+          .then(({ data }) => {
+            if (data.user) {
+              const freshUser = {
+                id: data.user._id || data.user.id,
+                name: data.user.name,
+                email: data.user.email,
+                role: data.user.role,
+                avatar: data.user.avatar,
+                createdAt: data.user.createdAt
+              };
+              setUser(freshUser);
+              localStorage.setItem('user', JSON.stringify(freshUser));
+            }
+          })
+          .catch(() => { /* silently use cached user if backend is down */ });
       } catch {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
