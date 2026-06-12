@@ -62,4 +62,43 @@ const optionalAuth = async (req, res, next) => {
   next();
 };
 
-module.exports = { auth, optionalAuth };
+/**
+ * softAuth blocks banned users if a token is provided,
+ * but allows unauthenticated (guest) users.
+ */
+const softAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.header('Authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.replace('Bearer ', '');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(decoded.id);
+
+      if (user) {
+        if (user.isBanned) {
+          if (user.banUntil && new Date(user.banUntil) <= new Date()) {
+            // Auto-lift expired ban
+            user.isBanned = false;
+            user.banUntil = null;
+            user.banReason = null;
+            await user.save();
+            req.user = user;
+          } else {
+            return res.status(403).json({ 
+              message: `Your account has been banned. Reason: ${user.banReason || 'No reason provided'}`, 
+              banUntil: user.banUntil,
+              reason: user.banReason
+            });
+          }
+        } else {
+          req.user = user;
+        }
+      }
+    }
+  } catch (error) {
+    // Silently ignore invalid tokens, treat as guest
+  }
+  next();
+};
+
+module.exports = { auth, optionalAuth, softAuth };
