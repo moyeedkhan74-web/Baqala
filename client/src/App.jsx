@@ -14,22 +14,14 @@ import api from './api/axios';
 const Home = lazy(() => import('./pages/Home'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
-const AppDetail = lazy(() => import('./pages/AppDetail'));
-const DeveloperDashboard = lazy(() => import('./pages/DeveloperDashboard'));
-const UploadApp = lazy(() => import('./pages/UploadApp'));
-const EditApp = lazy(() => import('./pages/EditApp'));
-const AdminPanel = lazy(() => import('./pages/AdminPanel'));
-const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
-const TermsOfService = lazy(() => import('./pages/TermsOfService'));
-const CookiePolicy = lazy(() => import('./pages/CookiePolicy'));
-const RevenueShare = lazy(() => import('./pages/RevenueShare'));
-const Contact = lazy(() => import('./pages/Contact'));
-const SearchResults = lazy(() => import('./pages/SearchResults'));
-const CategoryPage = lazy(() => import('./pages/CategoryPage'));
-const DeveloperProfile = lazy(() => import('./pages/DeveloperProfile'));
-const Settings = lazy(() => import('./pages/Settings'));
-const About = lazy(() => import('./pages/About'));
 const AppAbout = lazy(() => import('./pages/AppAbout'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const AppManagement = lazy(() => import('./pages/AppManagement'));
+const UserManagement = lazy(() => import('./pages/UserManagement'));
+const ModerationQueue = lazy(() => import('./pages/ModerationQueue'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const FeaturedCuration = lazy(() => import('./pages/FeaturedCuration'));
+const PlatformSettings = lazy(() => import('./pages/PlatformSettings'));
 
 function App() {
   const location = useLocation();
@@ -147,7 +139,37 @@ function App() {
                 } />
                 <Route path="/admin" element={
                   <ProtectedRoute roles={['admin']}>
-                    <AnimatedLayout><AdminPanel /></AnimatedLayout>
+                    <AnimatedLayout><AdminDashboard /></AnimatedLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/apps" element={
+                  <ProtectedRoute roles={['admin']}>
+                    <AnimatedLayout><AppManagement /></AnimatedLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/users" element={
+                  <ProtectedRoute roles={['admin']}>
+                    <AnimatedLayout><UserManagement /></AnimatedLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/reviews" element={
+                  <ProtectedRoute roles={['admin']}>
+                    <AnimatedLayout><ModerationQueue /></AnimatedLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/analytics" element={
+                  <ProtectedRoute roles={['admin']}>
+                    <AnimatedLayout><Analytics /></AnimatedLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/featured" element={
+                  <ProtectedRoute roles={['admin']}>
+                    <AnimatedLayout><FeaturedCuration /></AnimatedLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/settings" element={
+                  <ProtectedRoute roles={['admin']}>
+                    <AnimatedLayout><PlatformSettings /></AnimatedLayout>
                   </ProtectedRoute>
                 } />
               </Routes>
