@@ -8,24 +8,35 @@ const requireAdmin = require('../middleware/requireAdmin');
 // POST /api/reports — requires auth, creates report
 router.post('/', auth, async (req, res) => {
   try {
-    const { appId, category, customReason } = req.body;
+    const { appId, developerId, category, customReason } = req.body;
 
-    const existingReport = await Report.findOne({ app: appId, reportedBy: req.user._id });
+    if (!appId && !developerId) {
+      return res.status(400).json({ message: 'Missing report target (app or developer).' });
+    }
+
+    // Duplicate check
+    const query = appId ? { app: appId } : { developer: developerId };
+    query.reportedBy = req.user._id;
+
+    const existingReport = await Report.findOne(query);
     if (existingReport) {
-      return res.status(400).json({ message: 'You have already reported this app.' });
+      return res.status(400).json({ message: 'You have already reported this.' });
     }
 
     const report = await Report.create({
-      app: appId,
+      app: appId || undefined,
+      developer: developerId || undefined,
       reportedBy: req.user._id,
       category,
       customReason
     });
 
-    // Auto-set app.isFlagged = true when report count hits 5+
-    const reportCount = await Report.countDocuments({ app: appId });
-    if (reportCount >= 5) {
-      await App.findByIdAndUpdate(appId, { isFlagged: true, flaggedAt: new Date() });
+    // Auto-set app.isFlagged = true when report count hits 5+ (for apps only)
+    if (appId) {
+      const reportCount = await Report.countDocuments({ app: appId });
+      if (reportCount >= 5) {
+        await App.findByIdAndUpdate(appId, { isFlagged: true, flaggedAt: new Date() });
+      }
     }
 
     res.status(201).json({ message: 'Report submitted successfully.', report });
