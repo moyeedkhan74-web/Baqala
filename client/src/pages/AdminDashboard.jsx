@@ -9,7 +9,7 @@ import {
   ArrowDownRight,
   Clock,
   ExternalLink,
-  Package
+  Package as LucidePackage
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -23,7 +23,6 @@ import {
   Area
 } from 'recharts';
 import api from '../api/axios';
-import { formatDistanceToNow } from 'date-fns';
 
 const KPICard = ({ title, value, change, isPositive, icon: Icon, color }) => (
   <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-xl transition-all duration-300 group">
@@ -41,12 +40,35 @@ const KPICard = ({ title, value, change, isPositive, icon: Icon, color }) => (
   </div>
 );
 
+// Helper for time formatting without external deps
+const timeAgo = (date) => {
+  const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+  let interval = seconds / 31536000;
+  if (interval > 1) return Math.floor(interval) + " years ago";
+  interval = seconds / 2592000;
+  if (interval > 1) return Math.floor(interval) + " months ago";
+  interval = seconds / 86400;
+  if (interval > 1) return Math.floor(interval) + " days ago";
+  interval = seconds / 3600;
+  if (interval > 1) return Math.floor(interval) + " hours ago";
+  interval = seconds / 60;
+  if (interval > 1) return Math.floor(interval) + " minutes ago";
+  return Math.floor(seconds) + " seconds ago";
+};
+
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
     totalApps: '0',
     totalUsers: '0',
     pendingReports: '0',
     totalDownloads: '0'
+  });
+
+  const [changes, setChanges] = useState({
+    apps: '0',
+    users: '0',
+    downloads: '0',
+    reports: '0'
   });
 
   const [recentActivity, setRecentActivity] = useState([]);
@@ -65,6 +87,7 @@ const AdminDashboard = () => {
             ? (data.stats.totalDownloads / 1000).toFixed(1) + 'k' 
             : data.stats.totalDownloads.toString()
         });
+        setChanges(data.changes || { apps: '0', users: '0', downloads: '0', reports: '0' });
         setRecentActivity(data.activity);
         setChartData(data.chartData);
       } catch (error) {
@@ -93,32 +116,32 @@ const AdminDashboard = () => {
         <KPICard 
           title="Total Apps" 
           value={stats.totalApps} 
-          change="12" 
-          isPositive 
-          icon={Package} 
+          change={changes.apps} 
+          isPositive={parseFloat(changes.apps) >= 0} 
+          icon={LucidePackage} 
           color="bg-accent-violet" 
         />
         <KPICard 
           title="Total Users" 
           value={stats.totalUsers} 
-          change="4.5" 
-          isPositive 
+          change={changes.users} 
+          isPositive={parseFloat(changes.users) >= 0} 
           icon={Users} 
           color="bg-blue-500" 
         />
         <KPICard 
           title="Pending Reports" 
           value={stats.pendingReports} 
-          change="0" 
-          isPositive={true} 
+          change={changes.reports} 
+          isPositive={parseFloat(changes.reports) <= 5} // Lower reports is better, but here we show change
           icon={AlertCircle} 
           color="bg-amber-500" 
         />
         <KPICard 
           title="Total Downloads" 
           value={stats.totalDownloads} 
-          change="18.2" 
-          isPositive 
+          change={changes.downloads} 
+          isPositive={parseFloat(changes.downloads) >= 0} 
           icon={Download} 
           color="bg-emerald-500" 
         />
@@ -208,7 +231,7 @@ const AdminDashboard = () => {
                     {item.action}: <span className="text-accent-violet">{item.target}</span>
                   </p>
                   <p className="text-[10px] font-bold text-slate-500 uppercase mt-1">
-                    by {item.admin} • {formatDistanceToNow(new Date(item.time), { addSuffix: true })}
+                    by {item.admin} • {timeAgo(item.time)}
                   </p>
                 </div>
               </div>

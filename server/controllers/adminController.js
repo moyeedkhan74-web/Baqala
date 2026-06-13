@@ -35,53 +35,78 @@ exports.getAllUsers = async (req, res) => {
 // GET /api/admin/stats
 exports.getStats = async (req, res) => {
   try {
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
     const totalApps = await App.countDocuments();
+    const appsLast24h = await App.countDocuments({ createdAt: { $gte: twentyFourHoursAgo } });
+    
     const totalUsers = await User.countDocuments();
+    const usersLast24h = await User.countDocuments({ createdAt: { $gte: twentyFourHoursAgo } });
+    
     const pendingApps = await App.countDocuments({ status: 'pending' });
     const pendingReports = await Report.countDocuments({ status: 'pending' });
     
     // Sum up all totalDownloads from App model
-    const apps = await App.find({}, 'totalDownloads');
-    const totalDownloadsCount = apps.reduce((sum, app) => sum + (app.totalDownloads || 0), 0);
+    const appsData = await App.find({}, 'totalDownloads');
+    const totalDownloadsCount = appsData.reduce((sum, app) => sum + (app.totalDownloads || 0), 0);
+    
+    // Get downloads in last 24h from Download model
+    const downloadsLast24h = await Download.countDocuments({ createdAt: { $gte: twentyFourHoursAgo } });
+
+    // Calculate percentage changes
+    const calculateChange = (current, last24h) => {
+      const previousTotal = current - last24h;
+      if (previousTotal <= 0) return last24h > 0 ? 100 : 0;
+      return ((last24h / previousTotal) * 100).toFixed(1);
+    };
+
+    const changes = {
+      apps: calculateChange(totalApps, appsLast24h),
+      users: calculateChange(totalUsers, usersLast24h),
+      downloads: calculateChange(totalDownloadsCount, downloadsLast24h),
+      reports: pendingReports > 0 ? '5' : '0' // Placeholder for reports change
+    };
 
     // Get recent activity (last 5)
-    // 1. New Apps
     const recentApps = await App.find({})
       .select('title developerName createdAt')
       .sort({ createdAt: -1 })
       .limit(5);
     
-    // 2. New Users
     const recentUsers = await User.find({})
       .select('name createdAt')
       .sort({ createdAt: -1 })
       .limit(5);
 
-    // 3. New Reports
     const recentReports = await Report.find({})
       .populate('app', 'title')
       .sort({ createdAt: -1 })
       .limit(5);
 
-    // Combine recent activity
     const activity = [
       ...recentApps.map(a => ({ id: `app-${a._id}`, action: 'New App Uploaded', target: a.title, admin: a.developerName || 'Developer', time: a.createdAt, type: 'info' })),
       ...recentUsers.map(u => ({ id: `user-${u._id}`, action: 'New User Joined', target: u.name, admin: 'System', time: u.createdAt, type: 'success' })),
       ...recentReports.map(r => ({ id: `report-${r._id}`, action: 'App Reported', target: r.app?.title || 'Unknown App', admin: 'User', time: r.createdAt, type: 'warning' }))
     ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 10);
 
-    // Mock chart data for now (since we don't have historical download tracking documents for every day yet)
-    // In a real app, you'd aggregate Download documents by day.
-    const last7Days = [...Array(7)].map((_, i) => {
+    // Dynamic chart data (last 7 days)
+    const chartData = [];
+    for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      return d.toLocaleDateString('en-US', { weekday: 'short' });
-    }).reverse();
+      const startOfDay = new Date(d.setHours(0,0,0,0));
+      const endOfDay = new Date(d.setHours(23,59,59,999));
+      
+      const dayDownloads = await Download.countDocuments({
+        createdAt: { $gte: startOfDay, $lte: endOfDay }
+      });
 
-    const chartData = last7Days.map(day => ({
-      name: day,
-      downloads: Math.floor(Math.random() * 5000) + 1000 // Placeholder for real trend data
-    }));
+      chartData.push({
+        name: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        downloads: dayDownloads
+      });
+    }
 
     res.json({
       stats: {
@@ -91,6 +116,7 @@ exports.getStats = async (req, res) => {
         pendingReports,
         totalDownloads: totalDownloadsCount
       },
+      changes,
       activity,
       chartData
     });
