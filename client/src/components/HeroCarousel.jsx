@@ -46,7 +46,7 @@ const HeroCarousel = ({ apps }) => {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="relative w-full h-[400px] md:h-[500px]"
+          className="relative w-full h-[300px] md:h-[350px]"
         >
           {/* Background Content */}
           <div className="absolute inset-0 z-0 overflow-hidden">
@@ -64,49 +64,49 @@ const HeroCarousel = ({ apps }) => {
             <div className="absolute inset-0 bg-gradient-to-t from-background-light dark:from-background-dark via-background-light/60 dark:via-background-dark/80 to-transparent opacity-100" />
             <div className="absolute inset-0 bg-gradient-to-r from-background-light dark:from-background-dark via-background-light/40 dark:via-background-dark/40 to-transparent w-full" />
           </div>
-
-          <div className="relative z-10 h-full flex flex-col md:flex-row items-center p-8 md:p-16 gap-8 text-dark-800 dark:text-white">
+ 
+          <div className="relative z-10 h-full flex flex-col md:flex-row items-center p-6 md:p-10 gap-6 md:gap-10 text-dark-800 dark:text-white">
             
             {/* App Icon */}
             <motion.div 
               initial={{ y: 0, opacity: 0, x: -20 }}
               animate={{ y: 0, opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
-              className="w-32 h-32 md:w-48 md:h-48 flex-shrink-0"
+              className="w-24 h-24 md:w-32 md:h-32 flex-shrink-0"
               onClick={() => navigate(`/app/${currentApp._id}`)}
             >
               <img 
                 src={getImageUrl(currentApp?.iconUrl || currentApp?.icon)} 
-                className="w-full h-full object-cover rounded-[2rem] shadow-2xl border-4 border-white/20 cursor-pointer transform hover:scale-105 transition-transform" 
+                className="w-full h-full object-cover rounded-[1.5rem] shadow-2xl border-4 border-white/20 cursor-pointer transform hover:scale-105 transition-transform" 
                 alt={`${currentApp.title} app icon`}
               />
             </motion.div>
-
+ 
             {/* App Details */}
             <div className="flex-1 flex flex-col items-start justify-center text-left">
               <motion.div 
                 initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}
-                className="flex items-center gap-3 mb-3"
+                className="flex items-center gap-3 mb-2"
               >
-                <span className="badge-neon py-1 px-3 text-sm">
+                <span className="badge-neon py-0.5 px-2.5 text-[10px] uppercase tracking-wider">
                   {Array.isArray(currentApp.category) ? currentApp.category[0] : (currentApp.category || 'App')}
                 </span>
-                <div className="flex items-center gap-1 text-yellow-500 font-bold bg-white/50 dark:bg-dark-900/50 px-3 py-1 rounded-full text-sm">
+                <div className="flex items-center gap-1 text-yellow-500 font-bold bg-white/50 dark:bg-dark-900/50 px-2.5 py-0.5 rounded-full text-[11px]">
                   <HiStar /> {(currentApp?.averageRating || 0).toFixed(1)}
                 </div>
               </motion.div>
-
+ 
               <motion.h2 
                 initial={{ y: 0, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.05 }}
-                className="text-4xl md:text-5xl font-extrabold mb-4 hover:text-accent-magenta cursor-pointer transition-colors line-clamp-1"
+                className="text-3xl md:text-4xl font-extrabold mb-2 hover:text-accent-magenta cursor-pointer transition-colors line-clamp-1"
                 onClick={() => navigate(`/app/${currentApp._id}`)}
               >
                 {currentApp.title}
               </motion.h2>
-
+ 
               <motion.p 
                 initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }}
-                className="text-lg text-dark-600 dark:text-gray-300 mb-8 line-clamp-2 md:line-clamp-3 max-w-2xl"
+                className="text-sm md:text-base text-dark-600 dark:text-gray-300 mb-6 line-clamp-2 max-w-2xl"
               >
                 {currentApp.shortDescription || currentApp.description}
               </motion.p>
@@ -114,7 +114,7 @@ const HeroCarousel = ({ apps }) => {
               <motion.button 
                 initial={{ y: 0, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15 }}
                 onClick={() => navigate(`/app/${currentApp._id}`)}
-                className="btn-primary flex items-center gap-2 group/btn"
+                className="btn-primary flex items-center gap-2 group/btn py-2 px-6 text-sm"
                 aria-label={`Get ${currentApp.title} application`}
               >
                 Get App <HiArrowRight className="group-hover/btn:translate-x-1 transition-transform" aria-hidden="true" />
