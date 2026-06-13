@@ -235,6 +235,34 @@ exports.createApp = async (req, res, next) => {
     });
 
     await app.populate('developer', 'name email avatar');
+
+    // ── VirusTotal Scan Integration ──
+    app.fileHash = req.fileHash || null;
+
+    if (req.vtKnownClean) {
+      app.scanStatus = 'clean';
+      app.scanCompletedAt = new Date();
+      app.status = 'approved';
+      await app.save();
+    } else if (req.vtNeedsFullScan) {
+      app.scanStatus = 'scanning';
+      app.status = 'pending';
+      await app.save();
+      // Fire and forget — do NOT await
+      const { runBackgroundScan } = require('../services/backgroundScan');
+      const scanBuffer = appFile ? appFile.buffer : null;
+      const scanFilename = appFile ? appFile.originalname : (fileName || 'unknown');
+      if (scanBuffer) {
+        runBackgroundScan(app._id, scanBuffer, scanFilename)
+          .catch(err => console.error('[SCAN_LAUNCH] Error:', err.message));
+      }
+    } else {
+      // VT was unreachable (req.vtError) or no scan data
+      app.scanStatus = 'scan_failed';
+      app.status = 'approved';
+      await app.save();
+    }
+
     res.status(201).json({ app });
   } catch (error) {
     next(error);

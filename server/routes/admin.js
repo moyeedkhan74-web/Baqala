@@ -9,7 +9,8 @@ const {
   updateAppStatus,
   unbanUser,
   getAllReports,
-  dismissReport
+  dismissReport,
+  getFlaggedApps
 } = require('../controllers/adminController');
 const requireAdmin = require('../middleware/requireAdmin');
 
@@ -21,6 +22,7 @@ router.use(requireAdmin);
 router.get('/stats', getStats);
 router.get('/analytics', getAnalytics);
 router.get('/apps', getAllApps);
+router.get('/apps/flagged', getFlaggedApps);
 router.get('/users', getAllUsers);
 router.delete('/apps/:id', deleteApp);
 router.patch('/apps/:id/status', updateAppStatus);
