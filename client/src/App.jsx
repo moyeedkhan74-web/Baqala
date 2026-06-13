@@ -8,6 +8,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AnimatedLayout from './components/AnimatedLayout';
 import LoadingScreen from './components/LoadingScreen';
 import CookieBanner from './components/CookieBanner';
+import GlobalAnnouncement from './components/GlobalAnnouncement';
 const ParticlesBackground = lazy(() => import('./components/ParticlesBackground'));
 import api from './api/axios';
 
@@ -42,25 +43,34 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [config, setConfig] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
   useEffect(() => {
     const initializeApp = async () => {
       try {
         setError(null);
         
         // Parallelize static wait with backend ping for smooth transition
-        const [healthRes] = await Promise.all([
+        const [healthRes, configRes] = await Promise.all([
           api.get('/health').catch(err => {
             console.warn('Backend waking up...', err);
-            // If it fails once, we can retry or just wait a bit longer
             return new Promise((resolve) => setTimeout(() => api.get('/health'), 5000));
           }),
+          api.get('/config').catch(() => ({ data: { config: null } })),
           new Promise((resolve) => setTimeout(resolve, 2000)) // Min splash time for branding
         ]);
 
+        if (configRes.data.config) {
+          setConfig(configRes.data.config);
+        }
+
+        // Check user role via local auth context (simplified for this check)
+        const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+        if (storedUser?.role === 'admin') setIsAdmin(true);
+
         setIsLoading(false);
       } catch (err) {
-        // Even if health check fails after retry, we show the app 
-        // and let page-level loaders/errors handle it
         console.error('Initialization warning:', err);
         setIsLoading(false);
       }
@@ -68,6 +78,28 @@ function App() {
 
     initializeApp();
   }, []);
+
+  if (!isLoading && config?.isMaintenanceMode && !isAdmin && location.pathname !== '/login') {
+    return (
+      <div className="min-h-screen bg-background-light dark:bg-background-dark flex items-center justify-center p-8 text-center">
+        <div className="max-w-md space-y-6">
+          <div className="w-24 h-24 bg-rose-500/10 rounded-[2rem] flex items-center justify-center mx-auto text-rose-500 mb-8 border border-rose-500/20">
+            <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">System Maintenance</h1>
+          <p className="text-slate-500 dark:text-slate-400 font-bold leading-relaxed">
+            {config.maintenanceMessage || "Baqala is currently under maintenance. We will be back shortly!"}
+          </p>
+          <div className="pt-8 flex flex-col gap-4">
+             <Link to="/contact" className="text-accent-violet font-bold hover:underline">Contact Support</Link>
+             <Link to="/login" className="text-slate-400 text-xs hover:text-white transition-colors">Admin Login</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Safe Analytics Tracking
   useEffect(() => {
@@ -111,6 +143,7 @@ function App() {
         </Suspense>
         
         <div className="relative z-20 w-full flex flex-col flex-1">
+          <GlobalAnnouncement config={config} />
           <Navbar />
           
           <main id="main-content" className="flex-1 w-full flex flex-col">

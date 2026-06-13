@@ -12,6 +12,20 @@ const UploadApp = () => {
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const { user } = useAuth();
+  const [config, setConfig] = useState(null);
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const { data } = await api.get('/config');
+        setConfig(data.config);
+      } catch (err) {
+        console.error('Failed to fetch config', err);
+      }
+    };
+    fetchConfig();
+  }, []);
+
   const [formData, setFormData] = useState({ 
     title: '', 
     description: '', 
@@ -38,6 +52,18 @@ const UploadApp = () => {
     e.preventDefault();
     if (!files.appFile || !files.icon) return toast.error('App file and icon are required.');
     
+    // Check limits
+    if (config) {
+      const maxApkSizeBytes = config.maxApkSize * 1024 * 1024;
+      if (files.appFile.size > maxApkSizeBytes) {
+        return toast.error(`App file exceeds the platform limit of ${config.maxApkSize}MB`);
+      }
+      const maxImageSizeBytes = config.maxImageSize * 1024 * 1024;
+      if (files.icon.size > maxImageSizeBytes) {
+        return toast.error(`Icon exceeds the platform limit of ${config.maxImageSize}MB`);
+      }
+    }
+
     setLoading(true);
     setUploadProgress(0);
     const toastId = 'upload';
@@ -251,7 +277,7 @@ const UploadApp = () => {
                 <div className="p-6 border-2 border-dashed border-white/20 rounded-2xl bg-white/5 hover:bg-white/10 hover:border-accent-neon/50 transition-colors text-center relative">
                   <input type="file" required={!files.appFile} onChange={e => setFiles({...files, appFile: e.target.files[0]})} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".apk,.exe,.zip,.rar" />
                   <HiUpload className="w-10 h-10 text-accent-neon mx-auto mb-3" />
-                  <p className="text-white font-medium mb-1">Payload Binary (Max 200MB)</p>
+                  <p className="text-white font-medium mb-1">Payload Binary (Max {config?.maxApkSize || 500}MB)</p>
                   <p className="text-gray-400 text-sm">{files.appFile ? files.appFile.name : 'Drag & drop or click to select (.exe, .apk, .zip)'}</p>
                 </div>
 

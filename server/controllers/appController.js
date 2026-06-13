@@ -1,4 +1,5 @@
 const App = require('../models/App');
+const Config = require('../models/Config');
 const { uploadToB2, deleteFromB2, getDownloadUrl } = require('../utils/b2Storage');
 
 // Helper to upload assets directly to cloud (no compression to maintain original quality)
@@ -154,6 +155,18 @@ exports.getAppDownloadLink = async (req, res, next) => {
 
 exports.createApp = async (req, res, next) => {
   try {
+    // Check platform config for limits
+    let config = await Config.findOne();
+    if (!config) config = await Config.create({});
+
+    let fileSize = req.body.fileSize || 0;
+    const maxSizeBytes = (config.maxApkSize || 500) * 1024 * 1024;
+    
+    if (fileSize > maxSizeBytes) {
+      return res.status(400).json({ 
+        message: `File size (${(fileSize / (1024 * 1024)).toFixed(2)}MB) exceeds platform limit (${config.maxApkSize}MB).` 
+      });
+    }
     const title = String(req.body.title || '').trim();
     const description = String(req.body.description || '').trim();
     const shortDescription = req.body.shortDescription 
@@ -170,7 +183,7 @@ exports.createApp = async (req, res, next) => {
 
     let fileUrl = req.body.fileUrl;
     let fileName = req.body.fileName || 'unknown';
-    let fileSize = req.body.fileSize || 0;
+    fileSize = req.body.fileSize || 0;
 
     const appFile = req.files && req.files.appFile ? req.files.appFile[0] : null;
     if (appFile && !fileUrl) {
