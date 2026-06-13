@@ -81,7 +81,7 @@ const Home = () => {
         </div>
 
         {/* Featured Carousel */}
-        {!search && !category && (sort === 'newest' || sort === '-createdAt') && featuredApps?.length > 0 && (
+        {!search && !category && featuredApps?.length > 0 && (
           <Suspense fallback={<div className="w-full h-[400px] md:h-[500px] bg-slate-100 dark:bg-white/5 animate-pulse rounded-[2.5rem] mb-12" />}>
             <HeroCarousel apps={featuredApps} />
           </Suspense>

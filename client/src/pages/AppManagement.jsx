@@ -23,6 +23,7 @@ const AppManagement = () => {
   const [search, setSearch] = useState('');
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [togglingId, setTogglingId] = useState(null);
 
   const fetchApps = async () => {
     try {
@@ -182,22 +183,27 @@ const AppManagement = () => {
                     <td className="px-8 py-5">
                       <div className="flex items-center justify-end gap-2">
                         <button 
+                          disabled={togglingId === app._id}
                           onClick={async () => {
+                            setTogglingId(app._id);
                             try {
                               const { data } = await api.patch(`/admin/apps/${app._id}/featured`);
-                              setApps(apps.map(a => a._id === app._id ? { ...a, isFeatured: data.isFeatured } : a));
+                              setApps(prev => prev.map(a => a._id === app._id ? { ...a, isFeatured: data.isFeatured } : a));
                               toast.success(data.message);
                             } catch (error) {
                               toast.error('Failed to toggle featured status');
+                            } finally {
+                              setTogglingId(null);
                             }
                           }}
                           title={app.isFeatured ? "Remove from Featured" : "Mark as Featured"}
                           className={cn(
-                            "p-2.5 rounded-xl transition-colors",
+                            "p-2.5 rounded-xl transition-all",
+                            togglingId === app._id && "opacity-50 scale-90",
                             app.isFeatured ? "text-amber-500 hover:bg-amber-500/10" : "text-slate-400 hover:text-amber-500 hover:bg-amber-500/10"
                           )}
                         >
-                          <Star className={cn("w-5 h-5", app.isFeatured && "fill-current")} />
+                          <Star className={cn("w-5 h-5", app.isFeatured && "fill-current", togglingId === app._id && "animate-spin")} />
                         </button>
                         <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
                         {app.status !== 'approved' && (
