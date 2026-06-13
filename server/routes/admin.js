@@ -4,7 +4,8 @@ const {
   getAllUsers, 
   deleteApp, 
   banUser,
-  getStats
+  getStats,
+  getAnalytics
 } = require('../controllers/adminController');
 const requireAdmin = require('../middleware/requireAdmin');
 
@@ -14,6 +15,7 @@ const router = express.Router();
 router.use(requireAdmin);
 
 router.get('/stats', getStats);
+router.get('/analytics', getAnalytics);
 router.get('/apps', getAllApps);
 router.get('/users', getAllUsers);
 router.delete('/apps/:id', deleteApp);
