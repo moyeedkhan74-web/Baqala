@@ -9,7 +9,8 @@ import {
   ArrowDownRight,
   Clock,
   ExternalLink,
-  Package as LucidePackage
+  Package as LucidePackage,
+  RefreshCw
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -75,30 +76,36 @@ const AdminDashboard = () => {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState(7);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
+  const fetchStats = async (showLoader = false) => {
+    if (showLoader) setLoading(true);
+    try {
+      const { data } = await api.get(`/admin/stats?days=${period}`);
+      setStats({
+        totalApps: data.stats.totalApps.toString(),
+        totalUsers: data.stats.totalUsers.toString(),
+        pendingReports: data.stats.pendingReports.toString(),
+        totalDownloads: data.stats.totalDownloads > 1000 
+          ? (data.stats.totalDownloads / 1000).toFixed(1) + 'k' 
+          : data.stats.totalDownloads.toString()
+      });
+      setChanges(data.changes || { apps: '0', users: '0', downloads: '0', reports: '0' });
+      setRecentActivity(data.activity);
+      setChartData(data.chartData);
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error('Failed to fetch admin stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial fetch + auto-poll every 30 seconds
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const { data } = await api.get(`/admin/stats?days=${period}`);
-        setStats({
-          totalApps: data.stats.totalApps.toString(),
-          totalUsers: data.stats.totalUsers.toString(),
-          pendingReports: data.stats.pendingReports.toString(),
-          totalDownloads: data.stats.totalDownloads > 1000 
-            ? (data.stats.totalDownloads / 1000).toFixed(1) + 'k' 
-            : data.stats.totalDownloads.toString()
-        });
-        setChanges(data.changes || { apps: '0', users: '0', downloads: '0', reports: '0' });
-        setRecentActivity(data.activity);
-        setChartData(data.chartData);
-      } catch (error) {
-        console.error('Failed to fetch admin stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
+    fetchStats(true);
+    const interval = setInterval(() => fetchStats(false), 30000);
+    return () => clearInterval(interval);
   }, [period]);
 
   if (loading) {
@@ -154,16 +161,32 @@ const AdminDashboard = () => {
           <div className="flex justify-between items-center mb-8">
             <div>
               <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Downloads Activity</h2>
-              <p className="text-sm text-slate-500 font-bold">Platform performance trend</p>
+              <p className="text-sm text-slate-500 font-bold flex items-center gap-2">
+                Platform performance trend
+                {lastUpdated && (
+                  <span className="flex items-center gap-1 text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full ml-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Live Update
+                  </span>
+                )}
+              </p>
             </div>
-            <select 
-              value={period}
-              onChange={(e) => setPeriod(parseInt(e.target.value))}
-              className="bg-slate-100 dark:bg-white/5 border-none rounded-xl px-4 py-2 text-xs font-bold outline-none cursor-pointer"
-            >
-              <option value={7}>Last 7 Days</option>
-              <option value={30}>Last 30 Days</option>
-            </select>
+            <div className="flex items-center gap-4">
+              {lastUpdated && (
+                <div className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-slate-400 bg-slate-100 dark:bg-white/5 px-3 py-1.5 rounded-xl">
+                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                  Updated: {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </div>
+              )}
+              <select 
+                value={period}
+                onChange={(e) => setPeriod(parseInt(e.target.value))}
+                className="bg-slate-100 dark:bg-white/5 border-none rounded-xl px-4 py-2 text-xs font-bold outline-none cursor-pointer"
+              >
+                <option value={7}>Last 7 Days</option>
+                <option value={30}>Last 30 Days</option>
+              </select>
+            </div>
           </div>
           
           <div className="h-[350px] w-full">

@@ -134,6 +134,85 @@ exports.getStats = async (req, res) => {
   }
 };
 
+// GET /api/admin/analytics
+exports.getAnalytics = async (req, res) => {
+  try {
+    const days = parseInt(req.query.days) || 7;
+
+    // 1. Top Apps by Downloads
+    const topApps = await App.find({})
+      .select('title totalDownloads icon category')
+      .sort({ totalDownloads: -1 })
+      .limit(5)
+      .lean();
+
+    // 2. Downloads Over Time (daily breakdown)
+    const downloadTrend = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const startOfDay = new Date(d.setHours(0,0,0,0));
+      const endOfDay = new Date(d.setHours(23,59,59,999));
+      
+      const dayDownloads = await Download.countDocuments({
+        createdAt: { $gte: startOfDay, $lte: endOfDay }
+      });
+      const daySignups = await User.countDocuments({
+        createdAt: { $gte: startOfDay, $lte: endOfDay }
+      });
+      const dayApps = await App.countDocuments({
+        createdAt: { $gte: startOfDay, $lte: endOfDay }
+      });
+
+      downloadTrend.push({
+        date: new Date(startOfDay).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        downloads: dayDownloads,
+        signups: daySignups,
+        apps: dayApps
+      });
+    }
+
+    // 3. Category Distribution
+    const allApps = await App.find({}, 'category').lean();
+    const categoryMap = {};
+    allApps.forEach(app => {
+      const cats = Array.isArray(app.category) ? app.category : [app.category || 'Other'];
+      cats.forEach(cat => {
+        categoryMap[cat] = (categoryMap[cat] || 0) + 1;
+      });
+    });
+    const categoryDistribution = Object.entries(categoryMap)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+
+    // 4. Summary Stats
+    const totalApps = await App.countDocuments();
+    const totalUsers = await User.countDocuments();
+    const totalDownloads = allApps.length > 0
+      ? (await App.aggregate([{ $group: { _id: null, total: { $sum: '$totalDownloads' } } }]))[0]?.total || 0
+      : 0;
+    const pendingReports = await Report.countDocuments({ status: 'pending' });
+
+    // 5. Recent Users
+    const recentUsers = await User.find({})
+      .select('name email avatar createdAt')
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean();
+
+    res.json({
+      topApps,
+      downloadTrend,
+      categoryDistribution,
+      recentUsers,
+      summary: { totalApps, totalUsers, totalDownloads, pendingReports }
+    });
+  } catch (error) {
+    console.error('Admin analytics error:', error);
+    res.status(500).json({ message: 'Server error fetching analytics.' });
+  }
+};
+
 // DELETE /api/admin/apps/:id
 exports.deleteApp = async (req, res) => {
   try {
