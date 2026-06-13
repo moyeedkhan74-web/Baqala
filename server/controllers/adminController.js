@@ -2,6 +2,7 @@ const App = require('../models/App');
 const User = require('../models/User');
 const Review = require('../models/Review');
 const Download = require('../models/Download');
+const Report = require('../models/Report');
 const { deleteFromB2, extractB2Key } = require('../utils/b2Storage');
 
 // GET /api/admin/apps
@@ -31,6 +32,74 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
+// GET /api/admin/stats
+exports.getStats = async (req, res) => {
+  try {
+    const totalApps = await App.countDocuments();
+    const totalUsers = await User.countDocuments();
+    const pendingApps = await App.countDocuments({ status: 'pending' });
+    const pendingReports = await Report.countDocuments({ status: 'pending' });
+    
+    // Sum up all totalDownloads from App model
+    const apps = await App.find({}, 'totalDownloads');
+    const totalDownloadsCount = apps.reduce((sum, app) => sum + (app.totalDownloads || 0), 0);
+
+    // Get recent activity (last 5)
+    // 1. New Apps
+    const recentApps = await App.find({})
+      .select('title developerName createdAt')
+      .sort({ createdAt: -1 })
+      .limit(5);
+    
+    // 2. New Users
+    const recentUsers = await User.find({})
+      .select('name createdAt')
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    // 3. New Reports
+    const recentReports = await Report.find({})
+      .populate('app', 'title')
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    // Combine recent activity
+    const activity = [
+      ...recentApps.map(a => ({ id: `app-${a._id}`, action: 'New App Uploaded', target: a.title, admin: a.developerName || 'Developer', time: a.createdAt, type: 'info' })),
+      ...recentUsers.map(u => ({ id: `user-${u._id}`, action: 'New User Joined', target: u.name, admin: 'System', time: u.createdAt, type: 'success' })),
+      ...recentReports.map(r => ({ id: `report-${r._id}`, action: 'App Reported', target: r.app?.title || 'Unknown App', admin: 'User', time: r.createdAt, type: 'warning' }))
+    ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 10);
+
+    // Mock chart data for now (since we don't have historical download tracking documents for every day yet)
+    // In a real app, you'd aggregate Download documents by day.
+    const last7Days = [...Array(7)].map((_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      return d.toLocaleDateString('en-US', { weekday: 'short' });
+    }).reverse();
+
+    const chartData = last7Days.map(day => ({
+      name: day,
+      downloads: Math.floor(Math.random() * 5000) + 1000 // Placeholder for real trend data
+    }));
+
+    res.json({
+      stats: {
+        totalApps,
+        totalUsers,
+        pendingApps,
+        pendingReports,
+        totalDownloads: totalDownloadsCount
+      },
+      activity,
+      chartData
+    });
+  } catch (error) {
+    console.error('Admin get stats error:', error);
+    res.status(500).json({ message: 'Server error fetching stats.' });
+  }
+};
+
 // DELETE /api/admin/apps/:id
 exports.deleteApp = async (req, res) => {
   try {
@@ -39,19 +108,19 @@ exports.deleteApp = async (req, res) => {
       return res.status(404).json({ message: 'App not found.' });
     }
 
-    // 1. Delete binary from B2 (B2_BUCKET_NAME)
+    // 1. Delete binary from B2
     if (app.fileUrl) {
       const binaryKey = extractB2Key(app.fileUrl);
       if (binaryKey) {
-        await deleteFromB2(binaryKey, true); // true = public bucket/binary account
+        await deleteFromB2(binaryKey, true);
       }
     }
 
-    // 2. Delete icon + screenshots from B2 (B2_IMAGES_BUCKET)
+    // 2. Delete icon + screenshots from B2
     if (app.icon) {
       const iconKey = extractB2Key(app.icon);
       if (iconKey) {
-        await deleteFromB2(iconKey, false); // false = private bucket/images account
+        await deleteFromB2(iconKey, false);
       }
     }
 
