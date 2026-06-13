@@ -9,7 +9,7 @@ const { deleteFromB2, extractB2Key } = require('../utils/b2Storage');
 exports.getAllApps = async (req, res) => {
   try {
     const apps = await App.find({})
-      .select('title developerName status category icon developer')
+      .select('title developerName status category icon developer isFeatured banner')
       .populate('developer', 'name')
       .sort({ createdAt: -1 });
     res.json({ apps });

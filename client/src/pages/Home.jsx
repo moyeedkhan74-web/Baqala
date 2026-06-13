@@ -69,7 +69,7 @@ const Home = () => {
       <div className="pt-24 pb-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
 
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div className="flex-1">
             <h1 className="heading-hero">
               Discover <span className="gradient-text">Extraordinary</span> Apps
@@ -80,9 +80,9 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Featured Carousel */}
+        {/* Featured Carousel - Placed down the tagline and upper to categories */}
         {!search && !category && featuredApps?.length > 0 && (
-          <Suspense fallback={<div className="w-full h-[400px] md:h-[500px] bg-slate-100 dark:bg-white/5 animate-pulse rounded-[2.5rem] mb-12" />}>
+          <Suspense fallback={<div className="w-full h-[350px] md:h-[450px] bg-slate-100 dark:bg-white/5 animate-pulse rounded-[2.5rem] mb-10" />}>
             <HeroCarousel apps={featuredApps} />
           </Suspense>
         )}
