@@ -371,3 +371,22 @@ exports.dismissReport = async (req, res) => {
     res.status(500).json({ message: 'Server error dismissing report.' });
   }
 };
+
+// GET /api/admin/apps/flagged
+exports.getFlaggedApps = async (req, res) => {
+  try {
+    const apps = await App.find({
+      $or: [
+        { scanStatus: 'malicious' },
+        { isFlagged: true }
+      ]
+    })
+    .populate('developer', 'name email')
+    .sort({ createdAt: -1 });
+
+    res.json({ apps });
+  } catch (error) {
+    console.error('Admin get flagged apps error:', error);
+    res.status(500).json({ message: 'Server error fetching flagged apps.' });
+  }
+};

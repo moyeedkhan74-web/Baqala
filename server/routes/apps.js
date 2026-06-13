@@ -10,6 +10,7 @@ const requireOwner = require('../middleware/requireOwner');
 const { uploadApp, uploadChunked, uploadImages, uploadAll } = require('../middleware/upload');
 const { body, validationResult } = require('express-validator');
 const { downloadLimiter, generalLimiter } = require('../middleware/rateLimiter');
+const scanUpload = require('../middleware/scanUpload');
 
 // Validation middleware
 const validateApp = [
@@ -32,7 +33,7 @@ router.get('/search', generalLimiter, searchApps);
 router.get('/categories', getCategories);
 router.get('/my', auth, getMyApps);
 router.get('/', generalLimiter, getApps);
-router.post('/', auth, uploadAll, validateApp, createApp);
+router.post('/', auth, uploadAll, scanUpload, validateApp, createApp);
 
 // --- Action Routes (Specific) ---
 router.post('/init-upload', auth, initUpload);

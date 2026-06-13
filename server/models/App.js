@@ -99,7 +99,17 @@ const appSchema = new mongoose.Schema({
   isFeatured: {
     type: Boolean,
     default: false
-  }
+  },
+  scanStatus: {
+    type: String,
+    enum: ['not_scanned', 'scanning', 'clean', 'malicious', 'scan_failed'],
+    default: 'not_scanned'
+  },
+  scanCompletedAt: { type: Date, default: null },
+  vtAnalysisId: { type: String, default: null },
+  vtPermalink: { type: String, default: null },
+  vtMaliciousCount: { type: Number, default: 0 },
+  fileHash: { type: String, default: null }
 }, {
   timestamps: true
 });
