@@ -250,6 +250,11 @@ const Home = () => {
           </AnimatePresence>
         )}
       </div>
+      <div className="fixed bottom-4 right-4 z-[9999] opacity-20 hover:opacity-100 transition-opacity">
+        <span className="bg-black text-white text-[10px] px-2 py-1 rounded-full font-mono">
+          BAQALA_DEBUG_V4
+        </span>
+      </div>
     </div>
   );
 };
