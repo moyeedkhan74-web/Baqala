@@ -24,6 +24,17 @@ const HeroCarousel = ({ apps }) => {
 
   if (featuredApps.length === 0) return null;
 
+  const getImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/')) {
+      const host = window.location.origin;
+      return `${host}${url}`;
+    }
+    // Fallback for relative paths if needed, though they should be URLs
+    return url;
+  };
+
   const currentApp = featuredApps[currentIndex];
 
   return (
@@ -41,13 +52,15 @@ const HeroCarousel = ({ apps }) => {
           <div className="absolute inset-0 z-0 overflow-hidden">
             {currentApp.banner ? (
               <img 
-                src={currentApp.banner} 
+                src={getImageUrl(currentApp.banner)} 
                 className="w-full h-full object-cover" 
                 alt={`${currentApp.title} promotional banner`}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
               />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-accent-violet/20 via-accent-magenta/10 to-transparent" />
-            )}
+            ) : null}
+            <div className="absolute inset-0 bg-gradient-to-br from-accent-violet/30 via-accent-magenta/20 to-background-dark/80" />
             <div className="absolute inset-0 bg-gradient-to-t from-background-light dark:from-background-dark via-background-light/60 dark:via-background-dark/80 to-transparent opacity-100" />
             <div className="absolute inset-0 bg-gradient-to-r from-background-light dark:from-background-dark via-background-light/40 dark:via-background-dark/40 to-transparent w-full" />
           </div>
@@ -63,7 +76,7 @@ const HeroCarousel = ({ apps }) => {
               onClick={() => navigate(`/app/${currentApp._id}`)}
             >
               <img 
-                src={currentApp?.iconUrl || currentApp?.icon} 
+                src={getImageUrl(currentApp?.iconUrl || currentApp?.icon)} 
                 className="w-full h-full object-cover rounded-[2rem] shadow-2xl border-4 border-white/20 cursor-pointer transform hover:scale-105 transition-transform" 
                 alt={`${currentApp.title} app icon`}
               />
@@ -75,9 +88,11 @@ const HeroCarousel = ({ apps }) => {
                 initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}
                 className="flex items-center gap-3 mb-3"
               >
-                <span className="badge-neon py-1 px-3 text-sm" aria-label={`Category: ${currentApp.category}`}>{currentApp.category}</span>
-                <div className="flex items-center gap-1 text-yellow-500 font-bold bg-white/50 dark:bg-dark-900/50 px-3 py-1 rounded-full text-sm" aria-label={`Rating: ${(currentApp?.averageRating || 0).toFixed(1)} stars`}>
-                  <HiStar aria-hidden="true" /> {(currentApp?.averageRating || 0).toFixed(1)}
+                <span className="badge-neon py-1 px-3 text-sm">
+                  {Array.isArray(currentApp.category) ? currentApp.category[0] : (currentApp.category || 'App')}
+                </span>
+                <div className="flex items-center gap-1 text-yellow-500 font-bold bg-white/50 dark:bg-dark-900/50 px-3 py-1 rounded-full text-sm">
+                  <HiStar /> {(currentApp?.averageRating || 0).toFixed(1)}
                 </div>
               </motion.div>
 
