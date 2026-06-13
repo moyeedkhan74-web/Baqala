@@ -83,11 +83,7 @@ const Navbar = () => {
 
   const openAdminPortal = (e) => {
     e.preventDefault();
-    const width = 1400;
-    const height = 900;
-    const left = (window.screen.width - width) / 2;
-    const top = (window.screen.height - height) / 2;
-    window.open('/admin', 'BaqalaAdminPortal', `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`);
+    navigate('/admin');
     setProfileOpen(false);
     setMenuOpen(false);
   };
