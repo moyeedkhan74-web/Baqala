@@ -4,7 +4,12 @@ const reportSchema = new mongoose.Schema({
   app: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'App',
-    required: true
+    required: false
+  },
+  developer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false
   },
   reportedBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -20,6 +25,7 @@ const reportSchema = new mongoose.Schema({
       'copyright_violation', 
       'misleading_description', 
       'spam', 
+      'harassment',
       'other'
     ],
     required: true
@@ -49,7 +55,17 @@ const reportSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Unique compound index on { app, reportedBy }
-reportSchema.index({ app: 1, reportedBy: 1 }, { unique: true });
+// Validation: Ensure either app or developer is provided
+reportSchema.pre('validate', function(next) {
+  if (!this.app && !this.developer) {
+    next(new Error('Report must target either an app or a developer account.'));
+  } else {
+    next();
+  }
+});
+
+// Unique compound index: One user can report a specific target once
+reportSchema.index({ app: 1, reportedBy: 1 }, { unique: true, sparse: true });
+reportSchema.index({ developer: 1, reportedBy: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('Report', reportSchema);

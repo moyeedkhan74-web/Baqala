@@ -3,15 +3,22 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../api/axios';
 import AppCard from '../components/AppCard';
 import SEOHead from '../components/SEOHead';
-import { motion } from 'framer-motion';
-import { HiDownload, HiViewGrid, HiCalendar, HiUserCircle, HiGlobeAlt } from 'react-icons/hi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { HiDownload, HiViewGrid, HiCalendar, HiUserCircle, HiGlobeAlt, HiX } from 'react-icons/hi';
 import { SkeletonCard } from '../components/Skeleton';
+import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 
 const DeveloperProfile = () => {
   const { id } = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const { user } = useAuth();
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reporting, setReporting] = useState(false);
+  const [reportData, setReportData] = useState({ category: 'other', reason: '' });
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -27,6 +34,26 @@ const DeveloperProfile = () => {
     };
     fetchProfile();
   }, [id]);
+
+  const handleReport = async (e) => {
+    e.preventDefault();
+    if (!user) return toast.error('Please sign in to report');
+    setReporting(true);
+    try {
+      await api.post('/reports', { 
+        developerId: id, 
+        category: reportData.category, 
+        customReason: reportData.reason 
+      });
+      toast.success('Developer report submitted');
+      setReportModalOpen(false);
+      setReportData({ category: 'other', reason: '' });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to submit report');
+    } finally {
+      setReporting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -64,8 +91,68 @@ const DeveloperProfile = () => {
     <div className="pt-32 pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <SEOHead 
         title={`Apps by ${developer.name} — Baqala`}
-        description={`Explore the collection of high-quality Android apps and games developed by ${developer.name} on Baqala App Store.`}
+        description={`Explore the collection of apps developed by ${developer.name} on Baqala.`}
       />
+
+      {/* Report Modal */}
+      <AnimatePresence>
+        {reportModalOpen && (
+          <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setReportModalOpen(false)}
+              className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white dark:bg-dark-900 rounded-[2.5rem] p-8 shadow-2xl border border-slate-200 dark:border-white/10"
+              onClick={e => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => setReportModalOpen(false)}
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-accent-violet transition-colors"
+              >
+                <HiX className="w-6 h-6" />
+              </button>
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Report Developer</h2>
+              <p className="text-sm text-slate-500 font-bold mb-6 italic">Help us moderate the community.</p>
+              
+              <form onSubmit={handleReport} className="space-y-6">
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-3">Category</label>
+                  <select 
+                    value={reportData.category}
+                    onChange={e => setReportData({...reportData, category: e.target.value})}
+                    className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold dark:text-white outline-none focus:ring-2 focus:ring-accent-violet/50"
+                  >
+                    <option value="scam_fake">Scam or Fake Apps</option>
+                    <option value="inappropriate_content">Inappropriate Content</option>
+                    <option value="copyright_violation">Copyright Violations</option>
+                    <option value="spam">Spamming Activities</option>
+                    <option value="impersonation">Impersonation</option>
+                    <option value="other">Other Issue</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-3">Reason</label>
+                  <textarea 
+                    value={reportData.reason}
+                    onChange={e => setReportData({...reportData, reason: e.target.value})}
+                    placeholder="Provide details..."
+                    className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold dark:text-white outline-none focus:ring-2 focus:ring-accent-violet/50 h-32 resize-none"
+                    maxLength={500}
+                  />
+                </div>
+                <button type="submit" disabled={reporting} className="w-full btn-primary py-4 font-black tracking-widest disabled:opacity-50">
+                  {reporting ? 'Submitting...' : 'Submit Report'}
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
@@ -77,18 +164,10 @@ const DeveloperProfile = () => {
           <div className="absolute -inset-1 bg-gradient-to-r from-accent-violet to-accent-neon rounded-[32px] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
           <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-[28px] overflow-hidden border border-white/20 bg-white dark:bg-dark-800 shadow-glass">
             {developer.avatar ? (
-              <img 
-                src={developer.avatar} 
-                alt={`${developer.name}'s profile avatar`} 
-                width="160"
-                height="160"
-                loading="lazy"
-                decoding="async"
-                className="w-full h-full object-cover" 
-              />
+              <img src={developer.avatar} alt={developer.name} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-gradient-to-tr from-accent-violet to-accent-magenta flex items-center justify-center text-white text-5xl font-bold">
-                {(developer?.name || 'Developer').charAt(0).toUpperCase()}
+                {(developer?.name || 'D').charAt(0).toUpperCase()}
               </div>
             )}
           </div>
@@ -98,89 +177,41 @@ const DeveloperProfile = () => {
         <div className="flex-1 text-center md:text-left">
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mb-2">
             <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              {developer?.name || 'Unknown Developer'}
+              {developer?.name || 'Unknown'}
             </h1>
-            <span className="badge-neon uppercase tracking-widest text-[10px] px-3 py-1">
-              Verified Developer
-            </span>
+            <div className="flex gap-2">
+              <span className="badge-neon uppercase tracking-widest text-[10px] px-3 py-1">Verified</span>
+              <button 
+                onClick={() => setReportModalOpen(true)}
+                className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors border border-slate-200 dark:border-white/10 px-3 py-1 rounded-full"
+              >
+                Report
+              </button>
+            </div>
           </div>
 
-          {(developer?.tagline || developer?.specialization) && (
-            <div className="mb-8 mt-4 space-y-5">
-              {developer?.specialization && (
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-gray-500 mb-2 block">
-                    Field of Specialization
-                  </span>
-                  <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full bg-gradient-to-r from-accent-violet/10 to-accent-emerald/10 border border-accent-violet/30 dark:border-accent-neon/20">
-                    <div className="w-1.5 h-4 bg-gradient-to-b from-accent-violet to-accent-emerald rounded-full flex-shrink-0" />
-                    <span className="text-base md:text-lg font-bold text-slate-800 dark:text-slate-100">
-                      {developer.specialization}
-                    </span>
-                  </div>
-                </div>
-              )}
-              {developer?.tagline && (
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-gray-500 mb-2 block">
-                    Professional Tagline
-                  </span>
-                  <div className="relative pl-5 border-l-2 border-accent-violet/40 dark:border-accent-neon/30">
-                    <p className="text-base font-semibold italic text-slate-600 dark:text-gray-300 leading-relaxed">
-                      "{developer.tagline}"
-                    </p>
-                  </div>
-                </div>
-              )}
+          <div className="mt-6 flex flex-wrap justify-center md:justify-start gap-6">
+            <div className="flex flex-col">
+              <span className="text-2xl font-black text-accent-violet">{stats?.totalApps || 0}</span>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Apps</span>
             </div>
-          )}
+            <div className="flex flex-col">
+              <span className="text-2xl font-black text-accent-emerald">{stats?.totalDownloads || 0}</span>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Downloads</span>
+            </div>
+          </div>
 
-          <div className="mt-6 pt-6 border-t border-slate-200/70 dark:border-white/5">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-1.5 h-4 bg-accent-violet rounded-full" />
-              <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900 dark:text-white">About the Developer</h2>
-            </div>
-            <p className="text-base text-slate-600 dark:text-gray-400 max-w-2xl mb-8 leading-relaxed font-serif italic pl-3.5 border-l-2 border-slate-100 dark:border-white/5">
-              {developer?.bio || `Independent software engineer contributing high-quality digital experiences to the Baqala community since ${developer?.joinDate ? new Date(developer.joinDate).getFullYear() : '2024'}.`}
+          <div className="mt-8 pt-8 border-t border-slate-100 dark:border-white/5">
+            <p className="text-base text-slate-600 dark:text-gray-400 max-w-2xl leading-relaxed">
+              {developer?.bio || 'Professional developer contributing to the Baqala ecosystem.'}
             </p>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="flex flex-wrap justify-center md:justify-start gap-4 sm:gap-6">
-            <div className="glass-panel px-6 py-4 flex flex-col items-center md:items-start min-w-[140px]">
-              <span className="text-2xl font-black text-accent-violet dark:text-accent-neon flex items-center gap-2">
-                <HiViewGrid className="w-5 h-5 opacity-50" /> {stats?.totalApps || 0}
-              </span>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Apps Uploaded</span>
-            </div>
-            
-            <div className="glass-panel px-6 py-4 flex flex-col items-center md:items-start min-w-[140px]">
-              <span className="text-2xl font-black text-accent-emerald flex items-center gap-2">
-                <HiDownload className="w-5 h-5 opacity-50" /> {stats?.totalDownloads >= 1000 ? `${(stats.totalDownloads / 1000).toFixed(1)}k+` : (stats?.totalDownloads || 0)}
-              </span>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Total Reach</span>
-            </div>
-
-            <div className="glass-panel px-6 py-4 flex flex-col items-center md:items-start min-w-[140px]">
-              <span className="text-lg font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2 pt-1">
-                <HiCalendar className="w-5 h-5 opacity-50" /> {developer?.joinDate ? new Date(developer.joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '2024'}
-              </span>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Member Since</span>
-            </div>
           </div>
         </div>
       </motion.div>
 
       {/* Apps Section */}
       <div>
-        <div className="flex items-center justify-between mb-8 border-b border-slate-200 dark:border-white/10 pb-6">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <HiGlobeAlt className="text-accent-violet" />
-            Software <span className="gradient-text italic">Portfolio</span>
-          </h2>
-          <span className="text-sm font-bold text-slate-400">{apps.length} Releases</span>
-        </div>
-
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">Software Portfolio</h2>
         {apps && apps.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {apps.map((app, index) => (
@@ -188,8 +219,8 @@ const DeveloperProfile = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-20 bg-slate-50 dark:bg-white/5 rounded-3xl border border-dashed border-slate-200 dark:border-white/10">
-            <p className="text-slate-500 font-medium italic">This developer hasn't published any apps publicly yet.</p>
+          <div className="text-center py-20 bg-slate-50 dark:bg-white/5 rounded-3xl">
+            <p className="text-slate-500 italic">No public apps released yet.</p>
           </div>
         )}
       </div>

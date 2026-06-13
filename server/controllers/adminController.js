@@ -81,13 +81,21 @@ exports.getStats = async (req, res) => {
 
     const recentReports = await Report.find({})
       .populate('app', 'title')
+      .populate('developer', 'name')
       .sort({ createdAt: -1 })
       .limit(5);
 
     const activity = [
       ...recentApps.map(a => ({ id: `app-${a._id}`, action: 'New App Uploaded', target: a.title, admin: a.developerName || 'Developer', time: a.createdAt, type: 'info' })),
       ...recentUsers.map(u => ({ id: `user-${u._id}`, action: 'New User Joined', target: u.name, admin: 'System', time: u.createdAt, type: 'success' })),
-      ...recentReports.map(r => ({ id: `report-${r._id}`, action: 'App Reported', target: r.app?.title || 'Unknown App', admin: 'User', time: r.createdAt, type: 'warning' }))
+      ...recentReports.map(r => ({ 
+        id: `report-${r._id}`, 
+        action: r.app ? 'App Reported' : 'Developer Reported', 
+        target: r.app?.title || r.developer?.name || 'Unknown Target', 
+        admin: 'User', 
+        time: r.createdAt, 
+        type: 'warning' 
+      }))
     ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 10);
 
     // Dynamic chart data for requested period
