@@ -37,31 +37,35 @@ const HeroCarousel = ({ apps }) => {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="relative w-full h-[400px] md:h-[500px]"
         >
-          {/* Background Gradient to ensure text readability */}
-          <div className="absolute inset-0 z-0 overflow-hidden bg-dark-100/10 dark:bg-dark-900/40">
-            <div className="absolute inset-0 bg-gradient-to-t from-background-light dark:from-background-dark via-transparent to-transparent opacity-90" />
-            <div className="absolute inset-0 bg-gradient-to-r from-background-light dark:from-background-dark via-background-light/80 dark:via-background-dark/80 to-transparent w-full md:w-3/4" />
+          {/* Background Content */}
+          <div className="absolute inset-0 z-0 overflow-hidden">
+            {currentApp.banner ? (
+              <img 
+                src={currentApp.banner} 
+                className="w-full h-full object-cover" 
+                alt={`${currentApp.title} promotional banner`}
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-accent-violet/20 via-accent-magenta/10 to-transparent" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-background-light dark:from-background-dark via-background-light/60 dark:via-background-dark/80 to-transparent opacity-100" />
+            <div className="absolute inset-0 bg-gradient-to-r from-background-light dark:from-background-dark via-background-light/40 dark:via-background-dark/40 to-transparent w-full" />
           </div>
 
           <div className="relative z-10 h-full flex flex-col md:flex-row items-center p-8 md:p-16 gap-8 text-dark-800 dark:text-white">
             
             {/* App Icon */}
             <motion.div 
-              initial={{ y: 0, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0 }}
+              initial={{ y: 0, opacity: 0, x: -20 }}
+              animate={{ y: 0, opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
               className="w-32 h-32 md:w-48 md:h-48 flex-shrink-0"
               onClick={() => navigate(`/app/${currentApp._id}`)}
             >
               <img 
                 src={currentApp?.iconUrl || currentApp?.icon} 
-                className="w-full h-full object-cover rounded-3xl shadow-glow-violet md:shadow-[0_0_40px_-10px_rgba(139,92,246,0.6)] border border-white/20 cursor-pointer transform hover:scale-105 transition-transform" 
+                className="w-full h-full object-cover rounded-[2rem] shadow-2xl border-4 border-white/20 cursor-pointer transform hover:scale-105 transition-transform" 
                 alt={`${currentApp.title} app icon`}
-                fetchpriority="high"
-                loading="eager"
-                width="192"
-                height="192"
-                decoding="async"
               />
             </motion.div>
 

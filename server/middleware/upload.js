@@ -53,6 +53,7 @@ const uploadImages = multer({
 }).fields([
   { name: 'file', maxCount: 1 },
   { name: 'icon', maxCount: 1 },
+  { name: 'banner', maxCount: 1 },
   { name: 'screenshots', maxCount: 10 }
 ]);
 
@@ -65,6 +66,7 @@ const uploadAll = multer({
 }).fields([
   { name: 'appFile', maxCount: 1 },
   { name: 'icon', maxCount: 1 },
+  { name: 'banner', maxCount: 1 },
   { name: 'screenshots', maxCount: 10 }
 ]);
 

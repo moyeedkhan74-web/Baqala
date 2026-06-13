@@ -109,6 +109,7 @@ const appSchema = new mongoose.Schema({
   vtAnalysisId: { type: String, default: null },
   vtPermalink: { type: String, default: null },
   vtMaliciousCount: { type: Number, default: 0 },
+  banner: { type: String, default: '' },
   fileHash: { type: String, default: null }
 }, {
   timestamps: true

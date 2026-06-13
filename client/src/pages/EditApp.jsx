@@ -30,7 +30,7 @@ const EditApp = () => {
   const [formData, setFormData] = useState({
     title: '', description: '', shortDescription: '', 
     tagline: '', category: [], platform: '', version: '', 
-    developerName: '', tags: ''
+    developerName: '', tags: '', banner: ''
   });
   
   const [files, setFiles] = useState({ newIcon: null, newScreenshots: [], newAppFile: null });
@@ -53,7 +53,8 @@ const EditApp = () => {
         platform: appData.platform || '',
         version: appData.version || '',
         developerName: appData.developerName || '',
-        tags: Array.isArray(appData.tags) ? appData.tags.join(', ') : ''
+        tags: Array.isArray(appData.tags) ? appData.tags.join(', ') : '',
+        banner: appData.banner || ''
       });
       setLoading(false);
     } catch (error) {
@@ -356,6 +357,49 @@ const EditApp = () => {
                     <input type="file" multiple className="hidden" onChange={handleScreenshotUpload} accept="image/*" />
                   </label>
                 </div>
+              </div>
+
+              {/* Promotional Banner Section */}
+              <div className="glass-panel p-8 rounded-3xl bg-white/5 border border-white/10 shadow-glass">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    <HiPhotograph className="text-accent-magenta" /> Promotional Banner
+                  </h3>
+                  {app.banner && (
+                    <button 
+                      onClick={removeBanner}
+                      className="text-xs font-bold text-rose-400 hover:text-rose-300 flex items-center gap-1.5 transition-colors"
+                    >
+                      <HiTrash className="w-3.5 h-3.5" /> Remove Banner
+                    </button>
+                  )}
+                </div>
+                
+                {app.banner ? (
+                  <div className="relative aspect-[21/9] rounded-2xl overflow-hidden border border-white/10 group shadow-2xl">
+                    <img 
+                      src={getImageUrl(app.banner)} 
+                      className="w-full h-full object-cover transition duration-500" 
+                      alt="Promotional Banner"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                      <label className="p-3 bg-white/20 text-white rounded-full hover:bg-accent-violet hover:text-white transition-all cursor-pointer">
+                        <HiArrowUpTray className="w-6 h-6" />
+                        <input type="file" className="hidden" onChange={handleBannerUpdate} accept="image/*" />
+                      </label>
+                      <button onClick={removeBanner} className="p-3 bg-rose-500/20 text-rose-400 rounded-full hover:bg-rose-500 hover:text-white transition-all transform hover:scale-110">
+                        <HiTrash className="w-6 h-6" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="w-full h-[200px] border-2 border-dashed border-white/10 rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:bg-accent-violet/5 hover:border-accent-violet/30 transition-all group overflow-hidden">
+                    <HiPhotograph className="w-10 h-10 text-gray-500 group-hover:text-accent-magenta transition-colors" />
+                    <span className="text-sm text-gray-400 font-bold mt-3">Upload Promotional Banner (1200x500 recommended)</span>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">High visibility on Home Page Hero</p>
+                    <input type="file" className="hidden" onChange={handleBannerUpdate} accept="image/*" />
+                  </label>
+                )}
               </div>
 
               <div>
