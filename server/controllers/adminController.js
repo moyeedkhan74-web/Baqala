@@ -12,6 +12,7 @@ exports.getAllApps = async (req, res) => {
       .select('title developerName status category icon developer isFeatured banner')
       .populate('developer', 'name')
       .sort({ createdAt: -1 });
+    console.log(`[ADMIN] Fetched ${apps.length} apps. Featured count: ${apps.filter(a => a.isFeatured).length}`);
     res.json({ apps });
   } catch (error) {
     console.error('Admin get apps error:', error);
@@ -399,6 +400,7 @@ exports.toggleFeatured = async (req, res) => {
 
     app.isFeatured = !app.isFeatured;
     await app.save();
+    console.log(`[ADMIN] Toggled featured for ${app.title}. New state: ${app.isFeatured}`);
 
     res.json({ message: `App is now ${app.isFeatured ? 'featured' : 'standard'}`, isFeatured: app.isFeatured });
   } catch (error) {
