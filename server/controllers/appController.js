@@ -201,6 +201,11 @@ exports.createApp = async (req, res, next) => {
       }
     }
 
+    let promotionalBanner = req.body.banner || '';
+    if (req.files && req.files.banner) {
+      promotionalBanner = await uploadAsset(req.files.banner[0], 'banners');
+    }
+
     // Global Scrubbing on Creation
     const { extractB2Key } = require('../utils/b2Storage');
     let scrubbedFileUrl = fileUrl;
@@ -228,6 +233,7 @@ exports.createApp = async (req, res, next) => {
       fileName: scrubbedFileName,
       fileSize,
       icon: iconUrl,
+      banner: promotionalBanner,
       screenshots,
       version,
       platform,
@@ -282,6 +288,14 @@ exports.uploadAppImages = async (req, res, next) => {
       if (app.icon) await deleteFileFromB2(app.icon);
       const url = await uploadAsset(req.files.icon[0], 'icons');
       if (url) app.icon = url;
+    }
+
+    if (req.files && req.files.banner && req.files.banner[0]) {
+      // Delete old banner if exists
+      const { deleteFileFromB2 } = require('../utils/b2Storage');
+      if (app.banner) await deleteFileFromB2(app.banner);
+      const url = await uploadAsset(req.files.banner[0], 'banners');
+      if (url) app.banner = url;
     }
 
     if (req.files && req.files.screenshots) {
@@ -527,7 +541,7 @@ exports.updateApp = async (req, res) => {
     const { 
       title, description, shortDescription, category, 
       version, platform, tags, fileUrl, fileName, fileSize,
-      developerName, tagline
+      developerName, tagline, banner
     } = req.body;
 
     // Handle binary replacement cleanup
@@ -567,6 +581,7 @@ exports.updateApp = async (req, res) => {
     }
     if (version) app.version = version;
     if (platform) app.platform = platform;
+    if (banner !== undefined) app.banner = banner;
     if (developerName) app.developerName = developerName;
     if (tags) app.tags = typeof tags === 'string' ? tags.split(',').map(t => t.trim()) : tags;
 

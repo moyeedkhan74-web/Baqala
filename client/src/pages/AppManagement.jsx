@@ -160,12 +160,20 @@ const AppManagement = () => {
                       </span>
                     </td>
                     <td className="px-8 py-5">
-                      <div className={cn(
-                        "inline-flex items-center gap-2 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider",
-                        getStatusStyles(app.status)
-                      )}>
-                        <div className="w-1.5 h-1.5 rounded-full bg-current" />
-                        {app.status}
+                      <div className="flex flex-col gap-1.5">
+                        <div className={cn(
+                          "inline-flex items-center gap-2 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider",
+                          getStatusStyles(app.status)
+                        )}>
+                          <div className="w-1.5 h-1.5 rounded-full bg-current" />
+                          {app.status}
+                        </div>
+                        {app.isFeatured && (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[10px] font-black uppercase tracking-wider w-fit">
+                            <Star className="w-3 h-3 fill-current" />
+                            Featured
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-8 py-5">
@@ -173,6 +181,25 @@ const AppManagement = () => {
                     </td>
                     <td className="px-8 py-5">
                       <div className="flex items-center justify-end gap-2">
+                        <button 
+                          onClick={async () => {
+                            try {
+                              const { data } = await api.patch(`/admin/apps/${app._id}/featured`);
+                              setApps(apps.map(a => a._id === app._id ? { ...a, isFeatured: data.isFeatured } : a));
+                              toast.success(data.message);
+                            } catch (error) {
+                              toast.error('Failed to toggle featured status');
+                            }
+                          }}
+                          title={app.isFeatured ? "Remove from Featured" : "Mark as Featured"}
+                          className={cn(
+                            "p-2.5 rounded-xl transition-colors",
+                            app.isFeatured ? "text-amber-500 hover:bg-amber-500/10" : "text-slate-400 hover:text-amber-500 hover:bg-amber-500/10"
+                          )}
+                        >
+                          <Star className={cn("w-5 h-5", app.isFeatured && "fill-current")} />
+                        </button>
+                        <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
                         {app.status !== 'approved' && (
                           <button onClick={() => updateStatus(app._id, 'approved')} title="Approve" className="p-2.5 rounded-xl text-emerald-500 hover:bg-emerald-500/10 transition-colors">
                             <CheckCircle2 className="w-5 h-5" />

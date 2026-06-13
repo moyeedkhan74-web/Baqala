@@ -390,3 +390,19 @@ exports.getFlaggedApps = async (req, res) => {
     res.status(500).json({ message: 'Server error fetching flagged apps.' });
   }
 };
+
+// PATCH /api/admin/apps/:id/featured
+exports.toggleFeatured = async (req, res) => {
+  try {
+    const app = await App.findById(req.params.id);
+    if (!app) return res.status(404).json({ message: 'App not found.' });
+
+    app.isFeatured = !app.isFeatured;
+    await app.save();
+
+    res.json({ message: `App is now ${app.isFeatured ? 'featured' : 'standard'}`, isFeatured: app.isFeatured });
+  } catch (error) {
+    console.error('Admin toggle featured error:', error);
+    res.status(500).json({ message: 'Server error toggling featured status.' });
+  }
+};
