@@ -249,14 +249,36 @@ exports.deleteApp = async (req, res) => {
     // 3. Delete from MongoDB
     await App.findByIdAndDelete(req.params.id);
 
-    // 4. Delete related Reviews and Downloads
+    // 4. Delete related Reviews, Downloads, and Reports
     await Review.deleteMany({ app: req.params.id });
     await Download.deleteMany({ app: req.params.id });
+    await Report.deleteMany({ app: req.params.id });
 
     res.json({ message: 'App and all associated data deleted successfully.' });
   } catch (error) {
     console.error('Admin delete app error:', error);
     res.status(500).json({ message: 'Server error during app deletion.' });
+  }
+};
+
+// PATCH /api/admin/apps/:id/status
+exports.updateAppStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!['approved', 'rejected', 'pending'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status.' });
+    }
+    
+    const app = await App.findById(req.params.id);
+    if (!app) return res.status(404).json({ message: 'App not found.' });
+
+    app.status = status;
+    await app.save();
+    
+    res.json({ message: `App status updated to ${status}.`, app });
+  } catch (error) {
+    console.error('Admin update app status error:', error);
+    res.status(500).json({ message: 'Server error updating app status.' });
   }
 };
 
@@ -295,5 +317,57 @@ exports.banUser = async (req, res) => {
   } catch (error) {
     console.error('Admin ban user error:', error);
     res.status(500).json({ message: 'Server error banning user.' });
+  }
+};
+// POST /api/admin/users/:id/unban
+exports.unbanUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+
+    user.isBanned = false;
+    user.banUntil = null;
+    user.banReason = null;
+    await user.save();
+
+    res.json({ 
+      message: 'User unbanned successfully.',
+      user: { _id: user._id, isBanned: user.isBanned, banUntil: user.banUntil }
+    });
+  } catch (error) {
+    console.error('Admin unban user error:', error);
+    res.status(500).json({ message: 'Server error unbanning user.' });
+  }
+};
+
+// GET /api/admin/reports
+exports.getAllReports = async (req, res) => {
+  try {
+    const reports = await Report.find({})
+      .populate('reportedBy', 'name')
+      .populate('app', 'title')
+      .populate('developer', 'name')
+      .sort({ createdAt: -1 });
+
+    res.json({ reports });
+  } catch (error) {
+    console.error('Admin get reports error:', error);
+    res.status(500).json({ message: 'Server error fetching reports.' });
+  }
+};
+
+// PATCH /api/admin/reports/:id/dismiss
+exports.dismissReport = async (req, res) => {
+  try {
+    const report = await Report.findById(req.params.id);
+    if (!report) return res.status(404).json({ message: 'Report not found.' });
+
+    report.status = 'reviewed';
+    await report.save();
+
+    res.json({ message: 'Report dismissed.', report });
+  } catch (error) {
+    console.error('Admin dismiss report error:', error);
+    res.status(500).json({ message: 'Server error dismissing report.' });
   }
 };
