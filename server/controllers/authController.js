@@ -104,16 +104,15 @@ exports.getProfile = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
-    // Defensive check: explicitly remove protected fields
-    const PROTECTED_FIELDS = ['role', 'password', 'googleId', 'firebaseUid', 'isBanned', 'banUntil', 'banReason'];
-    PROTECTED_FIELDS.forEach(f => delete req.body[f]);
-
-    const { name, bio, tagline, specialization, avatar } = req.body;
+    // Strictly destructure ONLY allowed fields
+    const { name, bio, specialization, tagline, avatar } = req.body;
+    
+    // Build update object only with provided fields
     const updates = {};
     if (name) updates.name = name;
     if (bio !== undefined) updates.bio = bio;
-    if (tagline !== undefined) updates.tagline = tagline;
     if (specialization !== undefined) updates.specialization = specialization;
+    if (tagline !== undefined) updates.tagline = tagline;
     if (avatar !== undefined) updates.avatar = avatar;
 
     const user = await User.findByIdAndUpdate(req.user._id, updates, {
@@ -228,17 +227,29 @@ exports.firebaseLogin = async (req, res) => {
         await user.save();
       }
 
+      // Updated Ban Check Logic
       if (user.isBanned) {
-        if (user.banUntil && new Date(user.banUntil) <= new Date()) {
-          // Auto-lift expired ban
+        const now = new Date();
+        const banUntil = user.banUntil ? new Date(user.banUntil) : null;
+
+        if (banUntil && now < banUntil) {
+          // Temporary ban is still active
+          return res.status(403).json({ 
+            message: `Your account has been banned until ${banUntil.toLocaleString()}. Reason: ${user.banReason || 'No reason provided'}`, 
+            banUntil: user.banUntil,
+            reason: user.banReason
+          });
+        } else if (banUntil && now >= banUntil) {
+          // Temporary ban has passed -> auto-lift
           user.isBanned = false;
           user.banUntil = null;
           user.banReason = null;
           await user.save();
         } else {
+          // Permanent ban (no banUntil)
           return res.status(403).json({ 
-            message: `Your account has been banned. Reason: ${user.banReason || 'No reason provided'}`, 
-            banUntil: user.banUntil,
+            message: `Your account has been permanently banned. Reason: ${user.banReason || 'No reason provided'}`,
+            banUntil: null,
             reason: user.banReason
           });
         }
@@ -304,22 +315,34 @@ exports.firebaseRegister = async (req, res) => {
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      // If exists, just login them
+      // Updated Ban Check Logic for existing user
       if (existingUser.isBanned) {
-        if (existingUser.banUntil && new Date(existingUser.banUntil) <= new Date()) {
-          // Auto-lift expired ban
+        const now = new Date();
+        const banUntil = existingUser.banUntil ? new Date(existingUser.banUntil) : null;
+
+        if (banUntil && now < banUntil) {
+          // Temporary ban is still active
+          return res.status(403).json({ 
+            message: `Your account has been banned until ${banUntil.toLocaleString()}. Reason: ${existingUser.banReason || 'No reason provided'}`, 
+            banUntil: existingUser.banUntil,
+            reason: existingUser.banReason
+          });
+        } else if (banUntil && now >= banUntil) {
+          // Temporary ban has passed -> auto-lift
           existingUser.isBanned = false;
           existingUser.banUntil = null;
           existingUser.banReason = null;
           await existingUser.save();
         } else {
+          // Permanent ban
           return res.status(403).json({ 
-            message: `Your account has been banned. Reason: ${existingUser.banReason || 'No reason provided'}`, 
-            banUntil: existingUser.banUntil,
+            message: `Your account has been permanently banned. Reason: ${existingUser.banReason || 'No reason provided'}`,
+            banUntil: null,
             reason: existingUser.banReason
           });
         }
       }
+
       if (!existingUser.firebaseUid) {
         existingUser.firebaseUid = uid;
         await existingUser.save();

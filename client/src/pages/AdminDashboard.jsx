@@ -8,7 +8,8 @@ import {
   ArrowUpRight, 
   ArrowDownRight,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Package
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -22,6 +23,7 @@ import {
   Area
 } from 'recharts';
 import api from '../api/axios';
+import { formatDistanceToNow } from 'date-fns';
 
 const KPICard = ({ title, value, change, isPositive, icon: Icon, color }) => (
   <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-xl transition-all duration-300 group">
@@ -41,28 +43,49 @@ const KPICard = ({ title, value, change, isPositive, icon: Icon, color }) => (
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
-    totalApps: '124',
-    totalUsers: '1.2k',
-    pendingReviews: '12',
-    totalDownloads: '45.1k'
+    totalApps: '0',
+    totalUsers: '0',
+    pendingReports: '0',
+    totalDownloads: '0'
   });
 
-  const [recentActivity, setRecentActivity] = useState([
-    { id: 1, action: 'App Approved', target: 'PhotoEdit Pro', admin: 'Moyeed', time: '2 mins ago', type: 'success' },
-    { id: 2, action: 'User Banned', target: 'user_992', admin: 'Moyeed', time: '15 mins ago', type: 'error' },
-    { id: 3, action: 'New Submission', target: 'CryptoPulse', admin: 'System', time: '1 hour ago', type: 'info' },
-    { id: 4, action: 'Review Removed', target: 'GameX', admin: 'Admin_2', time: '4 hours ago', type: 'warning' },
-  ]);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [chartData, setChartData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const chartData = [
-    { name: 'Mon', downloads: 2400 },
-    { name: 'Tue', downloads: 1398 },
-    { name: 'Wed', downloads: 9800 },
-    { name: 'Thu', downloads: 3908 },
-    { name: 'Fri', downloads: 4800 },
-    { name: 'Sat', downloads: 3800 },
-    { name: 'Sun', downloads: 4300 },
-  ];
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const { data } = await api.get('/admin/stats');
+        setStats({
+          totalApps: data.stats.totalApps.toString(),
+          totalUsers: data.stats.totalUsers.toString(),
+          pendingReports: data.stats.pendingReports.toString(),
+          totalDownloads: data.stats.totalDownloads > 1000 
+            ? (data.stats.totalDownloads / 1000).toFixed(1) + 'k' 
+            : data.stats.totalDownloads.toString()
+        });
+        setRecentActivity(data.activity);
+        setChartData(data.chartData);
+      } catch (error) {
+        console.error('Failed to fetch admin stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  if (loading) {
+    return (
+      <AdminLayout title="Loading Stats...">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="w-12 h-12 border-4 border-accent-violet border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout title="Platform Overview">
@@ -84,10 +107,10 @@ const AdminDashboard = () => {
           color="bg-blue-500" 
         />
         <KPICard 
-          title="Pending Reviews" 
-          value={stats.pendingReviews} 
-          change="24" 
-          isPositive={false} 
+          title="Pending Reports" 
+          value={stats.pendingReports} 
+          change="0" 
+          isPositive={true} 
           icon={AlertCircle} 
           color="bg-amber-500" 
         />
@@ -107,7 +130,7 @@ const AdminDashboard = () => {
           <div className="flex justify-between items-center mb-8">
             <div>
               <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Downloads Activity</h2>
-              <p className="text-sm text-slate-500 font-bold">Platform performance over the last 7 days</p>
+              <p className="text-sm text-slate-500 font-bold">Platform performance trend</p>
             </div>
             <select className="bg-slate-100 dark:bg-white/5 border-none rounded-xl px-4 py-2 text-xs font-bold outline-none cursor-pointer">
               <option>Last 7 Days</option>
@@ -185,11 +208,16 @@ const AdminDashboard = () => {
                     {item.action}: <span className="text-accent-violet">{item.target}</span>
                   </p>
                   <p className="text-[10px] font-bold text-slate-500 uppercase mt-1">
-                    by {item.admin} • {item.time}
+                    by {item.admin} • {formatDistanceToNow(new Date(item.time), { addSuffix: true })}
                   </p>
                 </div>
               </div>
             ))}
+            {recentActivity.length === 0 && (
+              <div className="text-center py-10">
+                <p className="text-sm text-slate-500 font-bold">No recent activity</p>
+              </div>
+            )}
           </div>
 
           <button className="w-full mt-8 py-4 rounded-2xl border-2 border-dashed border-slate-200 dark:border-white/10 text-slate-400 font-bold hover:border-accent-violet hover:text-accent-violet transition-all text-sm">
@@ -200,10 +228,5 @@ const AdminDashboard = () => {
     </AdminLayout>
   );
 };
-
-const Package = ({ className }) => <PackageIcon className={className} />;
-const PackageIcon = ({ className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
-);
 
 export default AdminDashboard;

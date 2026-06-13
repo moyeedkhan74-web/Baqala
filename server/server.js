@@ -15,6 +15,7 @@ const reviewRoutes = require('./routes/reviews');
 const assetsRoutes = require('./routes/assets');
 const downloadRoutes = require('./routes/downloads');
 const adminRoutes = require('./routes/admin');
+const reportsRoutes = require('./routes/reports');
 
 const app = express();
 app.set('trust proxy', 1); // Trust Render's proxy for accurate IP tracking
@@ -34,19 +35,23 @@ app.use(compression({
   }
 })); // Compress other responses
 
-// CORS Configuration - Strictly allow Vercel domains
+// CORS Configuration
 const allowedOrigins = [
   'https://baqala-lovat.vercel.app',
-  'https://baqala-lovat-git-main-moyeedkhan74-webs-projects.vercel.app'
+  'https://baqala-lovat-git-main-moyeedkhan74-webs-projects.vercel.app',
+  'http://localhost:3000',
+  'http://localhost:5173'
 ];
 
 app.use(cors({
   origin: function(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
     }
+    return callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -86,10 +91,9 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/assets', assetsRoutes);
 app.use('/api/downloads', downloadRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/reports', reportsRoutes);
 app.use('/api/contact', require('./routes/contact'));
 app.use('/api/feedback', require('./routes/feedback'));
-
-
 
 // Health check
 app.get('/api/health', (req, res) => {
