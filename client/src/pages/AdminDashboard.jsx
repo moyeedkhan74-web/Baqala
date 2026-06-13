@@ -74,11 +74,12 @@ const AdminDashboard = () => {
   const [recentActivity, setRecentActivity] = useState([]);
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState(7);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const { data } = await api.get('/admin/stats');
+        const { data } = await api.get(`/admin/stats?days=${period}`);
         setStats({
           totalApps: data.stats.totalApps.toString(),
           totalUsers: data.stats.totalUsers.toString(),
@@ -98,7 +99,7 @@ const AdminDashboard = () => {
     };
 
     fetchStats();
-  }, []);
+  }, [period]);
 
   if (loading) {
     return (
@@ -155,9 +156,13 @@ const AdminDashboard = () => {
               <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Downloads Activity</h2>
               <p className="text-sm text-slate-500 font-bold">Platform performance trend</p>
             </div>
-            <select className="bg-slate-100 dark:bg-white/5 border-none rounded-xl px-4 py-2 text-xs font-bold outline-none cursor-pointer">
-              <option>Last 7 Days</option>
-              <option>Last 30 Days</option>
+            <select 
+              value={period}
+              onChange={(e) => setPeriod(parseInt(e.target.value))}
+              className="bg-slate-100 dark:bg-white/5 border-none rounded-xl px-4 py-2 text-xs font-bold outline-none cursor-pointer"
+            >
+              <option value={7}>Last 7 Days</option>
+              <option value={30}>Last 30 Days</option>
             </select>
           </div>
           

@@ -81,6 +81,17 @@ const Navbar = () => {
     }
   };
 
+  const openAdminPortal = (e) => {
+    e.preventDefault();
+    const width = 1400;
+    const height = 900;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    window.open('/admin', 'BaqalaAdminPortal', `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`);
+    setProfileOpen(false);
+    setMenuOpen(false);
+  };
+
   const isActive = (path) => location.pathname === path;
 
   return (
@@ -198,14 +209,12 @@ const Navbar = () => {
               </>
             )}
             {user && user.role === 'admin' && (
-              <a 
-                href="/admin" 
-                target="_blank" 
-                rel="noopener noreferrer" 
+              <button 
+                onClick={openAdminPortal}
                 className={`px-5 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 bg-rose-500 text-white shadow-lg hover:bg-rose-600 animate-pulse`}
               >
                 <HiShieldCheck className="w-5 h-5" /> Admin Portal
-              </a>
+              </button>
             )}
           </div>
 
@@ -248,14 +257,12 @@ const Navbar = () => {
                         <div className="space-y-1">
                           <Link to="/developer" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-xs font-bold dark:text-gray-200 transition-colors"><HiViewGrid className="text-accent-violet" /> Developer Dashboard</Link>
                           {user.role === 'admin' && (
-                            <a 
-                              href="/admin" 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              className="flex items-center gap-3 p-3 rounded-xl hover:bg-rose-500/10 text-xs font-bold text-rose-500 transition-colors"
+                            <button 
+                              onClick={openAdminPortal}
+                              className="flex items-center gap-3 p-3 rounded-xl hover:bg-rose-500/10 text-xs font-bold text-rose-500 transition-colors w-full"
                             >
                               <HiShieldCheck /> Admin Portal
-                            </a>
+                            </button>
                           )}
                           <Link to="/settings" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-xs font-bold dark:text-gray-200 transition-colors"><HiCog className="text-slate-400" /> Account Settings</Link>
                           <div className="h-px bg-white/5 my-2" />
@@ -349,15 +356,12 @@ const Navbar = () => {
                     </>
                   )}
                   {user && user.role === 'admin' && (
-                    <a 
-                      href="/admin" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      onClick={() => setMenuOpen(false)}
-                      className={`text-sm font-bold flex items-center gap-3 p-3 rounded-xl transition-all ${isActive('/admin') ? 'bg-rose-500/10 text-rose-500' : 'dark:text-gray-300 hover:bg-white/5'}`}
+                    <button 
+                      onClick={openAdminPortal}
+                      className={`text-sm font-bold flex items-center gap-3 p-3 rounded-xl transition-all ${isActive('/admin') ? 'bg-rose-500/10 text-rose-500' : 'dark:text-gray-300 hover:bg-white/5'} w-full text-left`}
                     >
                       <HiShieldCheck className="w-5 h-5" /> Admin Portal
-                    </a>
+                    </button>
                   )}
                 </div>
                 
