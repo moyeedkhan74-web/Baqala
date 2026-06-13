@@ -25,6 +25,19 @@ const EditApp = () => {
   const [app, setApp] = useState(null);
   const [activeTab, setActiveTab] = useState('general');
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [config, setConfig] = useState(null);
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const { data } = await api.get('/config');
+        setConfig(data.config);
+      } catch (err) {
+        console.error('Failed to fetch config', err);
+      }
+    };
+    fetchConfig();
+  }, []);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -80,6 +93,10 @@ const EditApp = () => {
     const file = e.target.files[0];
     if (!file) return;
     
+    if (config && file.size > config.maxImageSize * 1024 * 1024) {
+      return toast.error(`Icon exceeds the platform limit of ${config.maxImageSize}MB`);
+    }
+
     const iconFormData = new FormData();
     iconFormData.append('icon', file);
     
@@ -148,9 +165,53 @@ const EditApp = () => {
     }
   };
 
+  const handleBannerUpdate = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (config && file.size > config.maxImageSize * 1024 * 1024) {
+      return toast.error(`Banner exceeds the platform limit of ${config.maxImageSize}MB`);
+    }
+
+    const bannerFormData = new FormData();
+    bannerFormData.append('banner', file);
+    
+    setSaving(true);
+    try {
+      const { data } = await api.post(`/apps/${id}/images`, bannerFormData);
+      setApp(data.app);
+      setFormData(prev => ({ ...prev, banner: data.app.banner || '' }));
+      toast.success('Promotional banner updated!');
+    } catch (error) {
+      toast.error('Banner upload failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removeBanner = async () => {
+    if (!window.confirm('Remove the promotional banner?')) return;
+    setSaving(true);
+    try {
+      await api.put(`/apps/${id}`, { banner: '' });
+      setApp(prev => ({ ...prev, banner: '' }));
+      setFormData(prev => ({ ...prev, banner: '' }));
+      toast.success('Banner removed');
+    } catch (error) {
+      toast.error('Failed to remove banner');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleAppFileReplacement = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    if (config && file.size > config.maxApkSize * 1024 * 1024) {
+      return toast.error(`Payload exceeds the platform limit of ${config.maxApkSize}MB`);
+    }
+
     if (!window.confirm('Replace existing payload? This will delete the old cloud binary.')) return;
 
     setSaving(true);
