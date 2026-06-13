@@ -35,6 +35,7 @@ exports.getAllUsers = async (req, res) => {
 // GET /api/admin/stats
 exports.getStats = async (req, res) => {
   try {
+    const days = parseInt(req.query.days) || 7;
     const now = new Date();
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
@@ -65,10 +66,9 @@ exports.getStats = async (req, res) => {
       apps: calculateChange(totalApps, appsLast24h),
       users: calculateChange(totalUsers, usersLast24h),
       downloads: calculateChange(totalDownloadsCount, downloadsLast24h),
-      reports: pendingReports > 0 ? '5' : '0' // Placeholder for reports change
+      reports: pendingReports > 0 ? '5' : '0' 
     };
 
-    // Get recent activity (last 5)
     const recentApps = await App.find({})
       .select('title developerName createdAt')
       .sort({ createdAt: -1 })
@@ -90,9 +90,9 @@ exports.getStats = async (req, res) => {
       ...recentReports.map(r => ({ id: `report-${r._id}`, action: 'App Reported', target: r.app?.title || 'Unknown App', admin: 'User', time: r.createdAt, type: 'warning' }))
     ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 10);
 
-    // Dynamic chart data (last 7 days)
+    // Dynamic chart data for requested period
     const chartData = [];
-    for (let i = 6; i >= 0; i--) {
+    for (let i = days - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const startOfDay = new Date(d.setHours(0,0,0,0));
