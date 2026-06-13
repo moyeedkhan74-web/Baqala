@@ -11,20 +11,46 @@ import {
   ChevronLeft, 
   ChevronRight,
   Eye,
-  ArrowUpDown
+  ArrowUpDown,
+  RefreshCw
 } from 'lucide-react';
 import api from '../api/axios';
 import { cn } from '../utils/cn.js';
+import toast from 'react-hot-toast';
 
 const AppManagement = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch] = useState('');
-  const [apps, setApps] = useState([
-    { _id: '1', title: 'PhotoEdit Pro', developerName: 'Alice Dev', category: 'Photography', status: 'pending', downloads: 1200, createdAt: '2026-06-10', icon: 'https://cdn-icons-png.flaticon.com/512/3344/3344153.png' },
-    { _id: '2', title: 'CryptoPulse', developerName: 'Bob Markets', category: 'Finance', status: 'approved', downloads: 45000, createdAt: '2026-06-08', icon: 'https://cdn-icons-png.flaticon.com/512/3344/3344153.png' },
-    { _id: '3', title: 'Zombie Rush', developerName: 'GameStudio X', category: 'Games', status: 'rejected', downloads: 0, createdAt: '2026-06-05', icon: 'https://cdn-icons-png.flaticon.com/512/3344/3344153.png' },
-    { _id: '4', title: 'TaskMaster', developerName: 'Charlie Tools', category: 'Productivity', status: 'pending', downloads: 150, createdAt: '2026-06-12', icon: 'https://cdn-icons-png.flaticon.com/512/3344/3344153.png' },
-  ]);
+  const [apps, setApps] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchApps = async () => {
+    try {
+      const { data } = await api.get('/admin/apps');
+      setApps(data.apps);
+    } catch (error) {
+      console.error('Failed to fetch apps:', error);
+      toast.error('Failed to load applications');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchApps();
+  }, []);
+
+  const updateStatus = async (id, status) => {
+    const loadingToast = toast.loading(`Marking app as ${status}...`);
+    try {
+      await api.patch(`/admin/apps/${id}/status`, { status });
+      setApps(apps.map(app => app._id === id ? { ...app, status } : app));
+      toast.success(`App successfully ${status}`, { id: loadingToast });
+    } catch (error) {
+      console.error('Failed to update status:', error);
+      toast.error('Failed to update status', { id: loadingToast });
+    }
+  };
 
   const tabs = [
     { id: 'all', label: 'All Apps' },
@@ -35,8 +61,9 @@ const AppManagement = () => {
 
   const filteredApps = apps.filter(app => {
     const matchesTab = activeTab === 'all' || app.status === activeTab;
+    const devName = typeof app.developer === 'object' && app.developer?.name ? app.developer.name : '';
     const matchesSearch = app.title.toLowerCase().includes(search.toLowerCase()) || 
-                          app.developerName.toLowerCase().includes(search.toLowerCase());
+                          devName.toLowerCase().includes(search.toLowerCase());
     return matchesTab && matchesSearch;
   });
 
@@ -71,7 +98,7 @@ const AppManagement = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="relative group">
+          <div className="relative group flex-1 md:flex-none">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-accent-violet transition-colors" />
             <input 
               type="text" 
@@ -81,93 +108,100 @@ const AppManagement = () => {
               className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-2xl py-3 pl-12 pr-6 text-sm outline-none focus:border-accent-violet/30 transition-all w-full md:w-80 shadow-sm"
             />
           </div>
-          <button className="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-white/5 text-slate-500 hover:text-accent-violet transition-all shadow-sm">
-            <Filter className="w-5 h-5" />
+          <button onClick={fetchApps} className="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-white/5 text-slate-500 hover:text-accent-violet transition-all shadow-sm">
+            <RefreshCw className={cn("w-5 h-5", loading && "animate-spin")} />
           </button>
         </div>
       </div>
 
       {/* Table Section */}
       <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-white/2 border-b border-slate-200 dark:border-white/5">
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">App Name</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Developer</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Category</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                  Status <ArrowUpDown className="w-3 h-3" />
-                </th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Downloads</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-              {filteredApps.map((app) => (
-                <tr key={app._id} className="group hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
-                  <td className="px-8 py-5">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm group-hover:scale-105 transition-transform">
-                        <img src={app.icon} alt={app.title} className="w-8 h-8 object-contain" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-black text-slate-900 dark:text-white truncate">{app.title}</p>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">Submitted {app.createdAt}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-8 py-5">
-                    <p className="text-sm font-bold dark:text-slate-300">{app.developerName}</p>
-                  </td>
-                  <td className="px-8 py-5">
-                    <span className="px-3 py-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-black uppercase text-slate-600 dark:text-slate-400">
-                      {app.category}
-                    </span>
-                  </td>
-                  <td className="px-8 py-5">
-                    <div className={cn(
-                      "inline-flex items-center gap-2 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider",
-                      getStatusStyles(app.status)
-                    )}>
-                      <div className="w-1.5 h-1.5 rounded-full bg-current" />
-                      {app.status}
-                    </div>
-                  </td>
-                  <td className="px-8 py-5">
-                    <p className="text-sm font-black dark:text-white">{app.downloads.toLocaleString()}</p>
-                  </td>
-                  <td className="px-8 py-5">
-                    <div className="flex items-center justify-end gap-2">
-                      <button title="Approve" className="p-2.5 rounded-xl text-emerald-500 hover:bg-emerald-500/10 transition-colors">
-                        <CheckCircle2 className="w-5 h-5" />
-                      </button>
-                      <button title="Reject" className="p-2.5 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-colors">
-                        <XCircle className="w-5 h-5" />
-                      </button>
-                      <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
-                      <button className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
-                        <Eye className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </td>
+        <div className="overflow-x-auto min-h-[400px]">
+          {loading ? (
+            <div className="flex items-center justify-center h-[400px]">
+              <div className="w-12 h-12 border-4 border-accent-violet border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-white/2 border-b border-slate-200 dark:border-white/5">
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">App Name</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Developer</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Category</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Downloads</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination placeholder */}
-        <div className="px-8 py-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
-          <p className="text-sm text-slate-500 font-bold">Showing <span className="text-slate-900 dark:text-white">1 - {filteredApps.length}</span> of {apps.length} apps</p>
-          <div className="flex items-center gap-2">
-            <button className="p-3 rounded-2xl border border-slate-200 dark:border-white/5 text-slate-400 hover:text-accent-violet disabled:opacity-50 transition-all shadow-sm" disabled>
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button className="p-3 rounded-2xl border border-slate-200 dark:border-white/5 text-slate-400 hover:text-accent-violet transition-all shadow-sm">
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                {filteredApps.map((app) => (
+                  <tr key={app._id} className="group hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                    <td className="px-8 py-5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm group-hover:scale-105 transition-transform shrink-0">
+                          <img src={app.icon} alt={app.title} className="w-8 h-8 object-contain" onError={(e) => { e.target.src = 'https://cdn-icons-png.flaticon.com/512/3344/3344153.png'; }} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-black text-slate-900 dark:text-white truncate max-w-[150px]">{app.title}</p>
+                          <p className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">
+                            {new Date(app.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-5">
+                      <p className="text-sm font-bold dark:text-slate-300 truncate max-w-[120px]">
+                        {typeof app.developer === 'object' && app.developer?.name ? app.developer.name : 'Unknown'}
+                      </p>
+                    </td>
+                    <td className="px-8 py-5">
+                      <span className="px-3 py-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-black uppercase text-slate-600 dark:text-slate-400">
+                        {Array.isArray(app.category) ? app.category[0] : (app.category || 'App')}
+                      </span>
+                    </td>
+                    <td className="px-8 py-5">
+                      <div className={cn(
+                        "inline-flex items-center gap-2 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider",
+                        getStatusStyles(app.status)
+                      )}>
+                        <div className="w-1.5 h-1.5 rounded-full bg-current" />
+                        {app.status}
+                      </div>
+                    </td>
+                    <td className="px-8 py-5">
+                      <p className="text-sm font-black dark:text-white">{(app.totalDownloads || 0).toLocaleString()}</p>
+                    </td>
+                    <td className="px-8 py-5">
+                      <div className="flex items-center justify-end gap-2">
+                        {app.status !== 'approved' && (
+                          <button onClick={() => updateStatus(app._id, 'approved')} title="Approve" className="p-2.5 rounded-xl text-emerald-500 hover:bg-emerald-500/10 transition-colors">
+                            <CheckCircle2 className="w-5 h-5" />
+                          </button>
+                        )}
+                        {app.status !== 'rejected' && (
+                          <button onClick={() => updateStatus(app._id, 'rejected')} title="Reject" className="p-2.5 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-colors">
+                            <XCircle className="w-5 h-5" />
+                          </button>
+                        )}
+                        <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
+                        <a href={`/app/${app._id}`} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
+                          <Eye className="w-5 h-5" />
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                
+                {filteredApps.length === 0 && (
+                  <tr>
+                    <td colSpan="6" className="px-8 py-20 text-center text-slate-500 font-bold">
+                      No applications found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </AdminLayout>
