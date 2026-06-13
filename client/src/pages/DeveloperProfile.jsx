@@ -4,7 +4,7 @@ import api from '../api/axios';
 import AppCard from '../components/AppCard';
 import SEOHead from '../components/SEOHead';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiDownload, HiViewGrid, HiCalendar, HiUserCircle, HiGlobeAlt, HiX } from 'react-icons/hi';
+import { HiDownload, HiViewGrid, HiCalendar, HiUserCircle, HiGlobeAlt, HiX, HiFlag } from 'react-icons/hi';
 import { SkeletonCard } from '../components/Skeleton';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -125,14 +125,14 @@ const DeveloperProfile = () => {
                   <select 
                     value={reportData.category}
                     onChange={e => setReportData({...reportData, category: e.target.value})}
-                    className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold dark:text-white outline-none focus:ring-2 focus:ring-accent-violet/50"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-accent-violet/50"
                   >
-                    <option value="scam_fake">Scam or Fake Apps</option>
-                    <option value="inappropriate_content">Inappropriate Content</option>
-                    <option value="copyright_violation">Copyright Violations</option>
-                    <option value="spam">Spamming Activities</option>
-                    <option value="impersonation">Impersonation</option>
-                    <option value="other">Other Issue</option>
+                    <option value="scam_fake" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Scam or Fake Apps</option>
+                    <option value="inappropriate_content" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Inappropriate Content</option>
+                    <option value="copyright_violation" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Copyright Violations</option>
+                    <option value="spam" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Spamming Activities</option>
+                    <option value="impersonation" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Impersonation</option>
+                    <option value="other" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Other Issue</option>
                   </select>
                 </div>
                 <div>
@@ -183,8 +183,9 @@ const DeveloperProfile = () => {
               <span className="badge-neon uppercase tracking-widest text-[10px] px-3 py-1">Verified</span>
               <button 
                 onClick={() => setReportModalOpen(true)}
-                className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors border border-slate-200 dark:border-white/10 px-3 py-1 rounded-full"
+                className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors border border-slate-200 dark:border-white/10 px-3 py-1 rounded-full flex items-center gap-1"
               >
+                <HiFlag className="w-3 h-3" />
                 Report
               </button>
             </div>

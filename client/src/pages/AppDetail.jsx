@@ -7,7 +7,7 @@ import StarRating from '../components/StarRating';
 import SEOHead from '../components/SEOHead';
 import { SkeletonDetail } from '../components/Skeleton';
 import toast from 'react-hot-toast';
-import { HiDownload, HiStar, HiFolder, HiClock, HiDeviceMobile, HiArrowLeft, HiArrowRight, HiX } from 'react-icons/hi';
+import { HiDownload, HiStar, HiFolder, HiClock, HiDeviceMobile, HiArrowLeft, HiArrowRight, HiX, HiFlag } from 'react-icons/hi';
 
 const AppDetail = () => {
   const getImageUrl = (url) => {
@@ -294,15 +294,15 @@ const AppDetail = () => {
                   <select 
                     value={reportData.category}
                     onChange={e => setReportData({...reportData, category: e.target.value})}
-                    className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold dark:text-white outline-none focus:ring-2 focus:ring-accent-violet/50"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-accent-violet/50"
                   >
-                    <option value="malware_virus">Malware or Virus</option>
-                    <option value="scam_fake">Scam or Fake App</option>
-                    <option value="inappropriate_content">Inappropriate Content</option>
-                    <option value="copyright_violation">Copyright Violation</option>
-                    <option value="misleading_description">Misleading Description</option>
-                    <option value="spam">Spam / Low Quality</option>
-                    <option value="other">Other Issue</option>
+                    <option value="malware_virus" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Malware or Virus</option>
+                    <option value="scam_fake" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Scam or Fake App</option>
+                    <option value="inappropriate_content" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Inappropriate Content</option>
+                    <option value="copyright_violation" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Copyright Violation</option>
+                    <option value="misleading_description" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Misleading Description</option>
+                    <option value="spam" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Spam / Low Quality</option>
+                    <option value="other" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Other Issue</option>
                   </select>
                 </div>
                 <div>
@@ -363,20 +363,29 @@ const AppDetail = () => {
                   <HiDownload className="text-accent-emerald" /> <span className="font-bold dark:text-white">{(app.totalDownloads / 1000).toFixed(1)}k+</span>
                 </div>
               </div>
-              <button 
-                onClick={handleDownload} disabled={downloading}
-                className="btn-primary w-full md:w-auto text-lg px-12 py-4 relative overflow-hidden group"
-              >
-                {downloading && (
-                  <motion.div 
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: downloadProgress / 100 }}
-                    style={{ transformOrigin: 'left' }}
-                    className="absolute inset-0 bg-white/20 z-0 h-full"
-                  />
-                )}
-                <span className="relative z-10">{downloading ? `Installing ${downloadProgress}%` : 'Install Now'}</span>
-              </button>
+              <div className="flex flex-col sm:flex-row gap-4 mt-8">
+                <button 
+                  onClick={handleDownload} disabled={downloading}
+                  className="btn-primary flex-1 sm:flex-none text-lg px-12 py-4 relative overflow-hidden group min-w-[200px]"
+                >
+                  {downloading && (
+                    <motion.div 
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: downloadProgress / 100 }}
+                      style={{ transformOrigin: 'left' }}
+                      className="absolute inset-0 bg-white/20 z-0 h-full"
+                    />
+                  )}
+                  <span className="relative z-10">{downloading ? `Installing ${downloadProgress}%` : 'Install Now'}</span>
+                </button>
+                <button 
+                  onClick={() => setReportModalOpen(true)}
+                  className="px-8 py-4 text-sm font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-all border-2 border-slate-200 dark:border-white/10 hover:border-rose-500/50 rounded-2xl flex items-center justify-center gap-2"
+                >
+                  <HiFlag className="w-5 h-5" />
+                  Report
+                </button>
+              </div>
             </div>
           </div>
         </motion.article>
@@ -468,7 +477,6 @@ const AppDetail = () => {
               </div>
               <div className="p-6 space-y-3">
                 <Link to={`/developer/${app.developer?._id || app.developer}`} className="w-full btn-secondary py-2 text-sm flex items-center justify-center">View Profile</Link>
-                <button onClick={() => setReportModalOpen(true)} className="w-full py-2 text-xs font-bold text-slate-400 hover:text-rose-500 transition-colors uppercase tracking-widest">Report this App</button>
               </div>
             </div>
             <div className="glass-panel p-6 rounded-3xl">
