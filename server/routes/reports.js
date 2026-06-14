@@ -42,6 +42,12 @@ router.post('/', auth, async (req, res) => {
     res.status(201).json({ message: 'Report submitted successfully.', report });
   } catch (error) {
     console.error('Create report error:', error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ message: error.message });
+    }
+    if (error.code === 11000) {
+      return res.status(400).json({ message: 'You have already reported this target.' });
+    }
     res.status(500).json({ message: 'Server error while submitting report.' });
   }
 });

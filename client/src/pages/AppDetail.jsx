@@ -302,6 +302,8 @@ const AppDetail = () => {
                     <option value="copyright_violation" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Copyright Violation</option>
                     <option value="misleading_description" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Misleading Description</option>
                     <option value="spam" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Spam / Low Quality</option>
+                    <option value="harassment" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Harassment</option>
+                    <option value="impersonation" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Impersonation</option>
                     <option value="other" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Other Issue</option>
                   </select>
                 </div>
