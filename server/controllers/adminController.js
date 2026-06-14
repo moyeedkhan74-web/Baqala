@@ -489,10 +489,13 @@ exports.warnDeveloper = async (req, res) => {
     const devId = report.app ? report.app.developer : report.developer?._id;
 
     if (devId) {
+      const targetName = report.app ? `App "${report.app.title}"` : `Developer Profile`;
+      const categoryLabel = report.category.replace(/_/g, ' ').toUpperCase();
+      
       await Notification.create({
         recipient: devId,
         title: '⚠️ Moderation Warning',
-        message: `Admin Notice: ${warningMessage}`,
+        message: `Violation Identified: [${categoryLabel}] regarding ${targetName}. Admin Note: ${warningMessage}`,
         type: 'warning'
       });
     }

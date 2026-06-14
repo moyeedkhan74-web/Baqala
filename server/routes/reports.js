@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Report = require('../models/Report');
 const App = require('../models/App');
+const Notification = require('../models/Notification');
 const { auth } = require('../middleware/auth');
 const requireAdmin = require('../middleware/requireAdmin');
 
@@ -35,7 +36,17 @@ router.post('/', auth, async (req, res) => {
     if (appId) {
       const reportCount = await Report.countDocuments({ app: appId });
       if (reportCount >= 5) {
-        await App.findByIdAndUpdate(appId, { isFlagged: true, flaggedAt: new Date() });
+        const app = await App.findByIdAndUpdate(appId, { isFlagged: true, flaggedAt: new Date() });
+        
+        // Notify Developer
+        if (app && app.developer) {
+          await Notification.create({
+            recipient: app.developer,
+            title: '🚩 App Flagged for Review',
+            message: `Your app "${app.title}" has been automatically flagged due to multiple user reports. Our team will review it shortly.`,
+            type: 'warning'
+          });
+        }
       }
     }
 
