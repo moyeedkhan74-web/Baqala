@@ -17,6 +17,7 @@ const downloadRoutes = require('./routes/downloads');
 const adminRoutes = require('./routes/admin');
 const reportsRoutes = require('./routes/reports');
 const configRoutes = require('./routes/config');
+const notificationRoutes = require('./routes/notifications');
 
 const app = express();
 app.set('trust proxy', 1); // Trust Render's proxy for accurate IP tracking
@@ -96,6 +97,7 @@ app.use('/api/reports', reportsRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/contact', require('./routes/contact'));
 app.use('/api/feedback', require('./routes/feedback'));
+app.use('/api/notifications', notificationRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

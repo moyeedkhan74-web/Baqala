@@ -10,15 +10,22 @@ import {
   ShieldAlert,
   CheckCircle2,
   XCircle,
-  RefreshCw
+  RefreshCw,
+  Ban
 } from 'lucide-react';
 import api from '../api/axios';
 import { cn } from '../utils/cn.js';
 import toast from 'react-hot-toast';
+import BanUserModal from '../components/admin/BanUserModal';
+import IssueWarningModal from '../components/admin/IssueWarningModal';
 
 const ModerationQueue = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [banTarget, setBanTarget] = useState(null);
+  const [isProcessingBan, setIsProcessingBan] = useState(false);
+  const [warningTarget, setWarningTarget] = useState(null);
+  const [isProcessingWarning, setIsProcessingWarning] = useState(false);
 
   const fetchReports = async () => {
     try {
@@ -66,6 +73,38 @@ const ModerationQueue = () => {
     } catch (error) {
       console.error('Failed to delete app:', error);
       toast.error('Failed to remote app', { id: loadingToast });
+    }
+  };
+
+  const handleBanConfirm = async ({ userId, durationDays, reason }) => {
+    setIsProcessingBan(true);
+    const loadingToast = toast.loading('Applying restrictions to developer...');
+    try {
+      await api.post(`/admin/users/${userId}/ban`, { durationDays, reason });
+      toast.success('Developer restrictions applied successfully', { id: loadingToast });
+      setBanTarget(null);
+    } catch (error) {
+      console.error('Failed to restrict developer:', error);
+      toast.error('Failed to apply restrictions', { id: loadingToast });
+    } finally {
+      setIsProcessingBan(false);
+    }
+  };
+
+  const handleWarningConfirm = async ({ reportId, warningMessage }) => {
+    setIsProcessingWarning(true);
+    const loadingToast = toast.loading('Issuing warning...');
+    try {
+      await api.post(`/admin/reports/${reportId}/warn`, { warningMessage });
+      // Remove or update the report in the list since it's now resolved locally
+      setReports(reports.filter(r => r._id !== reportId));
+      toast.success('Warning issued and report resolved.', { id: loadingToast });
+      setWarningTarget(null);
+    } catch (error) {
+      console.error('Failed to issue warning:', error);
+      toast.error('Failed to issue warning.', { id: loadingToast });
+    } finally {
+      setIsProcessingWarning(false);
     }
   };
 
@@ -166,6 +205,18 @@ const ModerationQueue = () => {
                     <CheckCircle2 className="w-5 h-5" />
                     Dismiss
                   </button>
+                  {report.developer && (
+                    <button onClick={() => setWarningTarget(report)} title="Issue Warning" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-amber-500/10 text-amber-500 font-black text-xs uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all">
+                      <AlertCircle className="w-5 h-5" />
+                      Warn
+                    </button>
+                  )}
+                  {report.developer && (
+                    <button onClick={() => setBanTarget(report.developer)} title="Ban Developer" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-amber-500/10 text-amber-500 font-black text-xs uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all">
+                      <Ban className="w-5 h-5" />
+                      Restrict
+                    </button>
+                  )}
                   {report.app && (
                     <button onClick={() => handleRemoveApp(report.app._id, report._id)} title="Remove App" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-rose-500 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-rose-500/20 hover:scale-105 transition-transform">
                       <Trash2 className="w-5 h-5" />
@@ -185,6 +236,22 @@ const ModerationQueue = () => {
           )}
         </div>
       )}
+
+      {/* Advanced Ban Modal */}
+      <BanUserModal 
+        user={banTarget}
+        onClose={() => setBanTarget(null)}
+        onConfirm={handleBanConfirm}
+        isBanning={isProcessingBan}
+      />
+
+      {/* Issue Warning Modal */}
+      <IssueWarningModal 
+        report={warningTarget}
+        onClose={() => setWarningTarget(null)}
+        onConfirm={handleWarningConfirm}
+        isProcessing={isProcessingWarning}
+      />
     </AdminLayout>
   );
 };

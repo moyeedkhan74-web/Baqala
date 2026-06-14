@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { HiMenu, HiX, HiLogout, HiUpload, HiViewGrid, HiShieldCheck, HiMoon, HiSun, HiSearch, HiCog, HiArrowLeft } from 'react-icons/hi';
 import api from '../api/axios';
+import NotificationBell from './NotificationBell';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -225,6 +226,9 @@ const Navbar = () => {
             <button onClick={toggleTheme} className="hidden min-[900px]:flex p-2.5 rounded-full bg-white/50 dark:bg-white/5 border border-dark-200/50 dark:border-white/10" aria-label="Toggle theme">
               {isDark ? <HiSun className="w-5 h-5 text-yellow-400" /> : <HiMoon className="w-5 h-5 text-accent-violet" />}
             </button>
+
+            {/* Notifications */}
+            {user && <NotificationBell />}
 
             {/* Auth */}
             <div ref={profileRef} className="hidden min-[900px]:flex items-center gap-4 relative">

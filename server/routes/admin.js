@@ -11,7 +11,8 @@ const {
   getAllReports,
   dismissReport,
   getFlaggedApps,
-  toggleFeatured
+  toggleFeatured,
+  warnDeveloper
 } = require('../controllers/adminController');
 const requireAdmin = require('../middleware/requireAdmin');
 
@@ -34,5 +35,6 @@ router.post('/users/:id/unban', unbanUser);
 // Reports
 router.get('/reports', getAllReports);
 router.patch('/reports/:id/dismiss', dismissReport);
+router.post('/reports/:id/warn', warnDeveloper);
 
 module.exports = router;

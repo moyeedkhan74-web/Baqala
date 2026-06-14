@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Review = require('../models/Review');
 const Download = require('../models/Download');
 const Report = require('../models/Report');
+const Notification = require('../models/Notification');
 const { deleteFromB2, extractB2Key } = require('../utils/b2Storage');
 
 // GET /api/admin/apps
@@ -217,7 +218,7 @@ exports.getAnalytics = async (req, res) => {
 // DELETE /api/admin/apps/:id
 exports.deleteApp = async (req, res) => {
   try {
-    const app = await App.findById(req.params.id);
+    const app = await App.findById(req.params.id).populate('developer', 'name email');
     if (!app) {
       return res.status(404).json({ message: 'App not found.' });
     }
@@ -255,6 +256,16 @@ exports.deleteApp = async (req, res) => {
     await Download.deleteMany({ app: req.params.id });
     await Report.deleteMany({ app: req.params.id });
 
+    // 5. Send In-App Notification to Developer
+    if (app.developer?._id) {
+      await Notification.create({
+        recipient: app.developer._id,
+        title: 'Application Removed',
+        message: `Your application "${app.title}" has been permanently removed from the Baqala platform following a review. Repeated violations could result in account restriction.`,
+        type: 'danger'
+      });
+    }
+
     res.json({ message: 'App and all associated data deleted successfully.' });
   } catch (error) {
     console.error('Admin delete app error:', error);
@@ -286,7 +297,7 @@ exports.updateAppStatus = async (req, res) => {
 // POST /api/admin/users/:id/ban
 exports.banUser = async (req, res) => {
   try {
-    const { weeks, reason } = req.body;
+    const { weeks, durationDays, reason } = req.body;
     const user = await User.findById(req.params.id);
 
     if (!user) {
@@ -297,17 +308,36 @@ exports.banUser = async (req, res) => {
       return res.status(403).json({ message: 'Cannot ban another admin.' });
     }
 
-    const banDuration = parseInt(weeks) || 1;
     const banUntil = new Date();
-    banUntil.setDate(banUntil.getDate() + (banDuration * 7));
+    let displayDuration = 'Permanent';
+
+    if (durationDays === 'Permanent') {
+      banUntil.setFullYear(banUntil.getFullYear() + 100);
+    } else if (durationDays) {
+      banUntil.setDate(banUntil.getDate() + parseInt(durationDays));
+      displayDuration = durationDays;
+    } else {
+      // Fallback for legacy calls (from original weeks logic)
+      const banDuration = parseInt(weeks) || 520; // Default ~10 years
+      banUntil.setDate(banUntil.getDate() + (banDuration * 7));
+      displayDuration = banDuration * 7;
+    }
 
     user.isBanned = true;
     user.banUntil = banUntil;
-    user.banReason = reason || 'No reason provided';
+    user.banReason = reason || 'Violation of community guidelines.';
     await user.save();
 
+    // Send In-App Notification
+    await Notification.create({
+      recipient: user._id,
+      title: 'Account Restricted',
+      message: `Your account has been restricted. Reason: ${user.banReason}. Duration: ${displayDuration === 'Permanent' ? 'Permanent' : displayDuration + ' days'}.`,
+      type: 'danger'
+    });
+
     res.json({ 
-      message: `User banned for ${banDuration} week(s).`, 
+      message: `User banned restrictions applied.`, 
       user: {
         _id: user._id,
         isBanned: user.isBanned,
@@ -360,13 +390,28 @@ exports.getAllReports = async (req, res) => {
 // PATCH /api/admin/reports/:id/dismiss
 exports.dismissReport = async (req, res) => {
   try {
-    const report = await Report.findById(req.params.id);
+    const report = await Report.findById(req.params.id)
+      .populate('reportedBy', 'name email')
+      .populate('app', 'title')
+      .populate('developer', 'name');
+
     if (!report) return res.status(404).json({ message: 'Report not found.' });
 
     report.status = 'reviewed';
     await report.save();
 
-    res.json({ message: 'Report dismissed.', report });
+    // Notify Reporter In-App
+    if (report.reportedBy?._id) {
+      const targetName = report.app ? report.app.title : (report.developer ? report.developer.name : 'Unknown Target');
+      await Notification.create({
+        recipient: report.reportedBy._id,
+        title: 'Report Reviewed',
+        message: `Thank you for keeping Baqala safe. Your report concerning "${targetName}" has been reviewed and appropriate action has been taken.`,
+        type: 'success'
+      });
+    }
+
+    res.json({ message: 'Report actioned and reporter notified.', report });
   } catch (error) {
     console.error('Admin dismiss report error:', error);
     res.status(500).json({ message: 'Server error dismissing report.' });
@@ -408,3 +453,47 @@ exports.toggleFeatured = async (req, res) => {
     res.status(500).json({ message: 'Server error toggling featured status.' });
   }
 };
+
+// POST /api/admin/reports/:id/warn
+exports.warnDeveloper = async (req, res) => {
+  try {
+    const { warningMessage } = req.body;
+    const report = await Report.findById(req.params.id)
+      .populate('reportedBy', 'name email')
+      .populate('app', 'title developer')
+      .populate('developer', 'name');
+
+    if (!report) return res.status(404).json({ message: 'Report not found.' });
+
+    const devId = report.app ? report.app.developer : report.developer?._id;
+
+    if (devId) {
+      await Notification.create({
+        recipient: devId,
+        title: '⚠️ Moderation Warning',
+        message: `Admin Notice: ${warningMessage}`,
+        type: 'warning'
+      });
+    }
+
+    report.status = 'reviewed';
+    await report.save();
+
+    // Notify Reporter In-App
+    if (report.reportedBy?._id) {
+      const targetName = report.app ? report.app.title : (report.developer ? report.developer.name : 'Unknown Target');
+      await Notification.create({
+        recipient: report.reportedBy._id,
+        title: 'Report Reviewed',
+        message: `Thank you for keeping Baqala safe. Your report concerning "${targetName}" has been reviewed and an official warning has been issued to the developer.`,
+        type: 'success'
+      });
+    }
+
+    res.json({ message: 'Warning issued to developer and report resolved.', report });
+  } catch (error) {
+    console.error('Admin warn developer error:', error);
+    res.status(500).json({ message: 'Server error issuing warning.' });
+  }
+};
+
