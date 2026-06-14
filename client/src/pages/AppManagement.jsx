@@ -19,6 +19,7 @@ import api from '../api/axios';
 import { cn } from '../utils/cn.js';
 import toast from 'react-hot-toast';
 import IssueWarningModal from '../components/admin/IssueWarningModal';
+import AdminAppDetailModal from '../components/admin/AdminAppDetailModal';
 
 const AppManagement = () => {
   const [activeTab, setActiveTab] = useState('all');
@@ -30,6 +31,7 @@ const AppManagement = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [warningTarget, setWarningTarget] = useState(null);
   const [isProcessingWarning, setIsProcessingWarning] = useState(false);
+  const [viewingApp, setViewingApp] = useState(null);
 
   const fetchApps = async () => {
     try {
@@ -178,18 +180,21 @@ const AppManagement = () => {
               <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                 {filteredApps.map((app) => (
                   <tr key={app._id} className={cn(
-                    "group transition-all duration-300",
+                    "group transition-all duration-300 border-l-4",
                     app.isFeatured 
-                      ? "bg-accent-violet/[0.03] dark:bg-accent-violet/[0.05] border-l-4 border-l-accent-violet" 
-                      : "hover:bg-slate-50 dark:hover:bg-white/[0.02] border-l-4 border-l-transparent"
+                      ? "bg-accent-violet/[0.03] dark:bg-accent-violet/[0.05] border-l-accent-violet" 
+                      : "hover:bg-slate-50 dark:hover:bg-white/[0.02] border-l-transparent"
                   )}>
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm group-hover:scale-105 transition-transform shrink-0">
-                          <img src={app.icon} alt={app.title} className="w-8 h-8 object-contain" onError={(e) => { e.target.src = 'https://cdn-icons-png.flaticon.com/512/3344/3344153.png'; }} />
+                        <div 
+                          onClick={() => setViewingApp(app)}
+                          className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-white/10 shadow-sm group-hover:shadow-md transition-all shrink-0 cursor-pointer overflow-hidden p-2"
+                        >
+                          <img src={app.icon} alt={app.title} className="w-full h-full object-contain" onError={(e) => { e.target.src = 'https://cdn-icons-png.flaticon.com/512/3344/3344153.png'; }} />
                         </div>
-                        <div className="min-w-0">
-                          <p className="font-black text-slate-900 dark:text-white truncate max-w-[150px]">{app.title}</p>
+                        <div className="min-w-0 cursor-pointer" onClick={() => setViewingApp(app)}>
+                          <p className="font-black text-slate-900 dark:text-white truncate max-w-[150px] group-hover:text-accent-violet transition-colors">{app.title}</p>
                           <p className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">
                             {new Date(app.createdAt).toLocaleDateString()}
                           </p>
@@ -197,92 +202,90 @@ const AppManagement = () => {
                       </div>
                     </td>
                     <td className="px-8 py-5">
-                      <p className="text-sm font-bold dark:text-slate-300 truncate max-w-[120px]">
-                        {typeof app.developer === 'object' && app.developer?.name ? app.developer.name : 'Unknown'}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-black uppercase text-slate-500">
+                          {typeof app.developer === 'object' && app.developer?.name ? app.developer.name.charAt(0) : '?'}
+                        </div>
+                        <p className="text-xs font-bold dark:text-slate-300 truncate max-w-[120px]">
+                          {typeof app.developer === 'object' && app.developer?.name ? app.developer.name : 'Unknown'}
+                        </p>
+                      </div>
                     </td>
                     <td className="px-8 py-5">
-                      <span className="px-3 py-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-black uppercase text-slate-600 dark:text-slate-400">
+                      <span className="px-3 py-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[9px] font-black uppercase text-slate-600 dark:text-slate-400 tracking-wider">
                         {Array.isArray(app.category) ? app.category[0] : (app.category || 'App')}
                       </span>
                     </td>
                     <td className="px-8 py-5">
                       <div className="flex flex-col gap-1.5">
                         <div className={cn(
-                          "inline-flex items-center gap-2 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider",
+                          "inline-flex items-center gap-2 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest",
                           getStatusStyles(app.status)
                         )}>
-                          <div className="w-1.5 h-1.5 rounded-full bg-current" />
+                          <div className={cn("w-1.5 h-1.5 rounded-full", app.status === 'approved' ? 'bg-emerald-500' : 'bg-current')} />
                           {app.status}
                         </div>
                         {app.isFeatured && (
-                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-violet/10 text-accent-violet border border-accent-violet/20 text-[10px] font-black uppercase tracking-wider w-fit shadow-sm shadow-accent-violet/10">
-                            <Star className="w-3 h-3 fill-current" />
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[9px] font-black uppercase tracking-widest w-fit">
+                            <Star className="w-2.5 h-2.5 fill-current" />
                             Featured
                           </div>
                         )}
                       </div>
                     </td>
-                    <td className="px-8 py-5">
-                      <p className="text-sm font-black dark:text-white">{(app.totalDownloads || 0).toLocaleString()}</p>
+                    <td className="px-8 py-5 font-mono text-xs font-bold dark:text-slate-400">
+                      {(app.totalDownloads || 0).toLocaleString()}
                     </td>
-                    <td className="px-8 py-5">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className="px-8 py-5 text-right">
+                      <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
                           disabled={togglingId === app._id}
-                          onClick={async () => {
+                          onClick={() => {
                             setTogglingId(app._id);
-                            try {
-                              const { data } = await api.patch(`/admin/apps/${app._id}/featured`);
-                              setApps(prev => prev.map(a => a._id === app._id ? { ...a, isFeatured: data.isFeatured } : a));
-                              toast.success(data.message);
-                            } catch (error) {
-                              toast.error('Failed to toggle featured status');
-                            } finally {
-                              setTogglingId(null);
-                            }
+                            api.patch(`/admin/apps/${app._id}/featured`)
+                              .then(({ data }) => {
+                                setApps(prev => prev.map(a => a._id === app._id ? { ...a, isFeatured: data.isFeatured } : a));
+                                toast.success(data.message);
+                              })
+                              .catch(() => toast.error('Failed to toggle featured status'))
+                              .finally(() => setTogglingId(null));
                           }}
-                          title={app.isFeatured ? "Remove from Featured" : "Mark as Featured"}
                           className={cn(
-                            "p-2.5 rounded-xl transition-all",
-                            togglingId === app._id && "opacity-50 scale-90",
-                            app.isFeatured ? "text-amber-500 hover:bg-amber-500/10" : "text-slate-400 hover:text-amber-500 hover:bg-amber-500/10"
+                            "p-2 rounded-lg transition-all hover:bg-amber-500/10",
+                            app.isFeatured ? "text-amber-500" : "text-slate-400"
                           )}
                         >
-                          <Star className={cn("w-5 h-5", app.isFeatured && "fill-current", togglingId === app._id && "animate-spin")} />
+                          <Star className={cn("w-4 h-4", app.isFeatured && "fill-current")} />
                         </button>
-                        <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
+                        <button 
+                          onClick={() => setViewingApp(app)}
+                          className="p-2 rounded-lg text-slate-400 hover:text-accent-violet hover:bg-accent-violet/10 transition-colors"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <div className="w-px h-4 bg-slate-200 dark:bg-white/10" />
                         {app.status !== 'approved' && (
-                          <button onClick={() => updateStatus(app._id, 'approved')} title="Approve" className="p-2.5 rounded-xl text-emerald-500 hover:bg-emerald-500/10 transition-colors">
-                            <CheckCircle2 className="w-5 h-5" />
+                          <button onClick={() => updateStatus(app._id, 'approved')} className="p-2 rounded-lg text-emerald-500 hover:bg-emerald-500/10 transition-colors">
+                            <CheckCircle2 className="w-4 h-4" />
                           </button>
                         )}
-                        {app.status !== 'rejected' && (
-                          <button onClick={() => updateStatus(app._id, 'rejected')} title="Reject" className="p-2.5 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-colors">
-                            <XCircle className="w-5 h-5" />
-                          </button>
-                        )}
-                        <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
-                        <a href={`/app/${app._id}`} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
-                          <Eye className="w-5 h-5" />
-                        </a>
-                        <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
                         <button 
                           onClick={() => setWarningTarget(app)}
-                          title="Issue Warning" 
-                          className="p-2.5 rounded-xl text-slate-400 hover:text-amber-500 hover:bg-amber-500/10 transition-colors"
+                          className="p-2 rounded-lg text-amber-500/80 hover:bg-amber-500/10 transition-colors"
                         >
-                          <AlertTriangle className="w-5 h-5" />
+                          <AlertTriangle className="w-4 h-4" />
                         </button>
-                        <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
                         <button 
                           onClick={() => setDeleteTarget(app)}
-                          title="Delete App" 
-                          className="p-2.5 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+                          className="p-2 rounded-lg text-rose-500/80 hover:bg-rose-500/10 transition-colors"
                         >
-                          <Trash2 className="w-5 h-5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
+                      {/* Mobile view action toggle */}
+                      <button className="md:hidden p-2 text-slate-400">
+                         <MoreVertical className="w-5 h-5" />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -368,6 +371,12 @@ const AppManagement = () => {
         onClose={() => setWarningTarget(null)}
         onConfirm={handleWarningConfirm}
         isProcessing={isProcessingWarning}
+      />
+
+      {/* Quick View Modal */}
+      <AdminAppDetailModal 
+        app={viewingApp}
+        onClose={() => setViewingApp(null)}
       />
     </AdminLayout>
   );

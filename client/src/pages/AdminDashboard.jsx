@@ -26,18 +26,22 @@ import {
 import api from '../api/axios';
 
 const KPICard = ({ title, value, change, isPositive, icon: Icon, color }) => (
-  <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-xl transition-all duration-300 group">
-    <div className="flex justify-between items-start mb-4">
-      <div className={`p-4 rounded-2xl ${color} shadow-lg transition-transform group-hover:scale-110`}>
+  <div className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-2xl transition-all duration-500 group relative overflow-hidden">
+    <div className="absolute -right-4 -top-4 w-24 h-24 bg-slate-100 dark:bg-white/2 rounded-full blur-2xl group-hover:bg-current opacity-10 transition-colors" />
+    <div className="flex justify-between items-start mb-4 relative z-10">
+      <div className={cn("p-4 rounded-2xl shadow-lg transition-transform group-hover:scale-110", color)}>
         <Icon className="w-6 h-6 text-white" />
       </div>
-      <div className={`flex items-center gap-1 text-sm font-bold ${isPositive ? 'text-emerald-500' : 'text-rose-500'}`}>
-        {isPositive ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+      <div className={cn(
+        "flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg border",
+        isPositive ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" : "text-rose-500 bg-rose-500/10 border-rose-500/20"
+      )}>
+        {isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
         {change}%
       </div>
     </div>
-    <h3 className="text-slate-500 dark:text-slate-400 text-xs font-black uppercase tracking-widest">{title}</h3>
-    <p className="text-3xl font-black text-slate-900 dark:text-white mt-1">{value}</p>
+    <h3 className="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] relative z-10">{title}</h3>
+    <p className="text-3xl font-black text-slate-900 dark:text-white mt-1 relative z-10">{value}</p>
   </div>
 );
 
@@ -243,23 +247,24 @@ const AdminDashboard = () => {
             </button>
           </div>
           
-          <div className="space-y-6">
+          <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
             {recentActivity.map((item) => (
-              <div key={item.id} className="flex gap-4 group">
-                <div className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center ${
-                  item.type === 'success' ? 'bg-emerald-500/10 text-emerald-500' :
-                  item.type === 'error' ? 'bg-rose-500/10 text-rose-500' :
-                  item.type === 'warning' ? 'bg-amber-500/10 text-amber-500' :
-                  'bg-blue-500/10 text-blue-500'
-                }`}>
+              <div key={item.id} className="flex gap-4 group cursor-pointer hover:bg-slate-50 dark:hover:bg-white/2 p-2 rounded-2xl transition-colors">
+                <div className={cn(
+                  "w-10 h-10 rounded-xl shrink-0 flex items-center justify-center border",
+                  item.type === 'success' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
+                  item.type === 'error' ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' :
+                  item.type === 'warning' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                  'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                )}>
                   <Clock className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-black dark:text-white">
-                    {item.action}: <span className="text-accent-violet">{item.target}</span>
+                  <p className="text-xs font-black dark:text-white group-hover:text-accent-violet transition-colors">
+                    {item.action}: <span className="text-accent-violet/80">{item.target}</span>
                   </p>
-                  <p className="text-[10px] font-bold text-slate-500 uppercase mt-1">
-                    by {item.admin} • {timeAgo(item.time)}
+                  <p className="text-[9px] font-bold text-slate-400 uppercase mt-1 tracking-wider">
+                    {item.admin} • {timeAgo(item.time)}
                   </p>
                 </div>
               </div>
