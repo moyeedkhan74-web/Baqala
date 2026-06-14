@@ -56,7 +56,8 @@ function App() {
         const [healthRes, configRes] = await Promise.all([
           api.get('/health').catch(err => {
             console.warn('Backend waking up...', err);
-            return new Promise((resolve) => setTimeout(() => api.get('/health'), 5000));
+            // Retry once after 5s and resolve properly with the retry result
+            return new Promise((resolve) => setTimeout(() => resolve(api.get('/health')), 5000));
           }),
           api.get('/config').catch(() => ({ data: { config: null } })),
           new Promise((resolve) => setTimeout(resolve, 2000)) // Min splash time for branding
