@@ -6,7 +6,7 @@ exports.getDeveloperProfile = async (req, res) => {
     const { id } = req.params;
 
     // 1. Fetch User details
-    const user = await User.findById(id).select('name bio avatar createdAt role specialization tagline');
+    const user = await User.findById(id).select('name bio avatar createdAt role specialization tagline isVerified email');
     if (!user) {
       return res.status(404).json({ message: 'Developer not found.' });
     }
@@ -40,7 +40,9 @@ exports.getDeveloperProfile = async (req, res) => {
         tagline: user.tagline,
         avatar: user.avatar,
         joinDate: user.createdAt,
-        role: user.role
+        role: user.role,
+        isVerified: user.isVerified,
+        email: user.email // Included for frontend "Creator" logic
       },
       stats: {
         totalApps: developerStats.totalApps,

@@ -476,6 +476,15 @@ const AppDetail = () => {
                 </Link>
                 <Link to={`/developer/${app.developer?._id || app.developer}`} className="text-xl font-bold dark:text-white">{app.developerName}</Link>
                 <span className="inline-block border-2 border-accent-violet text-accent-violet rounded px-3 py-1 uppercase tracking-widest text-[11px] font-black mt-4">Publisher</span>
+                
+                <div className="flex flex-wrap justify-center gap-2 mt-4 px-4">
+                  {app.developer?.email === 'moyeedkhan74@gmail.com' && (
+                    <span className="badge-neon !bg-accent-sun/10 !text-accent-sun !border-accent-sun/20 uppercase tracking-widest text-[9px] px-3 py-1">Creator</span>
+                  )}
+                  {app.developer?.isVerified && (
+                    <span className="badge-neon uppercase tracking-widest text-[9px] px-3 py-1">Verified</span>
+                  )}
+                </div>
               </div>
               <div className="p-6 space-y-3">
                 <Link to={`/developer/${app.developer?._id || app.developer}`} className="w-full btn-secondary py-2 text-sm flex items-center justify-center">View Profile</Link>
