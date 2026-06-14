@@ -11,7 +11,8 @@ import {
   Globe,
   Smartphone,
   Cpu,
-  RefreshCw
+  RefreshCw,
+  Package as LucidePackage
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -225,8 +226,5 @@ const Analytics = () => {
     </AdminLayout>
   );
 };
-
-// Fix the missing import icon in this snippet relative context
-import { Package as LucidePackage } from 'lucide-react';
 
 export default Analytics;
