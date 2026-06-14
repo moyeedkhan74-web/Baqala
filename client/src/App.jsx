@@ -46,46 +46,15 @@ function App() {
   const [config, setConfig] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  useEffect(() => {
-    const initializeApp = async () => {
-      try {
-        setError(null);
-        console.log('🔄 Initializing app...');
-        
-        // Fetch config - this is critical
-        const configRes = await api.get('/config').catch(() => ({ 
-          data: { config: {
-            isMaintenanceMode: false,
-            maintenanceMessage: 'Baqala is currently under maintenance.',
-            maxApkSize: 500,
-            maxImageSize: 5,
-            announcement: { enabled: false, text: '', level: 'info' },
-            sections: {
-              trending: true,
-              newReleases: true,
-              categoryBrowsing: true,
-              featuredCarousel: true
-            }
-          } } 
-        }));
-
-        console.log('✅ Config loaded:', configRes.data.config);
-        setConfig(configRes.data.config);
-
-        // Check user role via local auth context
-        const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
-        if (storedUser?.role === 'admin') {
-          console.log('👤 User is admin');
-          setIsAdmin(true);
-        }
-
-        // Ping backend in background
-        api.get('/health').catch(err => console.warn('Backend waking up...', err));
-
-        setIsLoading(false);
-      } catch (err) {
-        console.error('❌ Initialization error:', err);
-        setConfig({
+  const initializeApp = async () => {
+    try {
+      setError(null);
+      setIsLoading(true);
+      console.log('🔄 Initializing app...');
+      
+      // Fetch config - this is critical
+      const configRes = await api.get('/config').catch(() => ({ 
+        data: { config: {
           isMaintenanceMode: false,
           maintenanceMessage: 'Baqala is currently under maintenance.',
           maxApkSize: 500,
@@ -97,11 +66,50 @@ function App() {
             categoryBrowsing: true,
             featuredCarousel: true
           }
-        });
-        setIsLoading(false);
-      }
-    };
+        } } 
+      }));
 
+      console.log('✅ Config loaded:', configRes.data.config);
+      setConfig(configRes.data.config);
+
+      // Check user role via local auth context
+      const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+      if (storedUser?.role === 'admin') {
+        console.log('👤 User is admin');
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
+
+      // Ping backend in background
+      api.get('/health').catch(err => console.warn('Backend waking up...', err));
+
+      setIsLoading(false);
+    } catch (err) {
+      console.error('❌ Initialization error:', err);
+      setError(err);
+      setConfig({
+        isMaintenanceMode: false,
+        maintenanceMessage: 'Baqala is currently under maintenance.',
+        maxApkSize: 500,
+        maxImageSize: 5,
+        announcement: { enabled: false, text: '', level: 'info' },
+        sections: {
+          trending: true,
+          newReleases: true,
+          categoryBrowsing: true,
+          featuredCarousel: true
+        }
+      });
+      setIsLoading(false);
+    }
+  };
+
+  const handleRetry = () => {
+    initializeApp();
+  };
+
+  useEffect(() => {
     initializeApp();
   }, []);
 
