@@ -482,7 +482,10 @@ const AppDetail = () => {
                     <span className="badge-neon !bg-accent-sun/10 !text-accent-sun !border-accent-sun/20 uppercase tracking-widest text-[9px] px-3 py-1">Developer</span>
                   )}
                   {app.developer?.isVerified && (
-                    <span className="badge-neon uppercase tracking-widest text-[9px] px-3 py-1">Verified</span>
+                    <span className="badge-neon uppercase tracking-widest text-[9px] px-3 py-1 flex items-center gap-1">
+                      <HiCheckCircle className="w-3 h-3" />
+                      Verified
+                    </span>
                   )}
                 </div>
               </div>
