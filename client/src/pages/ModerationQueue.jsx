@@ -78,9 +78,17 @@ const ModerationQueue = () => {
 
   const handleBanConfirm = async ({ userId, durationDays, reason }) => {
     setIsProcessingBan(true);
+    const reportId = banTarget?.reportId;
     const loadingToast = toast.loading('Applying restrictions to developer...');
     try {
       await api.post(`/admin/users/${userId}/ban`, { durationDays, reason });
+      
+      // If triggered from a report, dismiss that report too
+      if (reportId) {
+        await api.patch(`/admin/reports/${reportId}/dismiss`).catch(console.error);
+        setReports(reports.filter(r => r._id !== reportId));
+      }
+
       toast.success('Developer restrictions applied successfully', { id: loadingToast });
       setBanTarget(null);
     } catch (error) {
@@ -211,12 +219,12 @@ const ModerationQueue = () => {
                       Warn
                     </button>
                   )}
-                  {report.developer && (
-                    <button onClick={() => setBanTarget(report.developer)} title="Ban Developer" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-amber-500/10 text-amber-500 font-black text-xs uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all">
-                      <Ban className="w-5 h-5" />
-                      Restrict
-                    </button>
-                  )}
+                      {report.developer && (
+                        <button onClick={() => setBanTarget({ user: report.developer, reportId: report._id })} title="Ban Developer" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-amber-500/10 text-amber-500 font-black text-xs uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all">
+                          <Ban className="w-5 h-5" />
+                          Restrict
+                        </button>
+                      )}
                   {report.app && (
                     <button onClick={() => handleRemoveApp(report.app._id, report._id)} title="Remove App" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-rose-500 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-rose-500/20 hover:scale-105 transition-transform">
                       <Trash2 className="w-5 h-5" />
@@ -239,7 +247,7 @@ const ModerationQueue = () => {
 
       {/* Advanced Ban Modal */}
       <BanUserModal 
-        user={banTarget}
+        user={banTarget?.user || banTarget}
         onClose={() => setBanTarget(null)}
         onConfirm={handleBanConfirm}
         isBanning={isProcessingBan}
