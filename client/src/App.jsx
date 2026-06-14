@@ -113,200 +113,181 @@ function App() {
     initializeApp();
   }, []);
 
-  // Show basic loading screen while initializing
-  if (isLoading || !config) {
-    return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        backgroundColor: '#050505',
-        fontSize: '18px',
-        color: '#fff'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <h1>🚀 Baqala</h1>
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show maintenance mode if enabled
-  if (config.isMaintenanceMode && !isAdmin && location.pathname !== '/login') {
-    console.log('🔒 MAINTENANCE MODE ACTIVE');
-    return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6 relative overflow-hidden">
-        {/* Animated Background Orbs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent-violet/20 blur-[120px] rounded-full animate-pulse" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
-        </div>
-
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="relative z-10 max-w-xl w-full"
-        >
-          <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-8 sm:p-12 shadow-2xl text-center">
-            {/* Status Icon */}
-            <div className="flex justify-center mb-8">
-              <div className="relative">
-                <div className="w-24 h-24 bg-accent-violet/20 rounded-[2rem] flex items-center justify-center text-accent-violet border border-accent-violet/30">
-                  <RefreshCw className="w-10 h-10 animate-spin" style={{ animationDuration: '4s' }} />
-                </div>
-                <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-rose-500 rounded-2xl flex items-center justify-center text-white border-4 border-[#050505] shadow-xl">
-                  <Shield className="w-5 h-5" />
-                </div>
-              </div>
-            </div>
-
-            <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight mb-4 bg-gradient-to-r from-white via-white to-white/40 bg-clip-text text-transparent">
-              Platform Update
-            </h1>
-            
-            <p className="text-slate-400 font-bold text-lg leading-relaxed mb-10 max-w-sm mx-auto">
-              {config?.maintenanceMessage || "Baqala is currently updating to bring you a better experience. We'll be back shortly!"}
-            </p>
-
-            {/* Status Indicators */}
-            <div className="grid grid-cols-2 gap-4 mb-10 text-center">
-              <div className="bg-white/2 border border-white/5 p-4 rounded-2xl">
-                <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Status</p>
-                <p className="text-xs font-bold text-emerald-500 flex items-center justify-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Updating
-                </p>
-              </div>
-              <div className="bg-white/2 border border-white/5 p-4 rounded-2xl">
-                <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Access</p>
-                <p className="text-xs font-bold text-amber-500 flex items-center justify-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  Restricted
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-              <Link to="/contact" className="px-8 py-4 rounded-2xl bg-white text-black font-black text-sm uppercase tracking-widest hover:bg-slate-200 transition-all w-full sm:w-auto">
-                Contact Support
-              </Link>
-              <Link to="/login" className="text-slate-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest">
-                Administrator Portal
-              </Link>
-            </div>
-
-            <p className="mt-12 text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em]">
-              Baqala Safety Council &bull; Systems Operations
-            </p>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
-
   return (
     <>
       <LoadingScreen isLoading={isLoading} error={error} onRetry={handleRetry} />
-      <CookieBanner />
-      <a 
-        href="#main-content" 
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[1000] focus:bg-accent-violet focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-neon"
-      >
-        Skip to main content
-      </a>
-      <div className="min-h-screen flex flex-col relative overflow-hidden bg-background-light dark:bg-background-dark transition-colors duration-500">
-        {/* Global interactive particles */}
-        <Suspense fallback={null}>
-          <ParticlesBackground />
-        </Suspense>
-        
-        <div className="relative z-20 w-full flex flex-col flex-1">
-          <GlobalAnnouncement config={config} />
-          <Navbar />
-          
-          <main id="main-content" className="flex-1 w-full flex flex-col">
-            <AnimatePresence mode="wait">
-              <Routes location={location} key={location.pathname}>
-                <Route path="/" element={<AnimatedLayout skipInitial><Home /></AnimatedLayout>} />
-                <Route path="/login" element={<AnimatedLayout><Login /></AnimatedLayout>} />
-                <Route path="/register" element={<AnimatedLayout><Register /></AnimatedLayout>} />
-                <Route path="/app/:id" element={<AnimatedLayout><AppDetail /></AnimatedLayout>} />
-                <Route path="/app/:id/about" element={<AnimatedLayout><AppAbout /></AnimatedLayout>} />
-                <Route path="/privacy-policy" element={<AnimatedLayout><PrivacyPolicy /></AnimatedLayout>} />
-                <Route path="/terms-of-service" element={<AnimatedLayout><TermsOfService /></AnimatedLayout>} />
-                <Route path="/cookie-policy" element={<AnimatedLayout><CookiePolicy /></AnimatedLayout>} />
-                <Route path="/revenue-share" element={<AnimatedLayout><RevenueShare /></AnimatedLayout>} />
-                <Route path="/contact" element={<AnimatedLayout><Contact /></AnimatedLayout>} />
-                <Route path="/about" element={<AnimatedLayout><About /></AnimatedLayout>} />
-                <Route path="/search" element={<AnimatedLayout><SearchResults /></AnimatedLayout>} />
-                <Route path="/category/:name" element={<AnimatedLayout><CategoryPage /></AnimatedLayout>} />
-                <Route path="/developer/:id" element={<AnimatedLayout><DeveloperProfile /></AnimatedLayout>} />
-                <Route path="/settings" element={
-                  <ProtectedRoute>
-                    <AnimatedLayout><Settings /></AnimatedLayout>
-                  </ProtectedRoute>
-                } />
+      
+      {config && (
+        <>
+          {config.isMaintenanceMode && !isAdmin && location.pathname !== '/login' ? (
+            <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6 relative overflow-hidden">
+              {/* Animated Background Orbs */}
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent-violet/20 blur-[120px] rounded-full animate-pulse" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
+              </div>
+
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="relative z-10 max-w-xl w-full"
+              >
+                <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-8 sm:p-12 shadow-2xl text-center">
+                  {/* Status Icon */}
+                  <div className="flex justify-center mb-8">
+                    <div className="relative">
+                      <div className="w-24 h-24 bg-accent-violet/20 rounded-[2rem] flex items-center justify-center text-accent-violet border border-accent-violet/30">
+                        <RefreshCw className="w-10 h-10 animate-spin" style={{ animationDuration: '4s' }} />
+                      </div>
+                      <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-rose-500 rounded-2xl flex items-center justify-center text-white border-4 border-[#050505] shadow-xl">
+                        <Shield className="w-5 h-5" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight mb-4 bg-gradient-to-r from-white via-white to-white/40 bg-clip-text text-transparent">
+                    Platform Update
+                  </h1>
+                  
+                  <p className="text-slate-400 font-bold text-lg leading-relaxed mb-10 max-w-sm mx-auto">
+                    {config?.maintenanceMessage || "Baqala is currently updating to bring you a better experience. We'll be back shortly!"}
+                  </p>
+
+                  {/* Status Indicators */}
+                  <div className="grid grid-cols-2 gap-4 mb-10 text-center">
+                    <div className="bg-white/2 border border-white/5 p-4 rounded-2xl">
+                      <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Status</p>
+                      <p className="text-xs font-bold text-emerald-500 flex items-center justify-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Updating
+                      </p>
+                    </div>
+                    <div className="bg-white/2 border border-white/5 p-4 rounded-2xl">
+                      <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Access</p>
+                      <p className="text-xs font-bold text-amber-500 flex items-center justify-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                        Restricted
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                    <Link to="/contact" className="px-8 py-4 rounded-2xl bg-white text-black font-black text-sm uppercase tracking-widest hover:bg-slate-200 transition-all w-full sm:w-auto">
+                      Contact Support
+                    </Link>
+                    <Link to="/login" className="text-slate-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest">
+                      Administrator Portal
+                    </Link>
+                  </div>
+
+                  <p className="mt-12 text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em]">
+                    Baqala Safety Council &bull; Systems Operations
+                  </p>
+                </div>
+              </motion.div>
+            </div>
+          ) : (
+            <div className="min-h-screen flex flex-col relative overflow-hidden bg-background-light dark:bg-background-dark transition-colors duration-500">
+              <CookieBanner />
+              <a 
+                href="#main-content" 
+                className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[1000] focus:bg-accent-violet focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-neon"
+              >
+                Skip to main content
+              </a>
+              {/* Global interactive particles */}
+              <Suspense fallback={null}>
+                <ParticlesBackground />
+              </Suspense>
+              
+              <div className="relative z-20 w-full flex flex-col flex-1">
+                <GlobalAnnouncement config={config} />
+                <Navbar />
                 
-                <Route path="/developer" element={
-                  <ProtectedRoute>
-                    <AnimatedLayout><DeveloperDashboard /></AnimatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/upload" element={
-                  <ProtectedRoute>
-                    <AnimatedLayout><UploadApp /></AnimatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/edit/:id" element={
-                  <ProtectedRoute>
-                    <AnimatedLayout><EditApp /></AnimatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin" element={
-                  <ProtectedRoute roles={['admin']}>
-                    <AnimatedLayout><AdminDashboard /></AnimatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/apps" element={
-                  <ProtectedRoute roles={['admin']}>
-                    <AnimatedLayout><AppManagement /></AnimatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/users" element={
-                  <ProtectedRoute roles={['admin']}>
-                    <AnimatedLayout><UserManagement /></AnimatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/reviews" element={
-                  <ProtectedRoute roles={['admin']}>
-                    <AnimatedLayout><ModerationQueue /></AnimatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/analytics" element={
-                  <ProtectedRoute roles={['admin']}>
-                    <AnimatedLayout><Analytics /></AnimatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/featured" element={
-                  <ProtectedRoute roles={['admin']}>
-                    <AnimatedLayout><FeaturedCuration /></AnimatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/settings" element={
-                  <ProtectedRoute roles={['admin']}>
-                    <AnimatedLayout><PlatformSettings /></AnimatedLayout>
-                  </ProtectedRoute>
-                } />
-              </Routes>
-            </AnimatePresence>
-          </main>
-          
-          <Footer />
-        </div>
-      </div>
+                <main id="main-content" className="flex-1 w-full flex flex-col">
+                  <AnimatePresence mode="wait">
+                    <Routes location={location} key={location.pathname}>
+                      <Route path="/" element={<AnimatedLayout skipInitial><Home /></AnimatedLayout>} />
+                      <Route path="/login" element={<AnimatedLayout><Login /></AnimatedLayout>} />
+                      <Route path="/register" element={<AnimatedLayout><Register /></AnimatedLayout>} />
+                      <Route path="/app/:id" element={<AnimatedLayout><AppDetail /></AnimatedLayout>} />
+                      <Route path="/app/:id/about" element={<AnimatedLayout><AppAbout /></AnimatedLayout>} />
+                      <Route path="/privacy-policy" element={<AnimatedLayout><PrivacyPolicy /></AnimatedLayout>} />
+                      <Route path="/terms-of-service" element={<AnimatedLayout><TermsOfService /></AnimatedLayout>} />
+                      <Route path="/cookie-policy" element={<AnimatedLayout><CookiePolicy /></AnimatedLayout>} />
+                      <Route path="/revenue-share" element={<AnimatedLayout><RevenueShare /></AnimatedLayout>} />
+                      <Route path="/contact" element={<AnimatedLayout><Contact /></AnimatedLayout>} />
+                      <Route path="/about" element={<AnimatedLayout><About /></AnimatedLayout>} />
+                      <Route path="/search" element={<AnimatedLayout><SearchResults /></AnimatedLayout>} />
+                      <Route path="/category/:name" element={<AnimatedLayout><CategoryPage /></AnimatedLayout>} />
+                      <Route path="/developer/:id" element={<AnimatedLayout><DeveloperProfile /></AnimatedLayout>} />
+                      <Route path="/settings" element={
+                        <ProtectedRoute>
+                          <AnimatedLayout><Settings /></AnimatedLayout>
+                        </ProtectedRoute>
+                      } />
+                      
+                      <Route path="/developer" element={
+                        <ProtectedRoute>
+                          <AnimatedLayout><DeveloperDashboard /></AnimatedLayout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/upload" element={
+                        <ProtectedRoute>
+                          <AnimatedLayout><UploadApp /></AnimatedLayout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/edit/:id" element={
+                        <ProtectedRoute>
+                          <AnimatedLayout><EditApp /></AnimatedLayout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/admin" element={
+                        <ProtectedRoute roles={['admin']}>
+                          <AnimatedLayout><AdminDashboard /></AnimatedLayout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/admin/apps" element={
+                        <ProtectedRoute roles={['admin']}>
+                          <AnimatedLayout><AppManagement /></AnimatedLayout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/admin/users" element={
+                        <ProtectedRoute roles={['admin']}>
+                          <AnimatedLayout><UserManagement /></AnimatedLayout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/admin/reviews" element={
+                        <ProtectedRoute roles={['admin']}>
+                          <AnimatedLayout><ModerationQueue /></AnimatedLayout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/admin/analytics" element={
+                        <ProtectedRoute roles={['admin']}>
+                          <AnimatedLayout><Analytics /></AnimatedLayout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/admin/featured" element={
+                        <ProtectedRoute roles={['admin']}>
+                          <AnimatedLayout><FeaturedCuration /></AnimatedLayout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/admin/settings" element={
+                        <ProtectedRoute roles={['admin']}>
+                          <AnimatedLayout><PlatformSettings /></AnimatedLayout>
+                        </ProtectedRoute>
+                      } />
+                    </Routes>
+                  </AnimatePresence>
+                </main>
+                
+                <Footer />
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </>
   );
 }
