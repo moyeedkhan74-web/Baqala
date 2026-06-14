@@ -545,4 +545,36 @@ exports.warnAppDeveloper = async (req, res) => {
   }
 };
 
+// PATCH /api/admin/users/:id/verify
+exports.toggleUserVerified = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+
+    // Ensure we don't accidentally unverify the site creator if that's the logic (though admin can toggle)
+    // But generally, admins can manage this.
+    
+    user.isVerified = !user.isVerified;
+    await user.save();
+
+    // Notify User
+    await Notification.create({
+      recipient: user._id,
+      title: user.isVerified ? '🛡️ Identity Verified' : 'ℹ️ Verification Updated',
+      message: user.isVerified 
+        ? 'Congratulations! Your developer identity has been officially verified by the Baqala team. A verification badge has been added to your profile.'
+        : 'Your developer verification status has been updated. Contact support if you believe this is an error.',
+      type: user.isVerified ? 'success' : 'info'
+    });
+
+    res.json({ 
+      message: `User is now ${user.isVerified ? 'verified' : 'unverified'}.`, 
+      isVerified: user.isVerified 
+    });
+  } catch (error) {
+    console.error('Admin toggle verify error:', error);
+    res.status(500).json({ message: 'Server error toggling verification.' });
+  }
+};
+
 
