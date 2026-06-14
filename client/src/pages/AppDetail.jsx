@@ -479,7 +479,7 @@ const AppDetail = () => {
                 
                 <div className="flex flex-wrap justify-center gap-2 mt-4 px-4">
                   {app.developer?.email === 'moyeedkhan74@gmail.com' && (
-                    <span className="badge-neon !bg-accent-sun/10 !text-accent-sun !border-accent-sun/20 uppercase tracking-widest text-[9px] px-3 py-1">Creator</span>
+                    <span className="badge-neon !bg-accent-sun/10 !text-accent-sun !border-accent-sun/20 uppercase tracking-widest text-[9px] px-3 py-1">Developer</span>
                   )}
                   {app.developer?.isVerified && (
                     <span className="badge-neon uppercase tracking-widest text-[9px] px-3 py-1">Verified</span>
