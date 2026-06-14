@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import AdminSidebar from './AdminSidebar';
-import { Bell, Search, User } from 'lucide-react';
+import { Bell, Search, User, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { cn } from '../../utils/cn.js';
 
 const AdminLayout = ({ children, title = 'Dashboard' }) => {
   const [collapsed, setCollapsed] = useState(false);
