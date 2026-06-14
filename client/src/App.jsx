@@ -89,12 +89,13 @@ function App() {
     initializeApp();
   }, []);
 
-  if (!isLoading && config?.isMaintenanceMode && !isAdmin && location.pathname !== '/login') {
+  if (!isLoading && config && config.isMaintenanceMode && !isAdmin && location.pathname !== '/login') {
     console.log('🔒 MAINTENANCE MODE ACTIVE', {
       isLoading,
-      isMaintenanceMode: config?.isMaintenanceMode,
+      isMaintenanceMode: config.isMaintenanceMode,
       isAdmin,
-      pathname: location.pathname
+      pathname: location.pathname,
+      message: config.maintenanceMessage
     });
     return (
       <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6 relative overflow-hidden">
@@ -128,7 +129,7 @@ function App() {
             </h1>
             
             <p className="text-slate-400 font-bold text-lg leading-relaxed mb-10 max-w-sm mx-auto">
-              {config.maintenanceMessage || "Baqala is currently updating to bring you a better experience. We'll be back shortly!"}
+              {config?.maintenanceMessage || "Baqala is currently updating to bring you a better experience. We'll be back shortly!"}
             </p>
 
             {/* Status Indicators */}
