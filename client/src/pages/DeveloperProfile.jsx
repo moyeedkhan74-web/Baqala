@@ -130,7 +130,9 @@ const DeveloperProfile = () => {
                     <option value="scam_fake" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Scam or Fake Apps</option>
                     <option value="inappropriate_content" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Inappropriate Content</option>
                     <option value="copyright_violation" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Copyright Violations</option>
+                    <option value="misleading_description" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Misleading Description</option>
                     <option value="spam" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Spamming Activities</option>
+                    <option value="harassment" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Harassment</option>
                     <option value="impersonation" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Impersonation</option>
                     <option value="other" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Other Issue</option>
                   </select>

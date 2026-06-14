@@ -26,6 +26,7 @@ const reportSchema = new mongoose.Schema({
       'misleading_description', 
       'spam', 
       'harassment',
+      'impersonation',
       'other'
     ],
     required: true
