@@ -18,6 +18,7 @@ import {
 import api from '../api/axios';
 import { cn } from '../utils/cn.js';
 import toast from 'react-hot-toast';
+import IssueWarningModal from '../components/admin/IssueWarningModal';
 
 const AppManagement = () => {
   const [activeTab, setActiveTab] = useState('all');
@@ -27,6 +28,8 @@ const AppManagement = () => {
   const [togglingId, setTogglingId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [warningTarget, setWarningTarget] = useState(null);
+  const [isProcessingWarning, setIsProcessingWarning] = useState(false);
 
   const fetchApps = async () => {
     try {
@@ -72,6 +75,22 @@ const AppManagement = () => {
       toast.error('Failed to remove application', { id: loadingToast });
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleWarningConfirm = async ({ reportId, warningMessage }) => {
+    setIsProcessingWarning(true);
+    const loadingToast = toast.loading('Issuing warning to developer...');
+    try {
+      // Use the generic app warn endpoint
+      await api.post(`/admin/apps/${warningTarget._id}/warn`, { warningMessage });
+      toast.success('Warning issued successfully', { id: loadingToast });
+      setWarningTarget(null);
+    } catch (error) {
+      console.error('Failed to issue warning:', error);
+      toast.error('Failed to issue warning', { id: loadingToast });
+    } finally {
+      setIsProcessingWarning(false);
     }
   };
 
@@ -249,6 +268,14 @@ const AppManagement = () => {
                         </a>
                         <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
                         <button 
+                          onClick={() => setWarningTarget(app)}
+                          title="Issue Warning" 
+                          className="p-2.5 rounded-xl text-slate-400 hover:text-amber-500 hover:bg-amber-500/10 transition-colors"
+                        >
+                          <AlertTriangle className="w-5 h-5" />
+                        </button>
+                        <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
+                        <button 
                           onClick={() => setDeleteTarget(app)}
                           title="Delete App" 
                           className="p-2.5 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
@@ -334,6 +361,14 @@ const AppManagement = () => {
           </div>
         </div>
       )}
+
+      {/* Issue Warning Modal */}
+      <IssueWarningModal 
+        report={warningTarget ? { _id: warningTarget._id, app: warningTarget, customReason: 'Direct Administrative Review' } : null}
+        onClose={() => setWarningTarget(null)}
+        onConfirm={handleWarningConfirm}
+        isProcessing={isProcessingWarning}
+      />
     </AdminLayout>
   );
 };
