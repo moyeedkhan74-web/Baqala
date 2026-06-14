@@ -15,12 +15,16 @@ import {
 import api from '../api/axios';
 import { cn } from '../utils/cn.js';
 import toast from 'react-hot-toast';
+import BanUserModal from '../components/admin/BanUserModal';
 
 const UserManagement = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch] = useState('');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [banTarget, setBanTarget] = useState(null);
+  const [isProcessingBan, setIsProcessingBan] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -38,19 +42,32 @@ const UserManagement = () => {
     fetchUsers();
   }, []);
 
-  const handleBanToggle = async (userId, isBanned) => {
-    const action = isBanned ? 'unban' : 'ban';
-    const loadingToast = toast.loading(`${isBanned ? 'Unbanning' : 'Banning'} user...`);
+  const handleBanConfirm = async ({ userId, durationDays, reason }) => {
+    setIsProcessingBan(true);
+    const loadingToast = toast.loading('Applying restrictions...');
     
     try {
-      const payload = isBanned ? {} : { days: 3650, reason: 'Admin panel manual ban' };
-      const { data } = await api.post(`/admin/users/${userId}/${action}`, payload);
-      
-      setUsers(users.map(u => u._id === userId ? { ...u, isBanned: !isBanned, banUntil: data.user.banUntil } : u));
-      toast.success(`User successfully ${isBanned ? 'unbanned' : 'banned'}`, { id: loadingToast });
+      const { data } = await api.post(`/admin/users/${userId}/ban`, { durationDays, reason });
+      setUsers(users.map(u => u._id === userId ? { ...u, isBanned: true, banUntil: data.user.banUntil } : u));
+      toast.success('User restrictions applied', { id: loadingToast });
+      setBanTarget(null);
     } catch (error) {
-      console.error(`Failed to ${action} user:`, error);
-      toast.error(`Failed to ${action} user`, { id: loadingToast });
+      console.error('Failed to restrict user:', error);
+      toast.error('Failed to apply restrictions', { id: loadingToast });
+    } finally {
+      setIsProcessingBan(false);
+    }
+  };
+
+  const handleUnban = async (userId) => {
+    const loadingToast = toast.loading('Removing restrictions...');
+    try {
+      await api.post(`/admin/users/${userId}/unban`);
+      setUsers(users.map(u => u._id === userId ? { ...u, isBanned: false, banUntil: null } : u));
+      toast.success('Restrictions removed successfully', { id: loadingToast });
+    } catch (error) {
+      console.error('Failed to unban user:', error);
+      toast.error('Failed to remove restrictions', { id: loadingToast });
     }
   };
 
@@ -170,11 +187,11 @@ const UserManagement = () => {
                   Profile
                 </a>
                 {u.isBanned ? (
-                  <button onClick={() => handleBanToggle(u._id, true)} className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-500/10 text-emerald-500 font-bold text-xs hover:bg-emerald-500 hover:text-white transition-all">
+                  <button onClick={() => handleUnban(u._id)} className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-500/10 text-emerald-500 font-bold text-xs hover:bg-emerald-500 hover:text-white transition-all">
                     Unban User
                   </button>
                 ) : (
-                  <button onClick={() => handleBanToggle(u._id, false)} className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-rose-500/10 text-rose-500 font-bold text-xs hover:bg-rose-500 hover:text-white transition-all">
+                  <button onClick={() => setBanTarget(u)} className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-rose-500/10 text-rose-500 font-bold text-xs hover:bg-rose-500 hover:text-white transition-all">
                     <Ban className="w-4 h-4" />
                     Ban User
                   </button>
@@ -189,6 +206,14 @@ const UserManagement = () => {
           )}
         </div>
       )}
+
+      {/* Advanced Ban Modal */}
+      <BanUserModal 
+        user={banTarget}
+        onClose={() => setBanTarget(null)}
+        onConfirm={handleBanConfirm}
+        isBanning={isProcessingBan}
+      />
     </AdminLayout>
   );
 };
