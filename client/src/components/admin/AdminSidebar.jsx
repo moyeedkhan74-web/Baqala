@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
-const AdminSidebar = ({ collapsed, setCollapsed }) => {
+const AdminSidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) => {
   const location = useLocation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -38,12 +38,22 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
   };
 
   return (
-    <aside 
-      className={cn(
-        "fixed left-0 top-0 h-screen bg-slate-950 text-slate-300 transition-all duration-300 z-50 flex flex-col border-r border-white/10 shadow-2xl",
-        collapsed ? "w-20" : "w-64"
+    <>
+      {/* Mobile Overlay */}
+      {mobileOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[55] md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
       )}
-    >
+
+      <aside 
+        className={cn(
+          "fixed left-0 top-0 h-screen bg-slate-950 text-slate-300 transition-all duration-300 z-[60] flex flex-col border-r border-white/10 shadow-2xl",
+          collapsed ? "w-20" : "w-64",
+          mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        )}
+      >
       {/* Brand */}
       <div className="h-20 flex items-center px-6 gap-3 border-b border-white/5 bg-black/20">
         <div className="w-10 h-10 bg-accent-violet rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-accent-violet/20">
@@ -54,6 +64,12 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
             BAQALA<span className="text-accent-violet">.</span>
           </span>
         )}
+        <button 
+          onClick={() => setMobileOpen(false)}
+          className="ml-auto p-2 rounded-lg hover:bg-white/5 md:hidden"
+        >
+          <X className="w-5 h-5 text-slate-400" />
+        </button>
       </div>
 
       {/* Nav */}
@@ -66,6 +82,7 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
             <Link
               key={item.path}
               to={item.path}
+              onClick={() => setMobileOpen(false)}
               className={cn(
                 "flex items-center gap-3 px-3 py-3 rounded-xl transition-all group relative",
                 active 
@@ -109,6 +126,7 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
         <ChevronRight className={cn("w-3 h-3 transition-transform", collapsed ? "" : "rotate-180")} />
       </button>
     </aside>
+    </>
   );
 };
 
