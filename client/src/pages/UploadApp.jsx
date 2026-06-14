@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '../api/axios';
@@ -137,7 +137,15 @@ const UploadApp = () => {
       
       const finalFormData = new FormData();
       // Form fields
-      Object.keys(formData).forEach(key => finalFormData.append(key, formData[key]));
+      Object.keys(formData).forEach(key => {
+        if (key === 'category') {
+          // Properly append array elements for multipart/form-data
+          const cats = Array.isArray(formData.category) ? formData.category : [formData.category];
+          cats.forEach(cat => finalFormData.append('category', cat));
+        } else {
+          finalFormData.append(key, formData[key]);
+        }
+      });
       
       // Metadata from chunked upload
       finalFormData.append('fileUrl', finalBinaryUrl);
@@ -309,7 +317,7 @@ const UploadApp = () => {
                 <p className="text-gray-400 max-w-sm mx-auto mb-8">Your project "{formData.title}" is ready to be deployed to the Baqala moderation queue.</p>
                 
                 <div className="glass-panel p-6 rounded-2xl text-left bg-dark-900/50 border-white/5 max-w-md mx-auto mb-8 transition-all">
-                  <p className="text-sm text-gray-400 flex justify-between mb-2"><span>Category:</span> <span className="text-white font-medium">{formData.category}</span></p>
+                  <p className="text-sm text-gray-400 flex justify-between mb-2"><span>Category:</span> <span className="text-white font-medium">{(Array.isArray(formData.category) ? formData.category : [formData.category]).join(', ')}</span></p>
                   <p className="text-sm text-gray-400 flex justify-between mb-2"><span>Platform:</span> <span className="text-white font-medium">{formData.platform}</span></p>
                   <p className="text-sm text-gray-400 flex justify-between mb-6"><span>Files:</span> <span className="text-white font-medium">Binary + {1 + (files.screenshots || []).length} Images</span></p>
                   

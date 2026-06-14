@@ -173,9 +173,24 @@ exports.createApp = async (req, res, next) => {
       ? String(req.body.shortDescription).substring(0, 200) 
       : description.substring(0, 200);
       
-    const category = Array.isArray(req.body.category) 
-      ? req.body.category.slice(0, 5) 
-      : [req.body.category || 'Other'];
+    let rawCategory = req.body.category;
+    let category = [];
+    if (Array.isArray(rawCategory)) {
+      category = rawCategory;
+    } else if (typeof rawCategory === 'string') {
+      if (rawCategory.startsWith('[') && rawCategory.endsWith(']')) {
+        try { category = JSON.parse(rawCategory); } catch (e) { category = [rawCategory]; }
+      } else if (rawCategory.includes(',')) {
+        category = rawCategory.split(',').map(c => c.trim());
+      } else {
+        category = [rawCategory];
+      }
+    } else if (rawCategory) {
+      category = [String(rawCategory)];
+    } else {
+      category = ['Other'];
+    }
+    category = category.slice(0, 5);
     const version = req.body.version || '1.0.0';
     const platform = req.body.platform || 'Cross-platform';
     const developerName = req.body.developerName || (req.user ? req.user.name : 'Unknown');
