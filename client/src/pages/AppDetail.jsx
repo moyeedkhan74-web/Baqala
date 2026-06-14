@@ -7,7 +7,7 @@ import StarRating from '../components/StarRating';
 import SEOHead from '../components/SEOHead';
 import { SkeletonDetail } from '../components/Skeleton';
 import toast from 'react-hot-toast';
-import { HiDownload, HiStar, HiFolder, HiClock, HiDeviceMobile, HiArrowLeft, HiArrowRight, HiX, HiFlag } from 'react-icons/hi';
+import { HiDownload, HiStar, HiFolder, HiClock, HiDeviceMobile, HiArrowLeft, HiArrowRight, HiX, HiFlag, HiCheckCircle } from 'react-icons/hi';
 
 const AppDetail = () => {
   const getImageUrl = (url) => {
