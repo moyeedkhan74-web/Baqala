@@ -1,6 +1,6 @@
 // Baqala Deployment Trigger: CORS & Upload Final
-import { Routes, Route, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
+import { Routes, Route, useLocation, Link } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useState, useEffect, lazy, Suspense } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -9,6 +9,7 @@ import AnimatedLayout from './components/AnimatedLayout';
 import LoadingScreen from './components/LoadingScreen';
 import CookieBanner from './components/CookieBanner';
 import GlobalAnnouncement from './components/GlobalAnnouncement';
+import { Shield, RefreshCw } from 'lucide-react';
 const ParticlesBackground = lazy(() => import('./components/ParticlesBackground'));
 import api from './api/axios';
 
@@ -81,22 +82,72 @@ function App() {
 
   if (!isLoading && config?.isMaintenanceMode && !isAdmin && location.pathname !== '/login') {
     return (
-      <div className="min-h-screen bg-background-light dark:bg-background-dark flex items-center justify-center p-8 text-center">
-        <div className="max-w-md space-y-6">
-          <div className="w-24 h-24 bg-rose-500/10 rounded-[2rem] flex items-center justify-center mx-auto text-rose-500 mb-8 border border-rose-500/20">
-            <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">System Maintenance</h1>
-          <p className="text-slate-500 dark:text-slate-400 font-bold leading-relaxed">
-            {config.maintenanceMessage || "Baqala is currently under maintenance. We will be back shortly!"}
-          </p>
-          <div className="pt-8 flex flex-col gap-4">
-             <Link to="/contact" className="text-accent-violet font-bold hover:underline">Contact Support</Link>
-             <Link to="/login" className="text-slate-400 text-xs hover:text-white transition-colors">Admin Login</Link>
-          </div>
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6 relative overflow-hidden">
+        {/* Animated Background Orbs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent-violet/20 blur-[120px] rounded-full animate-pulse" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
         </div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="relative z-10 max-w-xl w-full"
+        >
+          <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-8 sm:p-12 shadow-2xl text-center">
+            {/* Status Icon */}
+            <div className="flex justify-center mb-8">
+              <div className="relative">
+                <div className="w-24 h-24 bg-accent-violet/20 rounded-[2rem] flex items-center justify-center text-accent-violet border border-accent-violet/30">
+                  <RefreshCw className="w-10 h-10 animate-spin" style={{ animationDuration: '4s' }} />
+                </div>
+                <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-rose-500 rounded-2xl flex items-center justify-center text-white border-4 border-[#050505] shadow-xl">
+                  <Shield className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+
+            <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight mb-4 bg-gradient-to-r from-white via-white to-white/40 bg-clip-text text-transparent">
+              Platform Update
+            </h1>
+            
+            <p className="text-slate-400 font-bold text-lg leading-relaxed mb-10 max-w-sm mx-auto">
+              {config.maintenanceMessage || "Baqala is currently updating to bring you a better experience. We'll be back shortly!"}
+            </p>
+
+            {/* Status Indicators */}
+            <div className="grid grid-cols-2 gap-4 mb-10 text-center">
+              <div className="bg-white/2 border border-white/5 p-4 rounded-2xl">
+                <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Status</p>
+                <p className="text-xs font-bold text-emerald-500 flex items-center justify-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Updating
+                </p>
+              </div>
+              <div className="bg-white/2 border border-white/5 p-4 rounded-2xl">
+                <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Access</p>
+                <p className="text-xs font-bold text-amber-500 flex items-center justify-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  Restricted
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+              <Link to="/contact" className="px-8 py-4 rounded-2xl bg-white text-black font-black text-sm uppercase tracking-widest hover:bg-slate-200 transition-all w-full sm:w-auto">
+                Contact Support
+              </Link>
+              <Link to="/login" className="text-slate-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest">
+                Administrator Portal
+              </Link>
+            </div>
+
+            <p className="mt-12 text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em]">
+              Baqala Safety Council &bull; Systems Operations
+            </p>
+          </div>
+        </motion.div>
       </div>
     );
   }

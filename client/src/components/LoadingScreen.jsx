@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { AlertTriangle } from 'lucide-react';
 
 const LoadingScreen = ({ isLoading, error, onRetry }) => {
   const [sparkles, setSparkles] = useState([]);
@@ -89,25 +90,32 @@ const LoadingScreen = ({ isLoading, error, onRetry }) => {
     <AnimatePresence>
       {error && (
         <motion.div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/80 backdrop-blur-xl flex items-center justify-center z-[100]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="bg-gray-900 border border-red-500/30 rounded-2xl p-8 max-w-md mx-4"
-            initial={{ scale: 0.5, y: 20 }}
+            className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 sm:p-12 max-w-md mx-4 text-center shadow-2xl"
+            initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.5, y: 20 }}
           >
-            <h3 className="text-xl font-bold text-red-400 mb-4">Oops! Something went wrong</h3>
-            <p className="text-gray-400 mb-6">{error}</p>
+            <div className="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 text-rose-500 border border-rose-500/20">
+              <AlertTriangle className="w-8 h-8" />
+            </div>
+            <h3 className="text-2xl font-black text-white mb-2 tracking-tight">Signal Interrupted</h3>
+            <p className="text-slate-400 font-bold mb-8 leading-relaxed">
+              We're having trouble connecting to the Baqala engine. This usually happens during maintenance or deep sleep cycles.
+            </p>
             <button
               onClick={onRetry}
-              className="w-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-105"
+              className="w-full bg-white text-black font-black py-4 rounded-2xl text-sm uppercase tracking-widest hover:bg-slate-200 transition-all shadow-xl shadow-white/5"
             >
-              Try Again
+              Reconnect Now
             </button>
+            <p className="mt-6 text-[10px] text-slate-600 font-bold uppercase tracking-widest">
+              Automatic retry in progress...
+            </p>
           </motion.div>
         </motion.div>
       )}
