@@ -518,3 +518,28 @@ exports.warnDeveloper = async (req, res) => {
   }
 };
 
+// POST /api/admin/apps/:id/warn
+exports.warnAppDeveloper = async (req, res) => {
+  try {
+    const { warningMessage } = req.body;
+    const app = await App.findById(req.params.id);
+    
+    if (!app) return res.status(404).json({ message: 'App not found.' });
+
+    if (app.developer) {
+      await Notification.create({
+        recipient: app.developer,
+        title: '⚠️ Moderation Warning',
+        message: `Admin Notice regarding "${app.title}": ${warningMessage}`,
+        type: 'warning'
+      });
+    }
+
+    res.json({ message: 'Warning issued to developer successfully.' });
+  } catch (error) {
+    console.error('Admin warn app dev error:', error);
+    res.status(500).json({ message: 'Server error issuing warning.' });
+  }
+};
+
+
