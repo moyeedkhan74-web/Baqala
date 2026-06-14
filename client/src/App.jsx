@@ -198,6 +198,8 @@ function App() {
       </div>
     );
   }
+
+  return (
     <>
       <LoadingScreen isLoading={isLoading} error={error} onRetry={handleRetry} />
       <CookieBanner />
