@@ -4,7 +4,7 @@ import api from '../api/axios';
 import AppCard from '../components/AppCard';
 import SEOHead from '../components/SEOHead';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiDownload, HiViewGrid, HiCalendar, HiUserCircle, HiGlobeAlt, HiX, HiFlag } from 'react-icons/hi';
+import { HiDownload, HiViewGrid, HiCalendar, HiUserCircle, HiGlobeAlt, HiX, HiFlag, HiCheckCircle } from 'react-icons/hi';
 import { SkeletonCard } from '../components/Skeleton';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -186,7 +186,10 @@ const DeveloperProfile = () => {
                 <span className="badge-neon !bg-accent-sun/10 !text-accent-sun !border-accent-sun/20 uppercase tracking-widest text-[10px] px-3 py-1">Developer</span>
               )}
               {developer.isVerified && (
-                <span className="badge-neon uppercase tracking-widest text-[10px] px-3 py-1">Verified</span>
+                <span className="badge-neon uppercase tracking-widest text-[10px] px-3 py-1 flex items-center gap-1">
+                  <HiCheckCircle className="w-3 h-3" />
+                  Verified
+                </span>
               )}
               <button 
                 onClick={() => setReportModalOpen(true)}
