@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Eye,
   ArrowUpDown,
-  RefreshCw
+  RefreshCw,
+  AlertTriangle
 } from 'lucide-react';
 import api from '../api/axios';
 import { cn } from '../utils/cn.js';
@@ -24,6 +25,8 @@ const AppManagement = () => {
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [togglingId, setTogglingId] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchApps = async () => {
     try {
@@ -50,6 +53,25 @@ const AppManagement = () => {
     } catch (error) {
       console.error('Failed to update status:', error);
       toast.error('Failed to update status', { id: loadingToast });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    
+    setIsDeleting(true);
+    const loadingToast = toast.loading('Permanently removing application...');
+    
+    try {
+      await api.delete(`/admin/apps/${deleteTarget._id}`);
+      setApps(apps.filter(app => app._id !== deleteTarget._id));
+      toast.success('Application removed perfectly', { id: loadingToast });
+      setDeleteTarget(null);
+    } catch (error) {
+      console.error('Failed to delete app:', error);
+      toast.error('Failed to remove application', { id: loadingToast });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -225,6 +247,14 @@ const AppManagement = () => {
                         <a href={`/app/${app._id}`} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
                           <Eye className="w-5 h-5" />
                         </a>
+                        <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
+                        <button 
+                          onClick={() => setDeleteTarget(app)}
+                          title="Delete App" 
+                          className="p-2.5 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -242,6 +272,68 @@ const AppManagement = () => {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+          <div 
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300"
+            onClick={() => !isDeleting && setDeleteTarget(null)}
+          />
+          
+          <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            {/* Header Gradient */}
+            <div className="h-2 bg-gradient-to-r from-rose-500 via-rose-600 to-rose-500" />
+            
+            <div className="p-8 sm:p-10">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mb-6 border border-rose-500/20">
+                  <AlertTriangle className="w-10 h-10 text-rose-500" />
+                </div>
+                
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-3">
+                  Permanent Removal
+                </h3>
+                
+                <p className="text-slate-500 dark:text-slate-400 font-bold text-sm leading-relaxed mb-8">
+                  You are about to delete <span className="text-slate-900 dark:text-white">"{deleteTarget.title}"</span>. 
+                  This action will permanently remove all binaries from B2 storage and metadata from MongoDB. This cannot be undone.
+                </p>
+
+                <div className="w-full space-y-3">
+                  <button
+                    disabled={isDeleting}
+                    onClick={handleDelete}
+                    className={cn(
+                      "w-full py-4 rounded-2xl bg-rose-500 text-white font-black text-sm uppercase tracking-widest shadow-xl shadow-rose-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3",
+                      isDeleting && "opacity-50 pointer-events-none"
+                    )}
+                  >
+                    {isDeleting ? (
+                      <RefreshCw className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-5 h-5" />
+                    )}
+                    {isDeleting ? 'Removing...' : 'Confirm Permanent Delete'}
+                  </button>
+                  
+                  <button
+                    disabled={isDeleting}
+                    onClick={() => setDeleteTarget(null)}
+                    className="w-full py-4 rounded-2xl bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-black text-sm uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                
+                <p className="mt-6 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                  Compliance: Action follows Privacy Policy & T&C rules
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 };
