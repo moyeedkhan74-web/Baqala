@@ -13,20 +13,52 @@ import './firebase';
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error) {
-    return { hasError: true };
+    return { hasError: true, error };
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error("App crashed:", error);
+    console.error("🔴 App crashed:", error);
+    console.error("Error Info:", errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
-      return <h1>Something went wrong. Please refresh.</h1>;
+      return (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          backgroundColor: '#050505',
+          color: '#fff',
+          padding: '20px',
+          fontFamily: 'monospace'
+        }}>
+          <h1 style={{ fontSize: '2rem', marginBottom: '20px' }}>⚠️ Something went wrong</h1>
+          <p style={{ fontSize: '0.9rem', maxWidth: '600px', marginBottom: '20px', color: '#ccc' }}>
+            {this.state.error?.message || 'An unexpected error occurred'}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#7c3aed',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '1rem'
+            }}
+          >
+            Refresh Page
+          </button>
+        </div>
+      );
     }
     return this.props.children;
   }
@@ -52,6 +84,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             </AuthProvider>
           </ThemeProvider>
         </BrowserRouter>
+  
       </HelmetProvider>
     </ErrorBoundary>
   </React.StrictMode>,
