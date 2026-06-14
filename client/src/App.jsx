@@ -43,7 +43,6 @@ function App() {
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const [config, setConfig] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -51,27 +50,11 @@ function App() {
     const initializeApp = async () => {
       try {
         setError(null);
+        console.log('🔄 Initializing app...');
         
-        // Parallelize static wait with backend ping for smooth transition
-        const [healthRes, configRes] = await Promise.all([
-          api.get('/health').catch(err => {
-            console.warn('Backend waking up...', err);
-            // Retry once after 5s and resolve properly with the retry result
-            return new Promise((resolve) => setTimeout(() => resolve(api.get('/health')), 5000));
-          }),
-          api.get('/config').catch(() => ({ data: { config: null } })),
-          new Promise((resolve) => setTimeout(resolve, 2000)) // Min splash time for branding
-        ]);
-
-        if (configRes.data.config) {
-          console.log('✅ Config loaded:', configRes.data.config);
-          console.log('📍 Maintenance mode:', configRes.data.config.isMaintenanceMode);
-          console.log('📝 Maintenance message:', configRes.data.config.maintenanceMessage);
-          setConfig(configRes.data.config);
-        } else {
-          console.warn('⚠️ Config is null or undefined, using defaults:', configRes.data);
-          // Set default config if fetch fails
-          setConfig({
+        // Fetch config - this is critical
+        const configRes = await api.get('/config').catch(() => ({ 
+          data: { config: {
             isMaintenanceMode: false,
             maintenanceMessage: 'Baqala is currently under maintenance.',
             maxApkSize: 500,
@@ -83,19 +66,38 @@ function App() {
               categoryBrowsing: true,
               featuredCarousel: true
             }
-          });
-        }
+          } } 
+        }));
 
-        // Check user role via local auth context (simplified for this check)
+        console.log('✅ Config loaded:', configRes.data.config);
+        setConfig(configRes.data.config);
+
+        // Check user role via local auth context
         const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
         if (storedUser?.role === 'admin') {
-          console.log('👤 User is admin, bypassing maintenance check');
+          console.log('👤 User is admin');
           setIsAdmin(true);
         }
 
+        // Ping backend in background
+        api.get('/health').catch(err => console.warn('Backend waking up...', err));
+
         setIsLoading(false);
       } catch (err) {
-        console.error('Initialization warning:', err);
+        console.error('❌ Initialization error:', err);
+        setConfig({
+          isMaintenanceMode: false,
+          maintenanceMessage: 'Baqala is currently under maintenance.',
+          maxApkSize: 500,
+          maxImageSize: 5,
+          announcement: { enabled: false, text: '', level: 'info' },
+          sections: {
+            trending: true,
+            newReleases: true,
+            categoryBrowsing: true,
+            featuredCarousel: true
+          }
+        });
         setIsLoading(false);
       }
     };
@@ -103,14 +105,29 @@ function App() {
     initializeApp();
   }, []);
 
-  if (!isLoading && config && config.isMaintenanceMode && !isAdmin && location.pathname !== '/login') {
-    console.log('🔒 MAINTENANCE MODE ACTIVE', {
-      isLoading,
-      isMaintenanceMode: config.isMaintenanceMode,
-      isAdmin,
-      pathname: location.pathname,
-      message: config.maintenanceMessage
-    });
+  // Show basic loading screen while initializing
+  if (isLoading || !config) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        backgroundColor: '#050505',
+        fontSize: '18px',
+        color: '#fff'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <h1>🚀 Baqala</h1>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show maintenance mode if enabled
+  if (config.isMaintenanceMode && !isAdmin && location.pathname !== '/login') {
+    console.log('🔒 MAINTENANCE MODE ACTIVE');
     return (
       <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6 relative overflow-hidden">
         {/* Animated Background Orbs */}
@@ -181,38 +198,6 @@ function App() {
       </div>
     );
   }
-
-  // Safe Analytics Tracking
-  useEffect(() => {
-    try {
-      if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('event', 'page_view', {
-          page_path: location.pathname,
-        });
-      }
-    } catch (e) {
-      // Silently catch ad-blocker errors
-    }
-    
-    // Global Scroll To Top on navigation - Fixed as requested
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [location.pathname]);
-
-  const handleRetry = () => {
-    setIsLoading(true);
-    setError(null);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
-    return () => clearTimeout(timer);
-  };
-
-  // Wait for config to load before rendering main app
-  if (!config) {
-    return <LoadingScreen isLoading={true} error={error} onRetry={handleRetry} />;
-  }
-
-  return (
     <>
       <LoadingScreen isLoading={isLoading} error={error} onRetry={handleRetry} />
       <CookieBanner />
