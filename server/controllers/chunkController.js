@@ -153,9 +153,24 @@ exports.combineChunks = async (req, res, next) => {
 
     // Create the app document if metadata was provided
     if (title && description) {
-      const parsedCategory = category 
-        ? (Array.isArray(category) ? category.slice(0, 5) : (typeof category === 'string' ? JSON.parse(category) : [category]))
-        : ['Other'];
+      let rawCategory = category;
+      let parsedCategory = [];
+      if (Array.isArray(rawCategory)) {
+        parsedCategory = rawCategory;
+      } else if (typeof rawCategory === 'string') {
+        if (rawCategory.startsWith('[') && rawCategory.endsWith(']')) {
+          try { parsedCategory = JSON.parse(rawCategory); } catch (e) { parsedCategory = [rawCategory]; }
+        } else if (rawCategory.includes(',')) {
+          parsedCategory = rawCategory.split(',').map(c => c.trim());
+        } else {
+          parsedCategory = [rawCategory];
+        }
+      } else if (rawCategory) {
+        parsedCategory = [String(rawCategory)];
+      } else {
+        parsedCategory = ['Other'];
+      }
+      parsedCategory = parsedCategory.slice(0, 5);
 
       const { extractB2Key: extractKey } = require('../utils/b2Storage');
       let scrubbedFileUrl = result.url;
