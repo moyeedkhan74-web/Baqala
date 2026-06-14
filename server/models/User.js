@@ -70,6 +70,10 @@ const userSchema = new mongoose.Schema({
   banReason: {
     type: String,
     default: null
+  },
+  isVerified: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

@@ -70,6 +70,18 @@ const UserManagement = () => {
       toast.error('Failed to remove restrictions', { id: loadingToast });
     }
   };
+  
+  const handleToggleVerify = async (userId) => {
+    const loadingToast = toast.loading('Updating verification status...');
+    try {
+      const { data } = await api.patch(`/admin/users/${userId}/verify`);
+      setUsers(users.map(u => u._id === userId ? { ...u, isVerified: data.isVerified } : u));
+      toast.success(data.message, { id: loadingToast });
+    } catch (error) {
+      console.error('Failed to toggle verification:', error);
+      toast.error('Failed to update verification', { id: loadingToast });
+    }
+  };
 
   const tabs = [
     { id: 'all', label: 'All Users' },
@@ -160,6 +172,12 @@ const UserManagement = () => {
                       <Shield className="w-3 h-3" />
                       {u.role}
                     </div>
+                    {u.isVerified && (
+                      <div className="inline-flex items-center gap-1 mt-1 ml-2 px-2 py-0.5 rounded-lg bg-accent-violet/10 text-accent-violet border border-accent-violet/20 text-[9px] font-black uppercase tracking-wider">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Verified
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -186,12 +204,26 @@ const UserManagement = () => {
                   <UserCheck className="w-4 h-4" />
                   Profile
                 </a>
+                {u.role === 'developer' && (
+                  <button 
+                    onClick={() => handleToggleVerify(u._id)} 
+                    className={cn(
+                      "flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold text-xs transition-all",
+                      u.isVerified 
+                        ? "bg-accent-violet/10 text-accent-violet hover:bg-accent-violet hover:text-white" 
+                        : "bg-slate-100 dark:bg-white/5 text-slate-500 hover:bg-accent-violet/10 hover:text-accent-violet"
+                    )}
+                  >
+                    <UserCheck className="w-4 h-4" />
+                    {u.isVerified ? 'Unverify' : 'Verify Dev'}
+                  </button>
+                )}
                 {u.isBanned ? (
-                  <button onClick={() => handleUnban(u._id)} className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-500/10 text-emerald-500 font-bold text-xs hover:bg-emerald-500 hover:text-white transition-all">
+                  <button onClick={() => handleUnban(u._id)} className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-500/10 text-emerald-500 font-bold text-xs hover:bg-emerald-500 hover:text-white transition-all col-span-2">
                     Unban User
                   </button>
                 ) : (
-                  <button onClick={() => setBanTarget(u)} className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-rose-500/10 text-rose-500 font-bold text-xs hover:bg-rose-500 hover:text-white transition-all">
+                  <button onClick={() => setBanTarget(u)} className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-rose-500/10 text-rose-500 font-bold text-xs hover:bg-rose-500 hover:text-white transition-all col-span-2">
                     <Ban className="w-4 h-4" />
                     Ban User
                   </button>

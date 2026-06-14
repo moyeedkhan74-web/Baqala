@@ -182,7 +182,12 @@ const DeveloperProfile = () => {
               {developer?.name || 'Unknown'}
             </h1>
             <div className="flex gap-2">
-              <span className="badge-neon uppercase tracking-widest text-[10px] px-3 py-1">Verified</span>
+              {developer.email === 'moyeedkhan74@gmail.com' && (
+                <span className="badge-neon !bg-accent-sun/10 !text-accent-sun !border-accent-sun/20 uppercase tracking-widest text-[10px] px-3 py-1">Creator</span>
+              )}
+              {developer.isVerified && (
+                <span className="badge-neon uppercase tracking-widest text-[10px] px-3 py-1">Verified</span>
+              )}
               <button 
                 onClick={() => setReportModalOpen(true)}
                 className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors border border-slate-200 dark:border-white/10 px-3 py-1 rounded-full flex items-center gap-1"

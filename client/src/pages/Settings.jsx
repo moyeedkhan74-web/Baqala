@@ -149,6 +149,16 @@ const Settings = () => {
                      <HiCheckCircle /> Online
                   </span>
                </div>
+               <div className="flex items-center justify-between text-xs font-bold">
+                  <span className="text-slate-400 uppercase">Verified</span>
+                  <span className={cn(
+                    "flex items-center gap-1",
+                    user?.isVerified ? "text-accent-violet dark:text-accent-neon" : "text-slate-400"
+                  )}>
+                    {user?.isVerified ? <HiCheckCircle /> : <HiExclamationCircle />}
+                    {user?.isVerified ? 'Verified' : 'Unverified'}
+                  </span>
+               </div>
             </div>
           </div>
         </div>
