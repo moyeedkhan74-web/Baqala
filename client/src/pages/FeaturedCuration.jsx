@@ -137,7 +137,7 @@ const FeaturedCuration = () => {
             ) : (
               <div className="space-y-4">
                 {featuredApps.map((app, index) => (
-                  <div key={app._id} className="bg-slate-50 dark:bg-white/5 rounded-2xl border border-transparent hover:border-accent-violet/30 transition-all overflow-hidden">
+                  <div key={app._id} className="bg-accent-violet/[0.03] dark:bg-accent-violet/[0.05] rounded-2xl border border-accent-violet/20 hover:border-accent-violet/50 transition-all overflow-hidden shadow-sm shadow-accent-violet/5">
                     {/* App Info Row */}
                     <div className="flex items-center gap-4 p-4">
                       <div className="text-xs font-black text-slate-400 w-6 text-center">{index + 1}</div>

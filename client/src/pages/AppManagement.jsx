@@ -136,7 +136,12 @@ const AppManagement = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                 {filteredApps.map((app) => (
-                  <tr key={app._id} className="group hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                  <tr key={app._id} className={cn(
+                    "group transition-all duration-300",
+                    app.isFeatured 
+                      ? "bg-accent-violet/[0.03] dark:bg-accent-violet/[0.05] border-l-4 border-l-accent-violet" 
+                      : "hover:bg-slate-50 dark:hover:bg-white/[0.02] border-l-4 border-l-transparent"
+                  )}>
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm group-hover:scale-105 transition-transform shrink-0">
@@ -170,7 +175,7 @@ const AppManagement = () => {
                           {app.status}
                         </div>
                         {app.isFeatured && (
-                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[10px] font-black uppercase tracking-wider w-fit">
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-violet/10 text-accent-violet border border-accent-violet/20 text-[10px] font-black uppercase tracking-wider w-fit shadow-sm shadow-accent-violet/10">
                             <Star className="w-3 h-3 fill-current" />
                             Featured
                           </div>
