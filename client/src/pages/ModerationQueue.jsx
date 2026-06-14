@@ -11,9 +11,7 @@ import {
   CheckCircle2,
   XCircle,
   RefreshCw,
-  Ban,
-  Calendar,
-  Tag
+  Ban
 } from 'lucide-react';
 import api from '../api/axios';
 import { cn } from '../utils/cn.js';
@@ -134,16 +132,16 @@ const ModerationQueue = () => {
 
   const getCategoryLabel = (category) => {
     const map = {
-      malware_virus: 'Malware / Virus',
-      scam_fake: 'Scam or Fake App',
-      inappropriate_content: 'Inappropriate Content',
-      harassment: 'Harassment',
-      copyright_violation: 'Copyright Violation',
-      misleading_description: 'Misleading Description',
-      spam: 'Spamming',
-      other: 'Other Violation'
+      malware_virus: 'High Severity: Malware/Virus',
+      scam_fake: 'High Severity: Scam/Fake App',
+      inappropriate_content: 'Medium Severity: Inappropriate Content',
+      harassment: 'Medium Severity: Harassment',
+      copyright_violation: 'Medium Severity: Copyright Violation',
+      misleading_description: 'Low Severity: Misleading Description',
+      spam: 'Low Severity: Spam',
+      other: 'Other Reason'
     };
-    return map[category] || category.replace(/_/g, ' ');
+    return map[category] || category;
   };
 
   return (
@@ -174,85 +172,67 @@ const ModerationQueue = () => {
             const targetType = report.app ? 'App' : 'Developer';
             
             return (
-              <div key={report._id} className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-sm p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center justify-between gap-8 group hover:shadow-2xl transition-all relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-slate-100 dark:bg-white/2 rounded-full blur-3xl opacity-20 pointer-events-none" />
-                
-                <div className="flex-1 space-y-4 relative z-10">
-                  <div className="flex flex-wrap items-center gap-3">
+              <div key={report._id} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6 group hover:shadow-xl transition-all">
+                <div className="flex-1 space-y-4">
+                  <div className="flex items-center gap-3">
                     <span className={cn(
-                      "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm",
+                      "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg",
                       getSeverityStyles(report.category)
                     )}>
                       {getCategoryLabel(report.category)}
                     </span>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 font-mono">ID: #{report._id.substring(0, 8)}</span>
-                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase bg-slate-50 dark:bg-white/5 text-slate-500 border border-slate-200 dark:border-white/10">
-                      <Tag className="w-3 h-3" />
-                      {targetType}
-                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ref: #{report._id.substring(0, 8)}</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-slate-100 dark:bg-white/5 text-slate-500 border border-slate-200 dark:border-white/10">
+                      Target: {targetType}
+                    </span>
                   </div>
                   
                   <div>
-                    <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white group-hover:text-accent-violet transition-colors">
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white group-hover:text-accent-violet transition-colors">
                       {targetName}
                     </h3>
-                    <div className="mt-3 p-4 bg-slate-50 dark:bg-white/2 rounded-2xl border border-slate-100 dark:border-white/5">
-                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-bold leading-relaxed">
-                        <span className="text-accent-violet/60 uppercase text-[10px] block mb-1 tracking-widest">Reporter Reasoning</span>
-                        {report.customReason || 'No descriptive details provided by reporter.'}
-                      </p>
-                    </div>
+                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 font-bold leading-relaxed">
+                      <span className="text-slate-400">Report Details:</span> {report.customReason || 'No custom reason provided.'}
+                    </p>
                   </div>
 
-                  <div className="flex flex-wrap gap-6 pt-2">
-                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                      <User className="w-3.5 h-3.5 text-slate-500" />
-                      By {report.reportedBy?.name || 'Anon'}
+                  <div className="flex flex-wrap gap-4">
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                      <User className="w-4 h-4 shrink-0" />
+                      Reporter: {report.reportedBy?.name || 'Unknown User'}
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                      <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                      {new Date(report.createdAt).toLocaleDateString()}
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      Date: {new Date(report.createdAt).toLocaleString()}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row lg:flex-row items-center gap-3 shrink-0 relative z-10">
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <button 
-                      onClick={() => handleDismiss(report._id)} 
-                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all border border-slate-200 dark:border-white/5 group/btn"
-                    >
-                      <CheckCircle2 className="w-4 h-4 group-hover/btn:text-emerald-500 transition-colors" />
-                      Ignore
+                <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex flex-col sm:flex-row lg:flex-row gap-3 w-full lg:w-auto">
+                    <button onClick={() => handleDismiss(report._id)} title="Dismiss Report" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-black text-xs uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all border border-slate-200 dark:border-white/5">
+                      <CheckCircle2 className="w-5 h-5" />
+                      Dismiss
                     </button>
                     {(report.developer || report.app) && (
-                      <button 
-                        onClick={() => setWarningTarget(report)} 
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-amber-500/10 text-amber-500 font-black text-[10px] uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all border border-amber-500/20 shadow-sm"
-                      >
-                        <AlertCircle className="w-4 h-4" />
+                      <button onClick={() => setWarningTarget(report)} title="Issue Warning" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-amber-500/10 text-amber-500 font-black text-xs uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all border border-amber-500/20">
+                        <AlertCircle className="w-5 h-5" />
                         Warn
                       </button>
                     )}
                   </div>
 
-                  <div className="flex gap-2 w-full sm:w-auto">
+                  <div className="flex flex-col sm:flex-row lg:flex-row gap-3 w-full lg:w-auto">
                     {report.developer && (
-                      <button 
-                        onClick={() => setBanTarget({ user: report.developer, reportId: report._id })} 
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-rose-500/10 text-rose-500 font-black text-[10px] uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20"
-                      >
-                        <Ban className="w-4 h-4" />
+                      <button onClick={() => setBanTarget({ user: report.developer, reportId: report._id })} title="Ban Developer" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-rose-500/10 text-rose-500 font-black text-xs uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20">
+                        <Ban className="w-5 h-5" />
                         Restrict
                       </button>
                     )}
                     {report.app && (
-                      <button 
-                        onClick={() => handleRemoveApp(report.app._id, report._id)} 
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-rose-600 text-white font-black text-[10px] uppercase tracking-widest shadow-[0_10px_20px_-5px_rgba(225,29,72,0.4)] hover:scale-105 active:scale-95 transition-all"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Delete App
+                      <button onClick={() => handleRemoveApp(report.app._id, report._id)} title="Remove App" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-rose-500 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-rose-500/20 hover:scale-105 transition-transform">
+                        <Trash2 className="w-5 h-5" />
+                        Remove App
                       </button>
                     )}
                   </div>

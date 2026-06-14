@@ -139,22 +139,22 @@ const UserManagement = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredUsers.map((u) => (
-            <div key={u._id} className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-2xl transition-all duration-300 group relative overflow-hidden flex flex-col">
+            <div key={u._id} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-xl transition-all duration-300 group relative overflow-hidden">
               {u.isBanned && (
-                <div className="absolute top-0 left-0 right-0 py-1.5 bg-rose-500 text-white text-[9px] font-black uppercase text-center tracking-[0.2em] z-10 shadow-lg">
-                  Restricted Access
+                <div className="absolute top-0 left-0 right-0 py-1 bg-rose-500 text-white text-[10px] font-black uppercase text-center tracking-widest">
+                  Banned User
                 </div>
               )}
               
               <div className="flex items-start justify-between mb-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-[1.5rem] bg-slate-100 dark:bg-white/5 flex items-center justify-center text-xl font-bold text-slate-400 group-hover:bg-accent-violet group-hover:text-white transition-all border border-slate-200 dark:border-white/10 overflow-hidden shrink-0 shadow-sm relative">
-                     <img src={u.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${u.name}`} alt={u.name} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                  <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center border border-slate-200 dark:border-white/10 overflow-hidden shrink-0 group-hover:scale-105 transition-transform">
+                     <img src={u.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${u.name}`} alt={u.name} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-black text-slate-900 dark:text-white text-lg leading-tight truncate group-hover:text-accent-violet transition-colors">{u.name}</h3>
+                    <h3 className="font-black text-slate-900 dark:text-white text-lg leading-tight truncate">{u.name}</h3>
                     <div className={cn(
-                      "inline-flex items-center gap-1.5 mt-2 px-2 py-0.5 rounded-lg border text-[9px] font-black uppercase tracking-widest",
+                      "inline-flex items-center gap-1.5 mt-1 px-2 py-0.5 rounded-lg border text-[9px] font-black uppercase tracking-wider",
                       getRoleStyles(u.role)
                     )}>
                       <Shield className="w-3 h-3" />
@@ -164,43 +164,36 @@ const UserManagement = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 mb-8 flex-1">
-                <div className="p-4 bg-slate-50 dark:bg-white/2 rounded-2xl border border-slate-100 dark:border-white/5 space-y-3">
-                  <div className="flex items-center gap-3 text-slate-500 group/item">
-                    <div className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm text-slate-400 group-hover/item:text-accent-violet transition-colors">
-                      <Mail className="w-4 h-4" />
-                    </div>
-                    <span className="text-xs font-bold truncate">{u.email}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-slate-500 group/item">
-                    <div className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm text-slate-400 group-hover/item:text-accent-violet transition-colors">
-                      <Calendar className="w-4 h-4" />
-                    </div>
-                    <span className="text-xs font-bold">Joined {new Date(u.createdAt).toLocaleDateString()}</span>
-                  </div>
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center gap-3 text-slate-500">
+                  <Mail className="w-4 h-4 shrink-0" />
+                  <span className="text-xs font-bold truncate">{u.email}</span>
                 </div>
-                
-                {u.role === 'developer' && (
-                  <div className="flex items-center justify-between px-4 py-3 bg-accent-violet/5 rounded-2xl border border-accent-violet/10">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-accent-violet/60">Portfolio Size</span>
-                    <span className="text-sm font-black text-accent-violet">{u.appCount || 0} Apps</span>
+                <div className="flex items-center gap-3 text-slate-500">
+                  <Calendar className="w-4 h-4 shrink-0" />
+                  <span className="text-xs font-bold">Joined {new Date(u.createdAt).toLocaleDateString()}</span>
+                </div>
+                {u.role === 'developer' && u.appCount !== undefined && (
+                  <div className="flex items-center gap-3 text-slate-500">
+                    <div className="w-4 h-4 flex items-center justify-center font-bold text-[10px] bg-slate-100 dark:bg-white/10 rounded shrink-0">A</div>
+                    <span className="text-xs font-bold">{u.appCount} Apps Published</span>
                   </div>
                 )}
               </div>
 
-              <div className="pt-6 border-t border-slate-100 dark:border-white/5 grid grid-cols-2 gap-3 mt-auto">
-                <a href={u.role === 'developer' ? `/developer/${u._id}` : '#'} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-white dark:bg-white/5 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/10 font-black text-[10px] uppercase tracking-widest hover:bg-accent-violet hover:text-white hover:border-accent-violet transition-all">
+              <div className="pt-6 border-t border-slate-100 dark:border-white/5 grid grid-cols-2 gap-3">
+                <a href={u.role === 'developer' ? `/developer/${u._id}` : '#'} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-accent-violet/10 hover:text-accent-violet text-slate-500 font-bold text-xs transition-all">
                   <UserCheck className="w-4 h-4" />
-                  Details
+                  Profile
                 </a>
                 {u.isBanned ? (
-                  <button onClick={() => handleUnban(u._id)} className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-95 transition-all">
-                    Unban Access
+                  <button onClick={() => handleUnban(u._id)} className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-500/10 text-emerald-500 font-bold text-xs hover:bg-emerald-500 hover:text-white transition-all">
+                    Unban User
                   </button>
                 ) : (
-                  <button onClick={() => setBanTarget(u)} className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-black text-[10px] uppercase tracking-widest hover:bg-rose-500 hover:text-white dark:hover:bg-rose-500 dark:hover:text-white transition-all shadow-xl">
+                  <button onClick={() => setBanTarget(u)} className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-rose-500/10 text-rose-500 font-bold text-xs hover:bg-rose-500 hover:text-white transition-all">
                     <Ban className="w-4 h-4" />
-                    Restrict
+                    Ban User
                   </button>
                 )}
               </div>
