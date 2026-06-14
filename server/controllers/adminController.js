@@ -287,6 +287,19 @@ exports.updateAppStatus = async (req, res) => {
     app.status = status;
     await app.save();
     
+    // Notify Developer
+    if (app.developer) {
+      const isApproved = status === 'approved';
+      await Notification.create({
+        recipient: app.developer,
+        title: isApproved ? '🚀 Application Approved' : '❌ Application Rejected',
+        message: isApproved 
+          ? `Your application "${app.title}" has been approved and is now live on the Baqala platform!` 
+          : `Your application "${app.title}" was not approved. Please review our guidelines and try again.`,
+        type: isApproved ? 'success' : 'danger'
+      });
+    }
+
     res.json({ message: `App status updated to ${status}.`, app });
   } catch (error) {
     console.error('Admin update app status error:', error);
@@ -360,6 +373,14 @@ exports.unbanUser = async (req, res) => {
     user.banUntil = null;
     user.banReason = null;
     await user.save();
+
+    // Notify User
+    await Notification.create({
+      recipient: user._id,
+      title: '🔓 Account Reinstated',
+      message: 'Great news! Your account restrictions have been lifted. You can now access all features of the Baqala platform.',
+      type: 'success'
+    });
 
     res.json({ 
       message: 'User unbanned successfully.',
