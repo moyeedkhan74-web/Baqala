@@ -397,7 +397,7 @@ exports.getAllReports = async (req, res) => {
   try {
     const reports = await Report.find({})
       .populate('reportedBy', 'name')
-      .populate('app', 'title')
+      .populate('app', 'title developer')
       .populate('developer', 'name')
       .sort({ createdAt: -1 });
 

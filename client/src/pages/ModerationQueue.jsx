@@ -209,28 +209,33 @@ const ModerationQueue = () => {
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
-                  <button onClick={() => handleDismiss(report._id)} title="Dismiss Report" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-black text-xs uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
-                    <CheckCircle2 className="w-5 h-5" />
-                    Dismiss
-                  </button>
-                  {report.developer && (
-                    <button onClick={() => setWarningTarget(report)} title="Issue Warning" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-amber-500/10 text-amber-500 font-black text-xs uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all">
-                      <AlertCircle className="w-5 h-5" />
-                      Warn
+                  <div className="flex flex-col sm:flex-row lg:flex-row gap-3 w-full lg:w-auto">
+                    <button onClick={() => handleDismiss(report._id)} title="Dismiss Report" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-black text-xs uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all border border-slate-200 dark:border-white/5">
+                      <CheckCircle2 className="w-5 h-5" />
+                      Dismiss
                     </button>
-                  )}
-                      {report.developer && (
-                        <button onClick={() => setBanTarget({ user: report.developer, reportId: report._id })} title="Ban Developer" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-amber-500/10 text-amber-500 font-black text-xs uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all">
-                          <Ban className="w-5 h-5" />
-                          Restrict
-                        </button>
-                      )}
-                  {report.app && (
-                    <button onClick={() => handleRemoveApp(report.app._id, report._id)} title="Remove App" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-rose-500 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-rose-500/20 hover:scale-105 transition-transform">
-                      <Trash2 className="w-5 h-5" />
-                      Delete App
-                    </button>
-                  )}
+                    {(report.developer || report.app) && (
+                      <button onClick={() => setWarningTarget(report)} title="Issue Warning" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-amber-500/10 text-amber-500 font-black text-xs uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all border border-amber-500/20">
+                        <AlertCircle className="w-5 h-5" />
+                        Warn
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row lg:flex-row gap-3 w-full lg:w-auto">
+                    {report.developer && (
+                      <button onClick={() => setBanTarget({ user: report.developer, reportId: report._id })} title="Ban Developer" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-rose-500/10 text-rose-500 font-black text-xs uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20">
+                        <Ban className="w-5 h-5" />
+                        Restrict
+                      </button>
+                    )}
+                    {report.app && (
+                      <button onClick={() => handleRemoveApp(report.app._id, report._id)} title="Remove App" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-rose-500 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-rose-500/20 hover:scale-105 transition-transform">
+                        <Trash2 className="w-5 h-5" />
+                        Remove App
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
