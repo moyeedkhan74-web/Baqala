@@ -66,7 +66,7 @@ const AdminLayout = ({ children, title = 'Dashboard' }) => {
                   <p className="text-[9px] font-bold text-slate-500 uppercase mt-1 tracking-[0.2em]">{user?.role}</p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-accent-violet flex items-center justify-center text-white font-black border border-white/20 shadow-lg shadow-accent-violet/20">
-                  {user?.name?.charAt(0).toUpperCase()}
+                  {(user?.name?.charAt(0) || 'A').toUpperCase()}
                 </div>
               </div>
             </div>
