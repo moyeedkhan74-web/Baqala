@@ -24,6 +24,7 @@ import {
   Area
 } from 'recharts';
 import api from '../api/axios';
+import { cn } from '../utils/cn.js';
 
 const KPICard = ({ title, value, change, isPositive, icon: Icon, color }) => (
   <div className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-2xl transition-all duration-500 group relative overflow-hidden">
