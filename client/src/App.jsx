@@ -64,12 +64,20 @@ function App() {
         ]);
 
         if (configRes.data.config) {
+          console.log('✅ Config loaded:', configRes.data.config);
+          console.log('📍 Maintenance mode:', configRes.data.config.isMaintenanceMode);
+          console.log('📝 Maintenance message:', configRes.data.config.maintenanceMessage);
           setConfig(configRes.data.config);
+        } else {
+          console.warn('⚠️ Config is null or undefined:', configRes.data);
         }
 
         // Check user role via local auth context (simplified for this check)
         const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
-        if (storedUser?.role === 'admin') setIsAdmin(true);
+        if (storedUser?.role === 'admin') {
+          console.log('👤 User is admin, bypassing maintenance check');
+          setIsAdmin(true);
+        }
 
         setIsLoading(false);
       } catch (err) {
@@ -82,6 +90,12 @@ function App() {
   }, []);
 
   if (!isLoading && config?.isMaintenanceMode && !isAdmin && location.pathname !== '/login') {
+    console.log('🔒 MAINTENANCE MODE ACTIVE', {
+      isLoading,
+      isMaintenanceMode: config?.isMaintenanceMode,
+      isAdmin,
+      pathname: location.pathname
+    });
     return (
       <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6 relative overflow-hidden">
         {/* Animated Background Orbs */}
