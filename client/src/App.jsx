@@ -69,7 +69,21 @@ function App() {
           console.log('📝 Maintenance message:', configRes.data.config.maintenanceMessage);
           setConfig(configRes.data.config);
         } else {
-          console.warn('⚠️ Config is null or undefined:', configRes.data);
+          console.warn('⚠️ Config is null or undefined, using defaults:', configRes.data);
+          // Set default config if fetch fails
+          setConfig({
+            isMaintenanceMode: false,
+            maintenanceMessage: 'Baqala is currently under maintenance.',
+            maxApkSize: 500,
+            maxImageSize: 5,
+            announcement: { enabled: false, text: '', level: 'info' },
+            sections: {
+              trending: true,
+              newReleases: true,
+              categoryBrowsing: true,
+              featuredCarousel: true
+            }
+          });
         }
 
         // Check user role via local auth context (simplified for this check)
@@ -192,6 +206,11 @@ function App() {
     }, 2000);
     return () => clearTimeout(timer);
   };
+
+  // Wait for config to load before rendering main app
+  if (!config) {
+    return <LoadingScreen isLoading={true} error={error} onRetry={handleRetry} />;
+  }
 
   return (
     <>
