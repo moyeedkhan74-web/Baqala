@@ -483,7 +483,7 @@ exports.getApps = async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const [apps, total] = await Promise.all([
       App.find(query)
-        .populate('developer', 'name avatar')
+        .populate('developer', 'name avatar isVerified')
         .sort(sortOption)
         .skip(skip)
         .limit(parseInt(limit))
@@ -550,7 +550,7 @@ exports.searchApps = async (req, res) => {
 exports.getApp = async (req, res) => {
   try {
     const app = await App.findById(req.params.id)
-      .populate('developer', 'name email avatar tagline specialization bio');
+      .populate('developer', 'name email avatar tagline specialization bio isVerified');
     if (!app) return res.status(404).json({ message: 'App not found.' });
     res.json({ app });
   } catch (error) {
