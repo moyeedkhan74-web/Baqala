@@ -4,7 +4,7 @@ const Notification = require('../models/Notification');
 // Fetch recent notifications for logged in user
 exports.getNotifications = async (req, res) => {
   try {
-    const notifications = await Notification.find({ recipient: req.userId })
+    const notifications = await Notification.find({ recipient: req.user._id })
       .sort({ createdAt: -1 })
       .limit(50); // Get latest 50
     res.json({ notifications });
@@ -18,7 +18,7 @@ exports.getNotifications = async (req, res) => {
 exports.markAsRead = async (req, res) => {
   try {
     const notification = await Notification.findOneAndUpdate(
-      { _id: req.params.id, recipient: req.userId },
+      { _id: req.params.id, recipient: req.user._id },
       { isRead: true },
       { new: true }
     );
@@ -38,7 +38,7 @@ exports.markAsRead = async (req, res) => {
 exports.markAllAsRead = async (req, res) => {
   try {
     await Notification.updateMany(
-      { recipient: req.userId, isRead: false },
+      { recipient: req.user._id, isRead: false },
       { isRead: true }
     );
     res.json({ message: 'All notifications marked as read' });
@@ -53,7 +53,7 @@ exports.deleteNotification = async (req, res) => {
   try {
     const notification = await Notification.findOneAndDelete({
       _id: req.params.id,
-      recipient: req.userId
+      recipient: req.user._id
     });
 
     if (!notification) {
