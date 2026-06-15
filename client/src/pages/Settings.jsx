@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import SEOHead from '../components/SEOHead';
+import { cn } from '../utils/cn';
 import { motion } from 'framer-motion';
 import { HiUser, HiCloudUpload, HiCheckCircle, HiExclamationCircle, HiPencilAlt, HiLockClosed } from 'react-icons/hi';
 import toast from 'react-hot-toast';
