@@ -28,7 +28,15 @@ const DeveloperDashboard = () => {
       await api.delete(`/apps/${id}`);
       setApps(apps.filter(app => app._id !== id));
       toast.success('Creation erased successfully');
-    } catch (error) { toast.error('Erasure failed'); }
+    } catch (error) {
+      // If 404, the app was already removed (e.g. by an admin) — clean up the UI
+      if (error.response?.status === 404) {
+        setApps(apps.filter(app => app._id !== id));
+        toast.success('App was already removed by an administrator. Syncing your dashboard.');
+      } else {
+        toast.error('Erasure failed');
+      }
+    }
   };
 
   const totalDownloads = apps.reduce((sum, app) => sum + (app.totalDownloads || 0), 0);
