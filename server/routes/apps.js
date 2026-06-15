@@ -35,7 +35,7 @@ router.get('/categories', getCategories);
 router.get('/my', auth, getMyApps);
 router.get('/', generalLimiter, getApps);
 router.post('/', auth, uploadAll, scanUpload, validateApp, createApp);
-router.post('/upload-apk', auth, uploadApp, uploadApkSecure);
+router.post('/upload-apk', auth, uploadAll, uploadApkSecure);
 
 // --- Action Routes (Specific) ---
 router.post('/init-upload', auth, initUpload);

@@ -8,7 +8,7 @@ const { v4: uuidv4 } = require('uuid');
  */
 exports.uploadApkSecure = async (req, res, next) => {
   try {
-    const file = req.file;
+    const file = req.files && req.files['appFile'] ? req.files['appFile'][0] : req.file;
     if (!file) {
       return res.status(400).json({ message: 'No file uploaded.' });
     }
