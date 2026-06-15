@@ -1,5 +1,5 @@
 const App = require('../models/App');
-const { uploadToSupabase } = require('../utils/supabaseStorage');
+const { uploadToB2 } = require('../utils/b2Storage');
 const { runBackgroundScan } = require('../services/backgroundScan');
 const { v4: uuidv4 } = require('uuid');
 
@@ -21,12 +21,12 @@ exports.uploadApkSecure = async (req, res, next) => {
       return res.status(400).json({ message: 'Invalid file type. Not a valid APK/ZIP signature.' });
     }
 
-    // 2. Upload to Supabase Storage
+    // 2. Upload to Storage (Using B2 to bypass Supabase RLS limits)
     const uuid = uuidv4();
     const safeName = file.originalname.replace(/\s+/g, '_');
-    const storagePath = `pending/${uuid}-${safeName}`;
+    const storagePath = `apps/pending/${uuid}-${safeName}`;
     
-    const uploadResult = await uploadToSupabase(storagePath, file.buffer, file.mimetype);
+    const uploadResult = await uploadToB2(storagePath, file.buffer, file.mimetype, true);
     if (!uploadResult.success) {
       return res.status(500).json({ message: 'Storage upload failed.', error: uploadResult.error });
     }
