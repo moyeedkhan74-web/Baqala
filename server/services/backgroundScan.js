@@ -1,16 +1,16 @@
 const App = require('../models/App');
-const { deleteFromB2, extractB2Key } = require('../utils/b2Storage');
+const User = require('../models/User');
 const { uploadFileToVirusTotal, pollScanResult } = require('./virusScanner');
+const { sendAutoRejectEmail } = require('./emailService');
 
 /**
  * Fire-and-forget background scan.
- * Uploads file to VirusTotal, polls for result, and auto-approves/rejects.
- * NEVER throws — this must never crash the server.
+ * Stage 3 Implementation
  */
 exports.runBackgroundScan = async (appId, buffer, filename) => {
   let app;
   try {
-    app = await App.findById(appId);
+    app = await App.findById(appId).populate('developer', 'email');
     if (!app) {
       console.warn(`[BG_SCAN] App ${appId} not found, aborting scan.`);
       return;
@@ -18,52 +18,59 @@ exports.runBackgroundScan = async (appId, buffer, filename) => {
 
     // 1. Upload to VirusTotal
     const { analysisId, permalink } = await uploadFileToVirusTotal(buffer, filename);
-    app.vtAnalysisId = analysisId;
-    app.vtPermalink = permalink;
+    app.vtScanId = analysisId;
+    app.vtReportUrl = permalink;
     await app.save();
 
     // 2. Poll for results
     const result = await pollScanResult(analysisId);
-    app.scanCompletedAt = new Date();
-    app.vtMaliciousCount = result.malicious || 0;
+    if (!result.completed) {
+       console.error(`[BG_SCAN] Scan did not complete for ${appId}`);
+       return;
+    }
 
-    if (result.completed && result.malicious > 0) {
-      // MALICIOUS — reject and delete file from B2
-      app.scanStatus = 'malicious';
-      app.status = 'rejected';
+    const { malicious = 0, suspicious = 0, undetected = 0 } = result.stats || {};
+    const totalEngines = malicious + suspicious + undetected + (result.stats?.harmless || 0) + (result.stats?.failure || 0);
 
-      // Delete binary from B2
-      const b2Key = extractB2Key(app.fileUrl);
-      if (b2Key) {
-        await deleteFromB2(b2Key, true);
-        console.log(`[BG_SCAN] Deleted malicious file from B2: ${b2Key}`);
+    app.vtMaliciousCount = malicious;
+    app.vtTotalEngines = totalEngines;
+
+    // 3. Decision Logic (Stage 3)
+    if (malicious >= 3) {
+      // AUTO REJECT
+      app.status = 'auto_rejected';
+      app.vtResult = 'malware';
+      app.rejectionReason = 'Automated security scan detected malware (3+ engines flagged).';
+      
+      // Notify Developer
+      if (app.developer && app.developer.email) {
+        await sendAutoRejectEmail(app.developer.email, app.title, app.vtReportUrl);
       }
-
-      console.log(`[BG_SCAN] MALICIOUS: App ${appId} rejected (${result.malicious} engines flagged)`);
-    } else if (result.completed && result.malicious === 0) {
-      // CLEAN — approve
-      app.scanStatus = 'clean';
-      app.status = 'approved';
-      console.log(`[BG_SCAN] CLEAN: App ${appId} approved`);
+    } else if (malicious >= 1 && malicious <= 2) {
+      // SUSPICIOUS
+      app.status = 'pending_review';
+      app.vtResult = 'suspicious';
     } else {
-      // Scan timed out — approve anyway
-      app.scanStatus = 'scan_failed';
-      app.status = 'approved';
-      console.warn(`[BG_SCAN] Scan timed out for App ${appId}, approved anyway.`);
+      // CLEAN
+      app.status = 'pending_review';
+      app.vtResult = 'clean';
     }
 
     await app.save();
+    
+    // 4. Supabase Realtime Event (Stage 3) - Notify Admin Dashboard
+    const supabase = require('../config/supabase');
+    supabase.channel('admin_scans')
+      .send({
+        type: 'broadcast',
+        event: 'scan_complete',
+        payload: { appId: app._id, status: app.status, vtResult: app.vtResult }
+      })
+      .catch(err => console.error('[REALTIME_ERROR]:', err.message));
+
+    console.log(`[BG_SCAN] Complete for ${appId}. Result: ${app.vtResult}, Status: ${app.status}`);
+
   } catch (error) {
     console.error('[BG_SCAN] Background scan error:', error.message);
-    try {
-      if (!app) app = await App.findById(appId);
-      if (app) {
-        app.scanStatus = 'scan_failed';
-        app.status = 'approved';
-        await app.save();
-      }
-    } catch (saveError) {
-      console.error('[BG_SCAN] Failed to save error state:', saveError.message);
-    }
   }
 };

@@ -50,18 +50,20 @@ const UploadApp = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Stage 1 - Client-side pre-checks
     if (!files.appFile || !files.icon) return toast.error('App file and icon are required.');
     
-    // Check limits
-    if (config) {
-      const maxApkSizeBytes = config.maxApkSize * 1024 * 1024;
-      if (files.appFile.size > maxApkSizeBytes) {
-        return toast.error(`App file exceeds the platform limit of ${config.maxApkSize}MB`);
-      }
-      const maxImageSizeBytes = config.maxImageSize * 1024 * 1024;
-      if (files.icon.size > maxImageSizeBytes) {
-        return toast.error(`Icon exceeds the platform limit of ${config.maxImageSize}MB`);
-      }
+    // Check file extension
+    const fileName = files.appFile.name.toLowerCase();
+    if (!fileName.endsWith('.apk')) {
+      return toast.error('Currently, only .apk files are supported for secure deployment.');
+    }
+
+    // Check file size (Stage 1: check 100MB)
+    const MAX_SIZE = 100 * 1024 * 1024;
+    if (files.appFile.size > MAX_SIZE) {
+      return toast.error('File exceeds 100MB limit for secure scanning.');
     }
 
     setLoading(true);
@@ -69,99 +71,41 @@ const UploadApp = () => {
     const toastId = 'upload';
     
     try {
-      // --- PHASE 1: CHUNKED PAYLOAD TRANSMISSION ---
-      toast.loading('Initializing Neural Link (Cloud Upload)...', { id: toastId });
+      toast.loading('Initializing Secure Pipeline...', { id: toastId });
       
-      const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
-      const file = files.appFile;
-      const totalPartCount = Math.ceil(file.size / CHUNK_SIZE);
-      
-      // 1. Initialize Upload
-      const initRes = await api.post('/apps/init-upload', { 
-        fileName: file.name,
-        contentType: file.type || 'application/octet-stream'
-      });
-      const { uploadId, filePath } = initRes.data;
-      
-      // 2. Upload Chunks
-      const parts = [];
-      for (let i = 0; i < totalPartCount; i++) {
-        const start = i * CHUNK_SIZE;
-        const end = Math.min(file.size, start + CHUNK_SIZE);
-        const chunk = file.slice(start, end);
-        
-        const chunkFormData = new FormData();
-        chunkFormData.append('chunk', chunk, 'chunk.bin');
-        chunkFormData.append('chunkIndex', i);
-        chunkFormData.append('uploadId', uploadId);
-        chunkFormData.append('filePath', filePath);
-        
-        toast.loading(`Transmitting Payload Part ${i + 1}/${totalPartCount}...`, { id: toastId });
-        
-        let chunkRes;
-        let retries = 3;
-        while (retries > 0) {
-          try {
-            chunkRes = await api.post('/apps/upload-chunk', chunkFormData, {
-              onUploadProgress: (progressEvent) => {
-                const chunkProgress = (progressEvent.loaded / progressEvent.total) * (1 / totalPartCount) * 70;
-                setUploadProgress(prev => Math.min(prev + chunkProgress, 99));
-              }
-            });
-            break; // Success!
-          } catch (err) {
-            retries--;
-            if (retries === 0) throw err;
-            console.warn(`Chunk ${i+1} failed, retrying... (${retries} left)`);
-            await new Promise(r => setTimeout(r, 2000)); // Wait before retry
-          }
-        }
-        
-        parts.push({ ETag: chunkRes.data.etag, PartNumber: chunkRes.data.partNumber });
-        setUploadProgress((i + 1) / totalPartCount * 70); // Up to 70% for binary
-      }
-      
-      // 3. Finalize Binary
-      toast.loading('Synchronizing Cloud State...', { id: toastId });
-      const combineRes = await api.post('/apps/combine-chunks', {
-        uploadId,
-        filePath,
-        parts,
-        fileName: file.name
-      });
-      const finalBinaryUrl = combineRes.data.url;
-      setUploadProgress(80);
-
-      // --- PHASE 2: VISUAL ASSETS & METADATA ---
-      toast.loading('Optimizing Visual Assets...', { id: toastId });
-      
-      const finalFormData = new FormData();
-      // Form fields
+      const formDataToSend = new FormData();
+      // Add all form data
       Object.keys(formData).forEach(key => {
         if (key === 'category') {
-          // Properly append array elements for multipart/form-data
           const cats = Array.isArray(formData.category) ? formData.category : [formData.category];
-          cats.forEach(cat => finalFormData.append('category', cat));
+          cats.forEach(cat => formDataToSend.append('category', cat));
         } else {
-          finalFormData.append(key, formData[key]);
+          formDataToSend.append(key, formData[key]);
         }
       });
-      
-      // Metadata from chunked upload
-      finalFormData.append('fileUrl', finalBinaryUrl);
-      finalFormData.append('fileName', file.name);
-      finalFormData.append('fileSize', file.size);
-      
-      // Raw files (icon & screenshots) to be processed by 'sharp' on server memory
-      finalFormData.append('icon', files.icon);
-      const maxScreenshots = files.screenshots.slice(0, 5);
-      maxScreenshots.forEach(ss => finalFormData.append('screenshots', ss));
 
-      await api.post('/apps', finalFormData);
+      // Add files
+      formDataToSend.append('appFile', files.appFile);
+      formDataToSend.append('icon', files.icon);
+      files.screenshots.forEach(ss => formDataToSend.append('screenshots', ss));
+
+      // Stage 2 - Upload to Secure API
+      const response = await api.post('/apps/upload-apk', formDataToSend, {
+        onUploadProgress: (progressEvent) => {
+          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(progress);
+          if (progress === 100) {
+            toast.loading('🔍 Phase 2: Biological Scanning & Signature Verification...', { id: toastId });
+          }
+        }
+      });
 
       setUploadProgress(100);
-      toast.success('Project deployed PERFECTLY! Verified on Global Cloud.', { id: toastId });
-      navigate('/developer');
+      toast.success('Upload complete! Your app is now being scanned by VirusTotal.', { id: toastId, duration: 5000 });
+      
+      // Delay navigation so they can see the success message
+      setTimeout(() => navigate('/developer'), 2000);
+
     } catch (e) {
       console.error('Deployment Crash:', e);
       toast.error(e.response?.data?.message || 'Deployment failed. Check connection or file formats.', { id: toastId });

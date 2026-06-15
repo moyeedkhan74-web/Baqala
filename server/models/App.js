@@ -85,8 +85,8 @@ const appSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'approved', 'rejected'],
-    default: 'approved'
+    enum: ['pending_scan', 'pending_review', 'approved', 'rejected', 'auto_rejected'],
+    default: 'pending_scan'
   },
   rejectionReason: {
     type: String,
@@ -100,15 +100,27 @@ const appSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  scanStatus: {
-    type: String,
-    enum: ['not_scanned', 'scanning', 'clean', 'malicious', 'scan_failed'],
-    default: 'not_scanned'
+  // VirusTotal / Security Pipeline
+  vtResult: { 
+    type: String, 
+    enum: ['clean', 'suspicious', 'malware', null], 
+    default: null 
   },
-  scanCompletedAt: { type: Date, default: null },
-  vtAnalysisId: { type: String, default: null },
-  vtPermalink: { type: String, default: null },
+  vtScanId: { type: String, default: null }, // Analysis ID for polling
+  vtReportUrl: { type: String, default: null }, // Full permalink
   vtMaliciousCount: { type: Number, default: 0 },
+  vtTotalEngines: { type: Number, default: 0 },
+  
+  // Moderation
+  reviewedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  reviewedAt: {
+    type: Date,
+    default: null
+  },
   banner: { type: String, default: '' },
   fileHash: { type: String, default: null }
 }, {

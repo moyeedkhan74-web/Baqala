@@ -276,26 +276,40 @@ exports.deleteApp = async (req, res) => {
 // PATCH /api/admin/apps/:id/status
 exports.updateAppStatus = async (req, res) => {
   try {
-    const { status } = req.body;
-    if (!['approved', 'rejected', 'pending'].includes(status)) {
+    const { status, rejectionReason } = req.body;
+    const validStatuses = ['approved', 'rejected', 'pending_review', 'pending_scan', 'auto_rejected'];
+    if (!validStatuses.includes(status)) {
       return res.status(400).json({ message: 'Invalid status.' });
     }
     
-    const app = await App.findById(req.params.id);
+    const app = await App.findById(req.params.id).populate('developer', 'name email');
     if (!app) return res.status(404).json({ message: 'App not found.' });
 
+    const previousStatus = app.status;
     app.status = status;
+    app.rejectionReason = rejectionReason || '';
+    app.reviewedBy = req.user._id;
+    app.reviewedAt = new Date();
     await app.save();
     
     // Notify Developer
-    if (app.developer) {
+    const { sendApprovalEmail, sendAdminRejectEmail } = require('../services/emailService');
+    
+    if (app.developer && app.developer.email) {
+      if (status === 'approved' && previousStatus !== 'approved') {
+        await sendApprovalEmail(app.developer.email, app.title);
+      } else if (status === 'rejected') {
+        await sendAdminRejectEmail(app.developer.email, app.title, app.rejectionReason);
+      }
+
+      // Also send In-App Notification
       const isApproved = status === 'approved';
       await Notification.create({
-        recipient: app.developer,
+        recipient: app.developer._id,
         title: isApproved ? '🚀 Application Approved' : '❌ Application Rejected',
         message: isApproved 
           ? `Your application "${app.title}" has been approved and is now live on the Baqala platform!` 
-          : `Your application "${app.title}" was not approved. Please review our guidelines and try again.`,
+          : `Your application "${app.title}" was not approved. Reason: ${app.rejectionReason}`,
         type: isApproved ? 'success' : 'danger'
       });
     }

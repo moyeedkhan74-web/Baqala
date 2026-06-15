@@ -4,6 +4,7 @@ const {
   proxyDownload, getMyApps, uploadAppImages, getCategories, uploadPlaceholderImages,
   removeScreenshot, removeAllScreenshots, uploadTemp, searchApps
 } = require('../controllers/appController');
+const { uploadApkSecure } = require('../controllers/secureUploadController');
 const { initUpload, uploadChunk, combineChunks } = require('../controllers/chunkController');
 const { auth, optionalAuth, softAuth } = require('../middleware/auth');
 const requireOwner = require('../middleware/requireOwner');
@@ -34,6 +35,7 @@ router.get('/categories', getCategories);
 router.get('/my', auth, getMyApps);
 router.get('/', generalLimiter, getApps);
 router.post('/', auth, uploadAll, scanUpload, validateApp, createApp);
+router.post('/upload-apk', auth, uploadApp, uploadApkSecure);
 
 // --- Action Routes (Specific) ---
 router.post('/init-upload', auth, initUpload);

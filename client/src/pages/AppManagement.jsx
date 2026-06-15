@@ -47,11 +47,11 @@ const AppManagement = () => {
     fetchApps();
   }, []);
 
-  const updateStatus = async (id, status) => {
+  const updateStatus = async (id, status, rejectionReason = '') => {
     const loadingToast = toast.loading(`Marking app as ${status}...`);
     try {
-      await api.patch(`/admin/apps/${id}/status`, { status });
-      setApps(apps.map(app => app._id === id ? { ...app, status } : app));
+      await api.patch(`/admin/apps/${id}/status`, { status, rejectionReason });
+      setApps(apps.map(app => app._id === id ? { ...app, status, rejectionReason } : app));
       toast.success(`App successfully ${status}`, { id: loadingToast });
     } catch (error) {
       console.error('Failed to update status:', error);
@@ -169,9 +169,8 @@ const AppManagement = () => {
                 <tr className="bg-slate-50 dark:bg-white/2 border-b border-slate-200 dark:border-white/5">
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">App Name</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Developer</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Category</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Security (VT)</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Downloads</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
                 </tr>
               </thead>
@@ -202,9 +201,33 @@ const AppManagement = () => {
                       </p>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="px-3 py-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-black uppercase text-slate-600 dark:text-slate-400">
-                        {Array.isArray(app.category) ? app.category[0] : (app.category || 'App')}
-                      </span>
+                      {app.vtResult ? (
+                        <div className="flex flex-col gap-1">
+                          <div className={cn(
+                            "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border text-[9px] font-black uppercase tracking-wider w-fit",
+                            app.vtResult === 'clean' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
+                            app.vtResult === 'suspicious' ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
+                            "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                          )}>
+                            {app.vtResult}
+                          </div>
+                          <p className="text-[10px] font-bold text-slate-500">
+                             {app.vtMaliciousCount} / {app.vtTotalEngines || 72} engines
+                          </p>
+                          {app.vtReportUrl && (
+                            <a 
+                              href={app.vtReportUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-[9px] font-black text-accent-violet hover:underline flex items-center gap-1"
+                            >
+                              <Eye className="w-3 h-3" /> Report
+                            </a>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-[10px] font-black text-slate-400 italic">Scanning...</span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-1.5">
@@ -213,18 +236,9 @@ const AppManagement = () => {
                           getStatusStyles(app.status)
                         )}>
                           <div className="w-1.5 h-1.5 rounded-full bg-current" />
-                          {app.status}
+                          {app.status.replace('_', ' ')}
                         </div>
-                        {app.isFeatured && (
-                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-violet/10 text-accent-violet border border-accent-violet/20 text-[10px] font-black uppercase tracking-wider w-fit shadow-sm shadow-accent-violet/10">
-                            <Star className="w-3 h-3 fill-current" />
-                            Featured
-                          </div>
-                        )}
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="text-sm font-black dark:text-white">{(app.totalDownloads || 0).toLocaleString()}</p>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
@@ -252,28 +266,25 @@ const AppManagement = () => {
                           <Star className={cn("w-5 h-5", app.isFeatured && "fill-current", togglingId === app._id && "animate-spin")} />
                         </button>
                         <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
-                        {app.status !== 'approved' && (
+                        
+                        {(app.status !== 'approved' && app.status !== 'auto_rejected') && (
                           <button onClick={() => updateStatus(app._id, 'approved')} title="Approve" className="p-2.5 rounded-xl text-emerald-500 hover:bg-emerald-500/10 transition-colors">
                             <CheckCircle2 className="w-5 h-5" />
                           </button>
                         )}
-                        {app.status !== 'rejected' && (
-                          <button onClick={() => updateStatus(app._id, 'rejected')} title="Reject" className="p-2.5 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-colors">
+                        {(app.status !== 'rejected' && app.status !== 'auto_rejected') && (
+                          <button onClick={() => {
+                            const reason = prompt("Enter rejection reason for the developer:");
+                            if (reason) updateStatus(app._id, 'rejected', reason);
+                          }} title="Reject" className="p-2.5 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-colors">
                             <XCircle className="w-5 h-5" />
                           </button>
                         )}
+                        
                         <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
                         <a href={`/app/${app._id}`} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
                           <Eye className="w-5 h-5" />
                         </a>
-                        <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
-                        <button 
-                          onClick={() => setWarningTarget(app)}
-                          title="Issue Warning" 
-                          className="p-2.5 rounded-xl text-slate-400 hover:text-amber-500 hover:bg-amber-500/10 transition-colors"
-                        >
-                          <AlertTriangle className="w-5 h-5" />
-                        </button>
                         <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
                         <button 
                           onClick={() => setDeleteTarget(app)}
