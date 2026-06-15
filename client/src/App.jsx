@@ -111,6 +111,26 @@ function App() {
 
   useEffect(() => {
     initializeApp();
+
+    // Poll config every 30 seconds to sync maintenance mode state in real-time
+    const pollInterval = setInterval(async () => {
+      try {
+        const { data } = await api.get('/config');
+        setConfig(prev => {
+          // If no previous config, set it entirely
+          if (!prev) return data.config;
+          // Otherwise safely update it while keeping local UI stable
+          return {
+            ...prev,
+            ...data.config
+          };
+        });
+      } catch (err) {
+        // Silently ignore background polling errors
+      }
+    }, 30000);
+
+    return () => clearInterval(pollInterval);
   }, []);
 
   return (

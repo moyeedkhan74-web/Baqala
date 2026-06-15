@@ -15,6 +15,8 @@ const ConfigSchema = new mongoose.Schema({
   // Maintenance & System
   isMaintenanceMode: { type: Boolean, default: false },
   maintenanceMessage: { type: String, default: 'Baqala is currently under maintenance. We will be back shortly!' },
+  maintenanceActivatedBy: { type: String, default: '' },
+  maintenanceActivatedAt: { type: Date, default: null },
 
   // Section Controls (for Home page)
   sections: {

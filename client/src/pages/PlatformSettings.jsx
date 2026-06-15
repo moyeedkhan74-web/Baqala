@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AdminLayout from '../components/admin/AdminLayout';
 import { 
   Settings as SettingsIcon, 
@@ -10,7 +10,10 @@ import {
   AlertTriangle,
   Server,
   Loader2,
-  Save
+  Save,
+  Zap,
+  Clock,
+  User
 } from 'lucide-react';
 import { cn } from '../utils/cn.js';
 import api from '../api/axios';
@@ -20,6 +23,8 @@ const PlatformSettings = () => {
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [togglingMaintenance, setTogglingMaintenance] = useState(false);
+  const pollRef = useRef(null);
 
   const fetchConfig = async () => {
     try {
@@ -33,7 +38,27 @@ const PlatformSettings = () => {
     }
   };
 
-  useEffect(() => { fetchConfig(); }, []);
+  useEffect(() => {
+    fetchConfig();
+
+    // Poll every 5 seconds so all admin tabs stay in sync
+    pollRef.current = setInterval(() => {
+      api.get('/config').then(({ data }) => {
+        setConfig(prev => {
+          // Only update maintenance-related fields from server to avoid overwriting local edits
+          if (!prev) return data.config;
+          return {
+            ...prev,
+            isMaintenanceMode: data.config.isMaintenanceMode,
+            maintenanceActivatedBy: data.config.maintenanceActivatedBy,
+            maintenanceActivatedAt: data.config.maintenanceActivatedAt,
+          };
+        });
+      }).catch(() => {});
+    }, 5000);
+
+    return () => clearInterval(pollRef.current);
+  }, []);
 
   const handleUpdate = async (updates) => {
     // Optimistic update
@@ -57,6 +82,38 @@ const PlatformSettings = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  // Instant maintenance toggle — saves immediately, no "Save" needed
+  const toggleMaintenance = async () => {
+    setTogglingMaintenance(true);
+    try {
+      const { data } = await api.post('/config/maintenance', {
+        maintenanceMessage: config.maintenanceMessage
+      });
+      setConfig(data.config);
+      toast.success(
+        data.config.isMaintenanceMode
+          ? '🔒 Lockdown activated — platform is now in maintenance mode'
+          : '🔓 Lockdown disabled — platform is back online',
+        { duration: 4000 }
+      );
+    } catch (error) {
+      toast.error('Failed to toggle maintenance mode');
+      fetchConfig(); // Re-sync from server
+    } finally {
+      setTogglingMaintenance(false);
+    }
+  };
+
+  const formatTime = (dateStr) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return d.toLocaleString('en-US', {
+      month: 'short', day: 'numeric',
+      hour: 'numeric', minute: '2-digit',
+      hour12: true
+    });
   };
 
   if (loading) {
@@ -204,20 +261,56 @@ const PlatformSettings = () => {
           </div>
         </div>
 
-        {/* Dangerous Zone */}
-        <div className="bg-rose-500/5 rounded-[2.5rem] border-2 border-dashed border-rose-500/20 p-8">
+        {/* Dangerous Zone — Maintenance Mode */}
+        <div className={cn(
+          "rounded-[2.5rem] border-2 border-dashed p-8 transition-all duration-500",
+          config.isMaintenanceMode
+            ? "bg-rose-500/10 border-rose-500/40 shadow-lg shadow-rose-500/5"
+            : "bg-rose-500/5 border-rose-500/20"
+        )}>
           <div className="flex items-center gap-4 mb-8 text-rose-500">
             <AlertTriangle className="w-8 h-8" />
-            <div>
+            <div className="flex-1">
               <h2 className="text-lg font-black leading-tight">Maintenance Mode</h2>
               <p className="text-xs font-bold uppercase mt-1">Completely disable the public platform</p>
             </div>
+            {/* Live sync indicator */}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-white/80 dark:bg-white/5 rounded-full border border-slate-200 dark:border-white/10">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Live Sync</span>
+            </div>
           </div>
+
+          {/* Active maintenance banner */}
+          {config.isMaintenanceMode && (
+            <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center gap-4">
+              <div className="w-10 h-10 bg-rose-500 rounded-xl flex items-center justify-center text-white shrink-0">
+                <Zap className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest">Lockdown Active</p>
+                <div className="flex items-center gap-3 mt-1 text-[10px] text-rose-500/70 font-bold">
+                  {config.maintenanceActivatedBy && (
+                    <span className="flex items-center gap-1">
+                      <User className="w-3 h-3" />
+                      {config.maintenanceActivatedBy}
+                    </span>
+                  )}
+                  {config.maintenanceActivatedAt && (
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {formatTime(config.maintenanceActivatedAt)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
           
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-4 flex-1">
               <p className="text-xs text-rose-500/70 font-bold max-w-md italic">
-                Warning: Enabling maintenance mode will block all users and developers from accessing Baqala until disabled. Admin portal remains active.
+                Warning: Enabling maintenance mode will block all users and developers from accessing Baqala until disabled. Admin portal remains active. All admins are synced in real-time.
               </p>
               <textarea 
                 value={config.maintenanceMessage}
@@ -227,14 +320,16 @@ const PlatformSettings = () => {
               />
             </div>
             <button 
-              onClick={() => handleUpdate({ isMaintenanceMode: !config.isMaintenanceMode })}
+              onClick={toggleMaintenance}
+              disabled={togglingMaintenance}
               className={cn(
-                "px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl transition-all hover:scale-105 active:scale-95",
+                "px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:hover:scale-100",
                 config.isMaintenanceMode 
                   ? "bg-emerald-500 text-white shadow-emerald-500/20" 
                   : "bg-rose-500 text-white shadow-rose-500/20"
               )}
             >
+              {togglingMaintenance && <Loader2 className="w-4 h-4 animate-spin" />}
               {config.isMaintenanceMode ? 'Disable Lockdown' : 'Initialize Lockdown'}
             </button>
           </div>

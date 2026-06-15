@@ -46,3 +46,43 @@ exports.updateConfig = async (req, res) => {
     res.status(500).json({ message: 'Server error updating configuration.' });
   }
 };
+
+// POST /api/config/maintenance
+// Admin only — instantly toggles maintenance mode and saves
+exports.toggleMaintenance = async (req, res) => {
+  try {
+    let config = await Config.findOne();
+    if (!config) {
+      config = new Config({});
+    }
+
+    const newState = !config.isMaintenanceMode;
+
+    config.isMaintenanceMode = newState;
+    if (req.body.maintenanceMessage) {
+      config.maintenanceMessage = req.body.maintenanceMessage;
+    }
+
+    if (newState) {
+      // Activating maintenance — record who and when
+      config.maintenanceActivatedBy = req.user?.name || req.user?.email || 'Unknown Admin';
+      config.maintenanceActivatedAt = new Date();
+    } else {
+      // Deactivating — clear audit
+      config.maintenanceActivatedBy = '';
+      config.maintenanceActivatedAt = null;
+    }
+
+    await config.save();
+
+    console.log(`🔒 Maintenance ${newState ? 'ENABLED' : 'DISABLED'} by ${config.maintenanceActivatedBy}`);
+
+    res.json({
+      message: `Maintenance mode ${newState ? 'enabled' : 'disabled'}.`,
+      config
+    });
+  } catch (error) {
+    console.error('Toggle maintenance error:', error);
+    res.status(500).json({ message: 'Server error toggling maintenance mode.' });
+  }
+};
