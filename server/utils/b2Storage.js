@@ -48,10 +48,10 @@ const sanitizePath = (path) => {
     .join('/');
 };
 
-const publicS3 = new S3Client(s3Config);
+const binaryS3 = new S3Client(s3Config);
 
-// Private Client (New Account - NOW FOR IMAGES)
-const privateS3 = new S3Client({
+// Image Client (New Account - NOW FOR IMAGES)
+const imageS3 = new S3Client({
   ...s3Config,
   region: process.env.B2_PRIVATE_REGION || 'us-east-005',
   endpoint: `https://${process.env.B2_PRIVATE_ENDPOINT}`,
@@ -61,14 +61,7 @@ const privateS3 = new S3Client({
   },
 });
 
-// --- HELPERS (INVERSED AS PER USER REQUEST) ---
-// We swap the roles: 
-// isPrivate=false (Images) -> now uses Private Account variables (privateS3 / B2_PRIVATE_BUCKET)
-// isPrivate=true (Binaries/Apps) -> now uses Public Account variables (publicS3 / B2_BUCKET_NAME)
-
-const getClient = (isPrivate) => isPrivate ? publicS3 : privateS3;
-const getBucket = (isPrivate) => isPrivate ? process.env.B2_BUCKET_NAME : process.env.B2_PRIVATE_BUCKET;
-const getEndpoint = (isPrivate) => isPrivate ? process.env.B2_ENDPOINT : process.env.B2_PRIVATE_ENDPOINT;
+// --- HELPERS ---
 
 /**
  * Robustly extracts the B2 Key from any given URL (Direct or Proxy)
@@ -125,76 +118,67 @@ exports.extractB2Key = (url) => {
 
 // --- ACTIONS ---
 
-exports.uploadToB2 = async (reqOrFilePath, fileBuffer, contentType, isPrivate = false) => {
+const doUpload = async (s3, bucket, endpoint, scrubbedPath, fileBuffer, contentType, isBinary) => {
+  const command = new PutObjectCommand({
+    Bucket: bucket,
+    Key: scrubbedPath,
+    Body: fileBuffer,
+    ContentType: contentType,
+    ContentDisposition: (isBinary || scrubbedPath.startsWith('avatars/')) ? 'attachment' : 'inline',
+    CacheControl: (isBinary || scrubbedPath.startsWith('avatars/')) ? 'no-cache' : 'public, max-age=31536000'
+  });
+  await s3.send(command);
+  
+  const baseUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 5000}`;
+  let url;
+  if (isBinary) {
+    url = `https://${endpoint}/${bucket}/${scrubbedPath}`;
+  } else {
+    url = `${baseUrl}/api/assets/${scrubbedPath}`;
+  }
+  return { success: true, url, path: scrubbedPath };
+};
+
+exports.uploadImage = async (reqOrFilePath, fileBuffer, contentType) => {
   try {
-    const s3 = getClient(isPrivate);
     const scrubbedPath = sanitizePath(typeof reqOrFilePath === 'string' ? reqOrFilePath : '');
-    
-    // 1. Determine Bucket: If it's in the avatars folder, use the dedicated bucket
-    let bucket = getBucket(isPrivate);
-    if (scrubbedPath.startsWith('avatars/')) {
-        bucket = process.env.B2_AVATAR_BUCKET || 'baqala.avatar';
-    }
-    
-    const endpoint = getEndpoint(isPrivate);
-    
-    console.log(`[B2_ROUTER] Routing ${scrubbedPath} to Bucket: ${bucket} at Endpoint: ${endpoint}`);
-
-    if (!bucket || !endpoint) {
-      throw new Error(`B2 configuration missing for target: ${scrubbedPath}`);
-    }
-
-    const command = new PutObjectCommand({
-      Bucket: bucket,
-      Key: scrubbedPath,
-      Body: fileBuffer,
-      ContentType: contentType,
-      ContentDisposition: (isPrivate || scrubbedPath.startsWith('apps/') || scrubbedPath.startsWith('avatars/')) ? 'attachment' : 'inline',
-      CacheControl: (isPrivate || scrubbedPath.startsWith('apps/') || scrubbedPath.startsWith('avatars/')) ? 'no-cache' : 'public, max-age=31536000'
-    });
-
-    await s3.send(command);
-    
-    // CDN/Proxy Configuration
-    // Use Render's native proxy endpoint instead of broken Cloudflare CDN to ensure images appear
-    const baseUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 5000}`;
-
-    let url;
-    if (scrubbedPath.toLowerCase().includes('apps/')) {
-      // Binaries still use direct B2 for signed/attachment downloads
-      url = `https://${process.env.B2_ENDPOINT}/${process.env.B2_BUCKET_NAME}/${scrubbedPath}`;
-    } else if (!isPrivate) {
-      // Proxy images via backend to handle private bucket auth transparently
-      url = `${baseUrl}/api/assets/${scrubbedPath}`;
-    } else {
-      url = `https://${endpoint}/${bucket}/${scrubbedPath}`;
-    }
-
-    return { success: true, url, path: scrubbedPath };
+    let bucket = scrubbedPath.startsWith('avatars/') ? (process.env.B2_AVATAR_BUCKET || 'baqala.avatar') : process.env.B2_PRIVATE_BUCKET;
+    return await doUpload(imageS3, bucket, process.env.B2_PRIVATE_ENDPOINT, scrubbedPath, fileBuffer, contentType, false);
   } catch (error) {
-    console.error(`B2 ${isPrivate ? 'Private' : 'Public'} Upload Error:`, error.message);
+    console.error(`B2 Image Upload Error:`, error.message);
     return { success: false, error: error.message };
   }
 };
 
-exports.deleteFromB2 = async (filePath, isPrivate = false) => {
+exports.uploadBinary = async (reqOrFilePath, fileBuffer, contentType) => {
   try {
-    const s3 = getClient(isPrivate);
-    
-    let bucket = getBucket(isPrivate);
-    if (filePath && filePath.startsWith('avatars/')) {
-        bucket = process.env.B2_AVATAR_BUCKET || 'baqala.avatar';
-    }
+    const scrubbedPath = sanitizePath(typeof reqOrFilePath === 'string' ? reqOrFilePath : '');
+    return await doUpload(binaryS3, process.env.B2_BUCKET_NAME, process.env.B2_ENDPOINT, scrubbedPath, fileBuffer, contentType, true);
+  } catch (error) {
+    console.error(`B2 Binary Upload Error:`, error.message);
+    return { success: false, error: error.message };
+  }
+};
 
-    const command = new DeleteObjectCommand({
-      Bucket: bucket,
-      Key: filePath,
-    });
-
-    await s3.send(command);
+exports.deleteImage = async (filePath) => {
+  try {
+    let bucket = filePath && filePath.startsWith('avatars/') ? (process.env.B2_AVATAR_BUCKET || 'baqala.avatar') : process.env.B2_PRIVATE_BUCKET;
+    const command = new DeleteObjectCommand({ Bucket: bucket, Key: filePath });
+    await imageS3.send(command);
     return { success: true };
   } catch (error) {
-    console.error(`B2 ${isPrivate ? 'Private' : 'Public'} Delete Error:`, error.message);
+    console.error(`B2 Image Delete Error:`, error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+exports.deleteBinary = async (filePath) => {
+  try {
+    const command = new DeleteObjectCommand({ Bucket: process.env.B2_BUCKET_NAME, Key: filePath });
+    await binaryS3.send(command);
+    return { success: true };
+  } catch (error) {
+    console.error(`B2 Binary Delete Error:`, error.message);
     return { success: false, error: error.message };
   }
 };
@@ -211,7 +195,7 @@ exports.getDownloadUrl = async (filePathOrUrl, fileName) => {
     if (!key) throw new Error('Invalid file path or URL for download');
 
     // With the account swap, binaries now live in the OLD account (publicS3 / B2_BUCKET_NAME)
-    const s3 = publicS3;
+    const s3 = binaryS3;
     const bucket = process.env.B2_BUCKET_NAME;
 
     console.log(`[B2_SIGN] Signing Key: "${key}" in Bucket: "${bucket}" for file: "${fileName || 'auto'}"`);
@@ -235,10 +219,10 @@ exports.getDownloadUrl = async (filePathOrUrl, fileName) => {
 
 // --- Multipart Upload Support (Always Private for Apps) ---
 
-exports.startMultipartUpload = async (filePath, contentType, isPrivate = true) => {
+exports.startMultipartUpload = async (filePath, contentType) => {
   try {
-    const s3 = getClient(isPrivate);
-    const bucket = getBucket(isPrivate);
+    const s3 = binaryS3;
+    const bucket = process.env.B2_BUCKET_NAME;
     const scrubbedPath = sanitizePath(filePath);
 
     const command = new CreateMultipartUploadCommand({
@@ -255,10 +239,10 @@ exports.startMultipartUpload = async (filePath, contentType, isPrivate = true) =
   }
 };
 
-exports.uploadPart = async (filePath, uploadId, partNumber, body, isPrivate = true) => {
+exports.uploadPart = async (filePath, uploadId, partNumber, body) => {
   try {
-    const s3 = getClient(isPrivate);
-    const bucket = getBucket(isPrivate);
+    const s3 = binaryS3;
+    const bucket = process.env.B2_BUCKET_NAME;
 
     const command = new UploadPartCommand({
       Bucket: bucket,
@@ -275,11 +259,11 @@ exports.uploadPart = async (filePath, uploadId, partNumber, body, isPrivate = tr
   }
 };
 
-exports.completeMultipartUpload = async (filePath, uploadId, parts, isPrivate = true) => {
+exports.completeMultipartUpload = async (filePath, uploadId, parts) => {
   try {
-    const s3 = getClient(isPrivate);
-    const bucket = getBucket(isPrivate);
-    const endpoint = getEndpoint(isPrivate);
+    const s3 = binaryS3;
+    const bucket = process.env.B2_BUCKET_NAME;
+    const endpoint = process.env.B2_ENDPOINT;
     const scrubbedPath = sanitizePath(filePath);
 
     const command = new CompleteMultipartUploadCommand({
@@ -293,16 +277,7 @@ exports.completeMultipartUpload = async (filePath, uploadId, parts, isPrivate = 
     await s3.send(command);
     
     // CDN/Proxy Configuration
-    const baseUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 5000}`;
-
-    let url;
-    if (scrubbedPath.toLowerCase().includes('apps/')) {
-      url = `https://${process.env.B2_ENDPOINT}/${process.env.B2_BUCKET_NAME}/${scrubbedPath}`;
-    } else if (!isPrivate) {
-      url = `${baseUrl}/api/assets/${scrubbedPath}`;
-    } else {
-      url = `https://${endpoint}/${bucket}/${scrubbedPath}`;
-    }
+    let url = `https://${endpoint}/${bucket}/${scrubbedPath}`;
     
     return { success: true, url };
   } catch (error) {
@@ -311,10 +286,10 @@ exports.completeMultipartUpload = async (filePath, uploadId, parts, isPrivate = 
   }
 };
 
-exports.abortMultipartUpload = async (filePath, uploadId, isPrivate = true) => {
+exports.abortMultipartUpload = async (filePath, uploadId) => {
   try {
-    const s3 = getClient(isPrivate);
-    const bucket = getBucket(isPrivate);
+    const s3 = binaryS3;
+    const bucket = process.env.B2_BUCKET_NAME;
 
     const command = new AbortMultipartUploadCommand({
       Bucket: bucket,

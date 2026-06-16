@@ -16,6 +16,10 @@ const auth = async (req, res, next) => {
       return res.status(401).json({ message: 'Token is invalid. User not found.' });
     }
 
+    if (decoded.tokenVersion !== user.tokenVersion) {
+      return res.status(401).json({ message: 'Session expired or invalidated. Please log in again.' });
+    }
+
     if (user.isBanned) {
       if (user.banUntil && new Date(user.banUntil) <= new Date()) {
         // Auto-lift ban
@@ -52,7 +56,7 @@ const optionalAuth = async (req, res, next) => {
       const token = authHeader.replace('Bearer ', '');
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const user = await User.findById(decoded.id);
-      if (user && !user.isBanned) {
+      if (user && !user.isBanned && decoded.tokenVersion === user.tokenVersion) {
         req.user = user;
       }
     }
@@ -74,7 +78,7 @@ const softAuth = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const user = await User.findById(decoded.id);
 
-      if (user) {
+      if (user && decoded.tokenVersion === user.tokenVersion) {
         if (user.isBanned) {
           if (user.banUntil && new Date(user.banUntil) <= new Date()) {
             // Auto-lift expired ban

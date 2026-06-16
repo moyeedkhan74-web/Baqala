@@ -40,6 +40,7 @@ const promoteToAdmin = async (email) => {
       console.log('\u2705 Created new Admin account!');
     } else {
       user.role = 'admin';
+      user.tokenVersion = (user.tokenVersion || 0) + 1;
       await user.save();
       console.log(`\u2705 Success! ${user.name} is now an ADMIN.`);
     }

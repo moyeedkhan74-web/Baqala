@@ -110,8 +110,8 @@ exports.combineChunks = async (req, res, next) => {
           const { valid, detectedType } = await validateFileMime(fileBuffer);
           if (!valid) {
             // Delete the malicious/invalid file from B2
-            const { deleteFromB2 } = require('../utils/b2Storage');
-            await deleteFromB2(b2Key, true);
+            const { deleteBinary } = require('../utils/b2Storage');
+            await deleteBinary(b2Key);
             return res.status(400).json({
               message: `Invalid file type. Detected: ${detectedType || 'unknown'}. Allowed: APK, EXE, ZIP, DMG, MSI, DEB, TAR, GZ, XZ, RAR, 7Z`
             });
@@ -123,8 +123,8 @@ exports.combineChunks = async (req, res, next) => {
 
           if (vtResult.known && vtResult.malicious > 0) {
             // Instant reject — delete from B2
-            const { deleteFromB2 } = require('../utils/b2Storage');
-            await deleteFromB2(b2Key, true);
+            const { deleteBinary } = require('../utils/b2Storage');
+            await deleteBinary(b2Key);
             return res.status(400).json({
               message: `This file has been flagged as malicious by ${vtResult.malicious} antivirus engine(s). Upload rejected.`,
               engines: vtResult.malicious
@@ -148,7 +148,7 @@ exports.combineChunks = async (req, res, next) => {
     } catch (scanError) {
       console.error('[COMBINE_SCAN] Scan step failed, proceeding:', scanError.message);
       scanStatus = 'scan_failed';
-      appStatus = 'approved';
+      appStatus = 'pending';
     }
 
     // Create the app document if metadata was provided
@@ -204,12 +204,15 @@ exports.combineChunks = async (req, res, next) => {
       // Fire background scan if needed
       if (scanStatus === 'scanning' && req._scanBuffer) {
         const { runBackgroundScan } = require('../services/backgroundScan');
-        runBackgroundScan(app._id, req._scanBuffer, fileName || 'unknown')
-          .catch(err => console.error('[SCAN_LAUNCH] Error:', err.message));
+        setImmediate(() => {
+          runBackgroundScan(app._id, req._scanBuffer, fileName || 'unknown')
+            .catch(err => console.error('[SCAN_LAUNCH] Error:', err.message));
+        });
       }
 
       await app.populate('developer', 'name email avatar');
-      return res.json({
+      const statusCode = scanStatus === 'scanning' ? 202 : 200;
+      return res.status(statusCode).json({
         success: true,
         url: result.url,
         fileName,
@@ -217,7 +220,8 @@ exports.combineChunks = async (req, res, next) => {
       });
     }
 
-    res.json({ 
+    const statusCode = scanStatus === 'scanning' ? 202 : 200;
+    res.status(statusCode).json({ 
       success: true, 
       url: result.url, 
       fileName,

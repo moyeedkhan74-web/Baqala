@@ -4,7 +4,7 @@ const Review = require('../models/Review');
 const Download = require('../models/Download');
 const Report = require('../models/Report');
 const Notification = require('../models/Notification');
-const { deleteFromB2, extractB2Key } = require('../utils/b2Storage');
+const { deleteBinary, deleteImage, extractB2Key } = require('../utils/b2Storage');
 
 // GET /api/admin/apps
 exports.getAllApps = async (req, res) => {
@@ -227,7 +227,7 @@ exports.deleteApp = async (req, res) => {
     if (app.fileUrl) {
       const binaryKey = extractB2Key(app.fileUrl);
       if (binaryKey) {
-        await deleteFromB2(binaryKey, true);
+        await deleteBinary(binaryKey);
       }
     }
 
@@ -235,7 +235,7 @@ exports.deleteApp = async (req, res) => {
     if (app.icon) {
       const iconKey = extractB2Key(app.icon);
       if (iconKey) {
-        await deleteFromB2(iconKey, false);
+        await deleteImage(iconKey);
       }
     }
 
@@ -243,7 +243,7 @@ exports.deleteApp = async (req, res) => {
       for (const screenshotUrl of app.screenshots) {
         const screenshotKey = extractB2Key(screenshotUrl);
         if (screenshotKey) {
-          await deleteFromB2(screenshotKey, false);
+          await deleteImage(screenshotKey);
         }
       }
     }
@@ -353,6 +353,7 @@ exports.banUser = async (req, res) => {
     user.isBanned = true;
     user.banUntil = banUntil;
     user.banReason = reason || 'Violation of community guidelines.';
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
     await user.save();
 
     // Send In-App Notification
@@ -386,6 +387,7 @@ exports.unbanUser = async (req, res) => {
     user.isBanned = false;
     user.banUntil = null;
     user.banReason = null;
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
     await user.save();
 
     // Notify User

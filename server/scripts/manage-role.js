@@ -32,7 +32,7 @@ const manageRole = async (email, role) => {
 
     const user = await User.findOneAndUpdate(
       { email: email.toLowerCase().trim() },
-      { role: role },
+      { $set: { role: role }, $inc: { tokenVersion: 1 } },
       { new: true, runValidators: true }
     );
 

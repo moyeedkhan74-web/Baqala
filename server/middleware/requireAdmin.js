@@ -16,6 +16,10 @@ const requireAdmin = async (req, res, next) => {
       return res.status(404).json({ message: 'User not found.' });
     }
 
+    if (decoded.tokenVersion !== user.tokenVersion) {
+      return res.status(401).json({ message: 'Session expired. Admin privileges revoked.' });
+    }
+
     // Whitelist check: Grant access if email is in ADMIN_EMAILS env var
     const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
     const isWhitelisted = user.email && adminEmails.includes(user.email.toLowerCase());

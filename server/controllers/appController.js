@@ -1,6 +1,6 @@
 const App = require('../models/App');
 const Config = require('../models/Config');
-const { uploadToB2, deleteFromB2, getDownloadUrl } = require('../utils/b2Storage');
+const { uploadImage, uploadBinary, deleteImage, deleteBinary, getDownloadUrl, extractB2Key } = require('../utils/b2Storage');
 
 // Helper to upload assets directly to cloud (no compression to maintain original quality)
 const uploadAsset = async (file, folder = 'icons') => {
@@ -10,7 +10,7 @@ const uploadAsset = async (file, folder = 'icons') => {
     const filePath = `${folder}/${fileName}`;
 
     // Upload original buffer and mimetype (No compression)
-    const result = await uploadToB2(filePath, file.buffer, file.mimetype, false);
+    const result = await uploadImage(filePath, file.buffer, file.mimetype);
     if (!result.success) {
       console.error(`[B2_UPLOAD_FAILURE] Folder: ${folder}, File: ${fileName}, Error: ${result.error}`);
     }
@@ -26,15 +26,18 @@ const deleteFileFromB2 = async (rawUrl) => {
   if (!rawUrl || typeof rawUrl !== 'string') return;
   
   try {
-    const b2Path = exports.extractB2Key(rawUrl);
+    const b2Path = extractB2Key(rawUrl);
     if (!b2Path) return;
 
     // Detect which bucket based on the subdomain or path (bucket name)
-    // Note: This logic assumes the account swap where binaries are in PUBLIC and images in PRIVATE
-    const isPrivate = rawUrl.includes('baqalaaa') || !rawUrl.includes('/apps/');
+    const isImage = rawUrl.includes('baqalaaa') || !rawUrl.includes('/apps/');
     
-    console.log(`[B2 DELETE] Path: "${b2Path}" | Private: ${isPrivate}`);
-    await deleteFromB2(b2Path, isPrivate);
+    console.log(`[B2 DELETE] Path: "${b2Path}" | isImage: ${isImage}`);
+    if (isImage) {
+      await deleteImage(b2Path);
+    } else {
+      await deleteBinary(b2Path);
+    }
   } catch (err) {
     console.error('B2 Surgical Delete Error:', err);
   }
@@ -54,8 +57,13 @@ exports.proxyDownload = async (req, res, next) => {
     const app = await App.findById(req.params.id);
     if (!app) return res.status(404).json({ message: 'App not found.' });
 
-    if (app.status === 'rejected') {
-      return res.status(400).json({ message: 'This app is not available for download.' });
+    if (app.status !== 'approved') {
+      return res.status(400).json({ message: 'This app is not approved for download.' });
+    }
+
+    const blockedStatuses = ['scanning', 'scan_failed', 'not_scanned'];
+    if (blockedStatuses.includes(app.scanStatus) || app.scanStatus !== 'clean') {
+      return res.status(423).json({ message: 'This app is pending security review and cannot be downloaded.' });
     }
 
     if (!app.fileUrl) {
@@ -122,6 +130,15 @@ exports.getAppDownloadLink = async (req, res, next) => {
   try {
     const app = await App.findById(req.params.id);
     if (!app) return res.status(404).json({ message: 'App not found.' });
+
+    if (app.status !== 'approved') {
+      return res.status(400).json({ message: 'This app is not approved for download.' });
+    }
+
+    const blockedStatuses = ['scanning', 'scan_failed', 'not_scanned'];
+    if (blockedStatuses.includes(app.scanStatus) || app.scanStatus !== 'clean') {
+      return res.status(423).json({ message: 'This app is pending security review and cannot be downloaded.' });
+    }
     
     // Support both B2 and legacy (Supabase) URLs
     if (!app.fileUrl.includes('.backblazeb2.com/')) {
@@ -159,7 +176,8 @@ exports.createApp = async (req, res, next) => {
     let config = await Config.findOne();
     if (!config) config = await Config.create({});
 
-    let fileSize = req.body.fileSize || 0;
+    const appFile = req.files && req.files.appFile ? req.files.appFile[0] : null;
+    let fileSize = appFile ? appFile.size : (Number(req.body.fileSize) || 0);
     const maxSizeBytes = (config.maxApkSize || 500) * 1024 * 1024;
     
     if (fileSize > maxSizeBytes) {
@@ -198,13 +216,11 @@ exports.createApp = async (req, res, next) => {
 
     let fileUrl = req.body.fileUrl;
     let fileName = req.body.fileName || 'unknown';
-    fileSize = req.body.fileSize || 0;
 
-    const appFile = req.files && req.files.appFile ? req.files.appFile[0] : null;
     if (appFile && !fileUrl) {
       const timestamp = Date.now();
       const path = `apps/${timestamp}_${appFile.originalname.replace(/\s+/g, '_')}`;
-      const result = await uploadToB2(path, appFile.buffer, appFile.mimetype, true);
+      const result = await uploadBinary(path, appFile.buffer, appFile.mimetype);
       if (result.success) {
         fileUrl = result.url;
         fileName = appFile.originalname;
@@ -282,13 +298,15 @@ exports.createApp = async (req, res, next) => {
       app.scanStatus = 'scanning';
       app.status = 'pending';
       await app.save();
-      // Fire and forget — do NOT await
+      // Fire background scan appropriately detached
       const { runBackgroundScan } = require('../services/backgroundScan');
       const scanBuffer = appFile ? appFile.buffer : null;
       const scanFilename = appFile ? appFile.originalname : (fileName || 'unknown');
       if (scanBuffer) {
-        runBackgroundScan(app._id, scanBuffer, scanFilename)
-          .catch(err => console.error('[SCAN_LAUNCH] Error:', err.message));
+        setImmediate(() => {
+          runBackgroundScan(app._id, scanBuffer, scanFilename)
+            .catch(err => console.error('[SCAN_LAUNCH] Error:', err.message));
+        });
       }
     } else {
       // VT was unreachable (req.vtError) or no scan data
@@ -297,7 +315,8 @@ exports.createApp = async (req, res, next) => {
       await app.save();
     }
 
-    res.status(201).json({ app });
+    const statusCode = app.scanStatus === 'scanning' ? 202 : 201;
+    res.status(statusCode).json({ app });
   } catch (error) {
     next(error);
   }
