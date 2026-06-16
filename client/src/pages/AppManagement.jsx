@@ -45,6 +45,14 @@ const AppManagement = () => {
     }
   };
 
+  const getImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    // For relative paths, prepend the API base URL
+    const baseUrl = api.defaults.baseURL.replace(/\/api$/, '');
+    return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
   useEffect(() => {
     fetchApps();
   }, []);
@@ -208,7 +216,7 @@ const AppManagement = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm group-hover:scale-105 transition-transform shrink-0">
-                          <img src={app.icon} alt={app.title} className="w-8 h-8 object-contain" onError={(e) => { e.target.src = 'https://cdn-icons-png.flaticon.com/512/3344/3344153.png'; }} />
+                          <img src={getImageUrl(app.icon)} alt={app.title} className="w-full h-full object-cover" onError={(e) => { e.target.src = 'https://cdn-icons-png.flaticon.com/512/3344/3344153.png'; }} />
                         </div>
                         <div className="min-w-0">
                           <p className="font-black text-slate-900 dark:text-white truncate max-w-[150px] leading-tight">{app.title}</p>

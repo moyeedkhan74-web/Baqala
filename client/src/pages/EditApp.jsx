@@ -82,6 +82,7 @@ const EditApp = () => {
     try {
       await api.put(`/apps/${id}`, formData);
       toast.success('Project metadata synchronized perfectly!');
+      navigate('/developer');
     } catch (error) {
       toast.error('Failed to update metadata');
     } finally {

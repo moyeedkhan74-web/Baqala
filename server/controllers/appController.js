@@ -298,6 +298,13 @@ exports.createApp = async (req, res, next) => {
       app.scanStatus = 'scanning';
       app.status = 'pending';
       await app.save();
+
+      // Notify Developer of successful upload and scan start
+      const { sendUploadConfirmationEmail } = require('../services/emailService');
+      if (app.developer?.email) {
+        sendUploadConfirmationEmail(app.developer.email, app.title).catch(err => console.error('[EMAIL_CONFIRMATION_ERROR]:', err.message));
+      }
+
       // Fire background scan appropriately detached
       const { runBackgroundScan } = require('../services/backgroundScan');
       const scanBuffer = appFile ? appFile.buffer : null;

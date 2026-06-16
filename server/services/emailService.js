@@ -114,3 +114,26 @@ exports.sendApprovalEmail = async (email, appName) => {
     `
   });
 };
+
+/**
+ * Template for Upload Confirmation
+ */
+exports.sendUploadConfirmationEmail = async (email, appName) => {
+  return exports.sendEmail({
+    to: email,
+    subject: `Processing: ${appName} is in the queue`,
+    html: `
+      <div style="font-family: sans-serif; padding: 20px;">
+        <h2>Upload Received!</h2>
+        <p>Your app <strong>${appName}</strong> has been successfully uploaded to the Baqala platform.</p>
+        <p><strong>What happens next?</strong></p>
+        <ul>
+          <li>Our automated scanner is currently checking your binary for security threats.</li>
+          <li>Once the scan is clean, our moderators will perform a final review.</li>
+          <li>You will receive another email once your app is approved and live!</li>
+        </ul>
+        <p>You can track the live status on your <a href="https://baqala-lovat.vercel.app/developer">Developer Dashboard</a>.</p>
+      </div>
+    `
+  });
+};
