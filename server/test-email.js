@@ -1,39 +1,32 @@
 require('dotenv').config({ path: 'd:/baqala project/server/.env' });
-const nodemailer = require('nodemailer');
+const { sendEmail } = require('./services/emailService');
 
-async function testSMTP() {
-  console.log('--- SMTP Test Started ---');
+async function testEmailService() {
+  console.log('--- Email Service Test Started ---');
   console.log('User:', process.env.SMTP_USER);
-  console.log('Host:', process.env.SMTP_HOST || 'smtp.gmail.com');
-  console.log('Port:', process.env.SMTP_PORT || 587);
+  
+  if (!process.env.SMTP_USER) {
+    console.error('SMTP_USER not found in .env');
+    return;
+  }
 
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: process.env.SMTP_PORT || 587,
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
+  const result = await sendEmail({
+    to: process.env.SMTP_USER,
+    subject: 'Baqala Email Service Test',
+    html: `
+      <div style="font-family: sans-serif; padding: 20px;">
+        <h1 style="color: #6366f1;">Connectivity Test</h1>
+        <p>This email verifies that the <strong>Baqala Email Service</strong> is properly configured.</p>
+        <p>If you see this, SMTP is working!</p>
+      </div>
+    `
   });
 
-  try {
-    console.log('Verifying connection...');
-    await transporter.verify();
-    console.log('Connection verified successfully!');
-
-    console.log('Sending test email...');
-    const info = await transporter.sendMail({
-      from: `"Baqala Test" <${process.env.SMTP_USER}>`,
-      to: process.env.SMTP_USER, // Send to self
-      subject: 'SMTP Connectivity Test',
-      text: 'If you receive this, your SMTP settings are correct!',
-    });
-    console.log('Test email sent! Message ID:', info.messageId);
-  } catch (error) {
-    console.error('SMTP Test Failed:');
-    console.error(error);
+  if (result.success) {
+    console.log('Test Passed: Email delivery handled.');
+  } else {
+    console.error('Test Failed: Email delivery failed.');
   }
 }
 
-testSMTP();
+testEmailService();

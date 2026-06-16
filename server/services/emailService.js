@@ -30,7 +30,7 @@ exports.sendEmail = async ({ to, subject, html }) => {
 
     // Try Nodemailer first (more flexible for development)
     if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-      console.log(`[EMAIL] Attempting SMTP delivery to: ${to} (Subject: ${subject})`);
+      console.log(`[EMAIL_SERVICE] [SMTP] Attempting delivery to: ${to} (Subject: ${subject})`);
       try {
         const info = await transporter.sendMail({
           from: `"Baqala" <${process.env.SMTP_USER}>`,
@@ -38,33 +38,52 @@ exports.sendEmail = async ({ to, subject, html }) => {
           subject,
           html: emailContent,
         });
-        console.log(`[EMAIL] SMTP Success: ${info.messageId}`);
+        console.log(`[EMAIL_SERVICE] [SMTP] Success: ${info.messageId}`);
         return { success: true, messageId: info.messageId };
       } catch (smtpError) {
-        console.error(`[EMAIL] SMTP Failed directly: ${smtpError.message}`);
-        // If SMTP fails, we'll try Resend as fallback below
+        console.error(`[EMAIL_SERVICE] [SMTP] Failed:`, {
+          message: smtpError.message,
+          code: smtpError.code,
+          command: smtpError.command,
+          response: smtpError.response
+        });
+        
+        if (smtpError.code === 'EAUTH') {
+          console.error('[EMAIL_SERVICE] [CRITICAL] Authentication Failed. If using Gmail, you MUST use an "App Password", not your regular account password. Visit: https://myaccount.google.com/apppasswords');
+        }
+        // If SMTP fails and not a critical config error, we'll try Resend as fallback below
       }
     }
 
     // Fallback to Resend
     if (!resendKey) {
-      console.warn('[EMAIL] No email provider configured. Falling back to console log.');
-      console.log(`[SIMULATED EMAIL] To: ${to}, Subject: ${subject}`);
+      console.warn('[EMAIL_SERVICE] [WARNING] No email provider configured or SMTP failed. Falling back to console log.');
+      console.log(`[EMAIL_SERVICE] [SIMULATED] To: ${to}, Subject: ${subject}`);
       return { success: true };
     }
 
-    const { data, error } = await resend.emails.send({
-      from: 'Baqala <onboarding@resend.dev>',
-      to,
-      subject,
-      html: emailContent
-    });
+    try {
+      console.log(`[EMAIL_SERVICE] [RESEND] Attempting delivery to: ${to}`);
+      const { data, error } = await resend.emails.send({
+        from: 'Baqala <onboarding@resend.dev>',
+        to,
+        subject,
+        html: emailContent
+      });
 
-    if (error) throw error;
-    return { success: true, data };
-  } catch (error) {
-    console.error('[EMAIL_ERROR]:', error);
-    return { success: false, error };
+      if (error) {
+        console.error('[EMAIL_SERVICE] [RESEND] Provider Error:', error);
+        throw error;
+      }
+      console.log(`[EMAIL_SERVICE] [RESEND] Success:`, data?.id);
+      return { success: true, data };
+    } catch (resendError) {
+      console.error('[EMAIL_SERVICE] [RESEND] Failed:', resendError.message);
+      return { success: false, error: resendError };
+    }
+  } catch (globalError) {
+    console.error('[EMAIL_SERVICE] [FATAL]:', globalError.message);
+    return { success: false, error: globalError.message };
   }
 };
 

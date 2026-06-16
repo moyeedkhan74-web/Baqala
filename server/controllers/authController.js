@@ -32,6 +32,10 @@ exports.register = async (req, res) => {
     const user = await User.create({ name, email, password, role: userRole });
     const token = generateToken(user);
 
+    // Send Welcome Notification
+    const { sendWelcomeNotification } = require('../services/notificationService');
+    await sendWelcomeNotification(user).catch(err => console.error('[WELCOME_NOTIFY_ERROR]:', err.message));
+
     res.status(201).json({
       token,
       user: {
@@ -375,6 +379,10 @@ exports.firebaseRegister = async (req, res) => {
     });
 
     const jwtToken = generateToken(user);
+
+    // Send Welcome Notification
+    const { sendWelcomeNotification } = require('../services/notificationService');
+    await sendWelcomeNotification(user).catch(err => console.error('[WELCOME_NOTIFY_ERROR_FIREBASE]:', err.message));
 
     res.status(201).json({
       token: jwtToken,

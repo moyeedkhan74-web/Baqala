@@ -35,6 +35,8 @@ exports.runBackgroundScan = async (appId, buffer, filename) => {
     app.vtMaliciousCount = malicious;
     app.vtTotalEngines = totalEngines;
 
+    const { sendScanResultNotification } = require('./notificationService');
+    
     // 3. Decision Logic (Stage 3)
     if (malicious >= 3) {
       // AUTO REJECT
@@ -55,6 +57,9 @@ exports.runBackgroundScan = async (appId, buffer, filename) => {
       app.status = 'pending_review';
       app.vtResult = 'clean';
     }
+
+    // In-App Notification (Centralized)
+    await sendScanResultNotification(app.developer._id, app.title, app._id, app.vtResult);
 
     await app.save();
     

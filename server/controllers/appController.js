@@ -320,10 +320,21 @@ exports.createApp = async (req, res, next) => {
 
     // Detached Background Task: Send confirmation email (Now global for all uploads)
     const { sendUploadConfirmationEmail } = require('../services/emailService');
-    if (app.developer?.email) {
-      setImmediate(() => {
-        sendUploadConfirmationEmail(app.developer.email, app.title)
-          .catch(err => console.error('[EMAIL_CONFIRMATION_ERROR]:', err.message));
+    const { sendUploadConfirmation } = require('../services/notificationService');
+
+    if (app.developer) {
+      setImmediate(async () => {
+        try {
+          // 1. Email Notification
+          if (app.developer.email) {
+            await sendUploadConfirmationEmail(app.developer.email, app.title);
+          }
+          
+          // 2. In-App Notification
+          await sendUploadConfirmation(app.developer, app.title, app._id);
+        } catch (err) {
+          console.error('[NOTIFY_UPLOAD_ERROR]:', err.message);
+        }
       });
     }
 
