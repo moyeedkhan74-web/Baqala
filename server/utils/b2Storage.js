@@ -217,6 +217,37 @@ exports.getDownloadUrl = async (filePathOrUrl, fileName) => {
   }
 };
 
+/**
+ * Downloads a file from B2 and returns it as a Buffer.
+ * Used for automated virus scanning or administrative processing.
+ */
+exports.getFileBuffer = async (filePathOrUrl) => {
+  try {
+    const key = filePathOrUrl.includes('/') && (filePathOrUrl.includes('http') || filePathOrUrl.includes('.com'))
+      ? exports.extractB2Key(filePathOrUrl)
+      : sanitizePath(filePathOrUrl);
+
+    if (!key) throw new Error('Invalid file path or URL for buffer retrieval');
+
+    const command = new GetObjectCommand({
+      Bucket: process.env.B2_BUCKET_NAME,
+      Key: key,
+    });
+
+    const response = await binaryS3.send(command);
+    
+    // Convert stream to Buffer
+    const chunks = [];
+    for await (const chunk of response.Body) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+  } catch (error) {
+    console.error('B2 Get Buffer Error:', error.message);
+    throw error;
+  }
+};
+
 // --- Multipart Upload Support (Always Private for Apps) ---
 
 exports.startMultipartUpload = async (filePath, contentType) => {

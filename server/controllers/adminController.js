@@ -593,4 +593,37 @@ exports.toggleUserVerified = async (req, res) => {
   }
 };
 
+// POST /api/admin/apps/:id/scan
+exports.manualAppScan = async (req, res) => {
+  try {
+    const app = await App.findById(req.params.id);
+    if (!app) return res.status(404).json({ message: 'App not found.' });
+
+    if (!app.fileUrl) {
+      return res.status(400).json({ message: 'App has no binary file to scan.' });
+    }
+
+    const { getFileBuffer } = require('../utils/b2Storage');
+    const { runBackgroundScan } = require('../services/backgroundScan');
+
+    // Trigger in background to avoid timeout
+    // We fetch the buffer here to ensure it's available, but the scan itself is async
+    res.json({ message: 'Manual security scan initiated. Results will appear shortly.' });
+
+    try {
+      const buffer = await getFileBuffer(app.fileUrl);
+      const filename = `${app.title.replace(/\s+/g, '_')}_${app._id}.apk`;
+      
+      console.log(`[MANUAL_SCAN] Starting scan for ${app.title} (${app._id})`);
+      await runBackgroundScan(app._id, buffer, filename);
+    } catch (scanError) {
+      console.error(`[MANUAL_SCAN_ERROR] Failed to fetch buffer or start scan for ${app._id}:`, scanError.message);
+    }
+
+  } catch (error) {
+    console.error('Admin manual scan error:', error);
+    res.status(500).json({ message: 'Server error initiating scan.' });
+  }
+};
+
 

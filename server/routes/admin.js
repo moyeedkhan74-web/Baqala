@@ -14,7 +14,8 @@ const {
   toggleFeatured,
   warnDeveloper,
   warnAppDeveloper,
-  toggleUserVerified
+  toggleUserVerified,
+  manualAppScan
 } = require('../controllers/adminController');
 const requireAdmin = require('../middleware/requireAdmin');
 
@@ -35,6 +36,7 @@ router.post('/apps/:id/warn', warnAppDeveloper);
 router.post('/users/:id/ban', banUser);
 router.post('/users/:id/unban', unbanUser);
 router.patch('/users/:id/verify', toggleUserVerified);
+router.post('/apps/:id/scan', manualAppScan);
 
 // Reports
 router.get('/reports', getAllReports);

@@ -13,7 +13,8 @@ import {
   Save,
   Zap,
   Clock,
-  User
+  User,
+  PartyPopper
 } from 'lucide-react';
 import { cn } from '../utils/cn.js';
 import api from '../api/axios';
@@ -202,17 +203,18 @@ const PlatformSettings = () => {
               className="w-full bg-slate-50 dark:bg-white/5 border border-transparent focus:border-accent-violet/30 rounded-2xl p-4 text-sm font-bold outline-none min-h-[100px] resize-none"
             />
             <div className="flex gap-2">
-              {['info', 'warning', 'critical'].map(level => (
+              {['info', 'warning', 'critical', 'celebratory'].map(level => (
                 <button
                   key={level}
                   onClick={() => handleNestedUpdate('announcement', { level })}
                   className={cn(
-                    "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all",
+                    "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all flex items-center gap-2",
                     config.announcement.level === level
-                      ? "bg-slate-900 text-white border-slate-900"
+                      ? (level === 'celebratory' ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white border-transparent shadow-lg shadow-pink-500/20" : "bg-slate-900 text-white border-slate-900")
                       : "bg-transparent text-slate-500 border-slate-200 dark:border-white/10"
                   )}
                 >
+                  {level === 'celebratory' && <PartyPopper className="w-3 h-3" />}
                   {level}
                 </button>
               ))}

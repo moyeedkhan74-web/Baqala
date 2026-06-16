@@ -220,13 +220,16 @@ const Home = () => {
                     );
                     return catEntries.map(([cat, catApps]) => (
                       <section key={cat} aria-label={cat}>
-                        <div className="flex items-center justify-between mb-6">
-                          <h2 className="text-xl font-black text-slate-900 dark:text-white">{cat}</h2>
+                        <div className="flex items-center justify-between mb-8">
+                          <div className="flex items-center gap-4">
+                            <div className="w-1.5 h-8 bg-accent-violet rounded-full shadow-[0_0_12px_rgba(139,92,246,0.5)]" />
+                            <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{cat}</h2>
+                          </div>
                           <button
                             onClick={() => setCategory(cat)}
-                            className="text-accent-violet text-sm font-bold hover:underline"
+                            className="bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 px-4 py-2 rounded-xl text-accent-violet text-xs font-black uppercase tracking-widest transition-all"
                           >
-                            See all →
+                            Explore All
                           </button>
                         </div>
                         <div className="app-grid">

@@ -13,7 +13,8 @@ import {
   Eye,
   ArrowUpDown,
   RefreshCw,
-  AlertTriangle
+  AlertTriangle,
+  Shield
 } from 'lucide-react';
 import api from '../api/axios';
 import { cn } from '../utils/cn.js';
@@ -30,6 +31,7 @@ const AppManagement = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [warningTarget, setWarningTarget] = useState(null);
   const [isProcessingWarning, setIsProcessingWarning] = useState(false);
+  const [isScanningId, setIsScanningId] = useState(null);
 
   const fetchApps = async () => {
     try {
@@ -94,6 +96,19 @@ const AppManagement = () => {
     }
   };
 
+  const handleScan = async (id) => {
+    setIsScanningId(id);
+    try {
+      const { data } = await api.post(`/admin/apps/${id}/scan`);
+      toast.success(data.message);
+    } catch (error) {
+      console.error('Manual scan failed:', error);
+      toast.error(error.response?.data?.message || 'Failed to initiate scan');
+    } finally {
+      setIsScanningId(null);
+    }
+  };
+
   const tabs = [
     { id: 'all', label: 'All Apps' },
     { id: 'pending', label: 'Pending' },
@@ -121,7 +136,15 @@ const AppManagement = () => {
   return (
     <AdminLayout title="Application Management">
       {/* Header & Filters */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+        <div className="flex items-center gap-4">
+          <div className="w-2 h-10 bg-accent-violet rounded-full shadow-lg shadow-accent-violet/20" />
+          <div>
+            <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight leading-none">Application Fleet</h2>
+            <p className="text-[10px] text-slate-500 font-bold uppercase mt-1.5 tracking-widest">Global inventory management</p>
+          </div>
+        </div>
+
         <div className="flex bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm overflow-x-auto no-scrollbar">
           {tabs.map(tab => (
             <button
@@ -189,7 +212,18 @@ const AppManagement = () => {
                         </div>
                         <div className="min-w-0">
                           <p className="font-black text-slate-900 dark:text-white truncate max-w-[150px]">{app.title}</p>
-                          <p className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {Array.isArray(app.category) ? app.category.map(cat => (
+                              <span key={cat} className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[8px] font-black uppercase text-slate-500">
+                                {cat}
+                              </span>
+                            )) : (
+                              <span className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[8px] font-black uppercase text-slate-500">
+                                {app.category || 'Uncategorized'}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">
                             {new Date(app.createdAt).toLocaleDateString()}
                           </p>
                         </div>
@@ -281,6 +315,18 @@ const AppManagement = () => {
                           </button>
                         )}
                         
+                        <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
+                        <button 
+                          disabled={isScanningId === app._id}
+                          onClick={() => handleScan(app._id)}
+                          title="Trigger Security Scan" 
+                          className={cn(
+                            "p-2.5 rounded-xl transition-all",
+                            isScanningId === app._id ? "text-accent-violet animate-pulse" : "text-slate-400 hover:text-accent-violet hover:bg-accent-violet/10"
+                          )}
+                        >
+                          <Shield className={cn("w-5 h-5", isScanningId === app._id && "animate-spin")} />
+                        </button>
                         <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
                         <a href={`/app/${app._id}`} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
                           <Eye className="w-5 h-5" />
