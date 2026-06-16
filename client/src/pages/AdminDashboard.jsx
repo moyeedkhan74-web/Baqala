@@ -86,17 +86,19 @@ const AdminDashboard = () => {
     if (showLoader) setLoading(true);
     try {
       const { data } = await api.get(`/admin/stats?days=${period}`);
-      setStats({
-        totalApps: data.stats.totalApps.toString(),
-        totalUsers: data.stats.totalUsers.toString(),
-        pendingReports: data.stats.pendingReports.toString(),
-        totalDownloads: data.stats.totalDownloads > 1000 
-          ? (data.stats.totalDownloads / 1000).toFixed(1) + 'k' 
-          : data.stats.totalDownloads.toString()
-      });
+      if (data && data.stats) {
+        setStats({
+          totalApps: (data.stats.totalApps || 0).toString(),
+          totalUsers: (data.stats.totalUsers || 0).toString(),
+          pendingReports: (data.stats.pendingReports || 0).toString(),
+          totalDownloads: (data.stats.totalDownloads || 0) > 1000 
+            ? ((data.stats.totalDownloads || 0) / 1000).toFixed(1) + 'k' 
+            : (data.stats.totalDownloads || 0).toString()
+        });
+      }
       setChanges(data.changes || { apps: '0', users: '0', downloads: '0', reports: '0' });
-      setRecentActivity(data.activity);
-      setChartData(data.chartData);
+      setRecentActivity(data.activity || []);
+      setChartData(data.chartData || []);
       setLastUpdated(new Date());
     } catch (error) {
       console.error('Failed to fetch admin stats:', error);

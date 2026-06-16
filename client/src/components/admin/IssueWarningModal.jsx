@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertTriangle, MessageSquareWarning, X } from 'lucide-react';
+import { AlertTriangle, MessageSquare, X } from 'lucide-react';
 import { cn } from '../../utils/cn.js';
 
 const IssueWarningModal = ({ report, onClose, onConfirm, isProcessing }) => {
@@ -34,11 +34,11 @@ const IssueWarningModal = ({ report, onClose, onConfirm, isProcessing }) => {
         >
           <X className="w-5 h-5" />
         </button>
-
+ 
         <div className="p-8 sm:p-10">
           <div className="flex flex-col items-center text-center mb-8">
             <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mb-4 border border-amber-500/20">
-              <MessageSquareWarning className="w-8 h-8 text-amber-500" />
+              <MessageSquare className="w-8 h-8 text-amber-500" />
             </div>
             <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2">
               Issue Official Warning

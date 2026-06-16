@@ -74,8 +74,9 @@ const Analytics = () => {
   }
 
   // Map category distribution to chart format
-  const topCategories = data.categoryDistribution.slice(0, 5);
-  const otherCategoriesCount = data.categoryDistribution.slice(5).reduce((sum, item) => sum + item.value, 0);
+  const categories = data.categoryDistribution || [];
+  const topCategories = categories.slice(0, 5);
+  const otherCategoriesCount = categories.slice(5).reduce((sum, item) => sum + item.value, 0);
   const pieData = [
     ...topCategories,
     ...(otherCategoriesCount > 0 ? [{ name: 'Other', value: otherCategoriesCount }] : [])
@@ -148,7 +149,7 @@ const Analytics = () => {
            <h2 className="text-xl font-black text-slate-900 dark:text-white mb-2">Top Performer Apps</h2>
            <p className="text-sm text-slate-500 font-bold mb-8">Highest lifetime downloads</p>
            <div className="h-[300px] w-full">
-            {data.topApps.length > 0 ? (
+            {(data.topApps && data.topApps.length > 0) ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.topApps} layout="vertical" margin={{ left: 20 }}>
                   <XAxis type="number" hide />
