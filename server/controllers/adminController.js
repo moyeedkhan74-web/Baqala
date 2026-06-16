@@ -223,30 +223,28 @@ exports.deleteApp = async (req, res) => {
       return res.status(404).json({ message: 'App not found.' });
     }
 
-    // 1. Delete binary from B2
+    // Delete all assets from B2 in parallel
+    const deletePromises = [];
+    
     if (app.fileUrl) {
       const binaryKey = extractB2Key(app.fileUrl);
-      if (binaryKey) {
-        await deleteBinary(binaryKey);
-      }
+      if (binaryKey) deletePromises.push(deleteBinary(binaryKey));
     }
 
-    // 2. Delete icon + screenshots from B2
     if (app.icon) {
       const iconKey = extractB2Key(app.icon);
-      if (iconKey) {
-        await deleteImage(iconKey);
-      }
+      if (iconKey) deletePromises.push(deleteImage(iconKey));
     }
 
     if (app.screenshots && app.screenshots.length > 0) {
-      for (const screenshotUrl of app.screenshots) {
-        const screenshotKey = extractB2Key(screenshotUrl);
-        if (screenshotKey) {
-          await deleteImage(screenshotKey);
-        }
-      }
+      app.screenshots.forEach(url => {
+        const key = extractB2Key(url);
+        if (key) deletePromises.push(deleteImage(key));
+      });
     }
+
+    // Fire and forget deletions (or await in parallel)
+    Promise.all(deletePromises).catch(err => console.error('[B2_CLEANUP_ERR]:', err));
 
     // 3. Delete from MongoDB
     await App.findByIdAndDelete(req.params.id);
@@ -292,26 +290,32 @@ exports.updateAppStatus = async (req, res) => {
     app.reviewedAt = new Date();
     await app.save();
     
-    // Notify Developer
+    // Notify Developer - BACKGROUND TASK (Don't await to keep response fast)
     const { sendApprovalEmail, sendAdminRejectEmail } = require('../services/emailService');
     
     if (app.developer && app.developer.email) {
-      if (status === 'approved' && previousStatus !== 'approved') {
-        await sendApprovalEmail(app.developer.email, app.title);
-      } else if (status === 'rejected') {
-        await sendAdminRejectEmail(app.developer.email, app.title, app.rejectionReason);
-      }
+      (async () => {
+        try {
+          if (status === 'approved' && previousStatus !== 'approved') {
+            await sendApprovalEmail(app.developer.email, app.title);
+          } else if (status === 'rejected') {
+            await sendAdminRejectEmail(app.developer.email, app.title, app.rejectionReason);
+          }
 
-      // Also send In-App Notification
-      const isApproved = status === 'approved';
-      await Notification.create({
-        recipient: app.developer._id,
-        title: isApproved ? '🚀 Application Approved' : '❌ Application Rejected',
-        message: isApproved 
-          ? `Your application "${app.title}" has been approved and is now live on the Baqala platform!` 
-          : `Your application "${app.title}" was not approved. Reason: ${app.rejectionReason}`,
-        type: isApproved ? 'success' : 'danger'
-      });
+          // Also send In-App Notification
+          const isApproved = status === 'approved';
+          await Notification.create({
+            recipient: app.developer._id,
+            title: isApproved ? '🚀 Application Approved' : '❌ Application Rejected',
+            message: isApproved 
+              ? `Your application "${app.title}" has been approved and is now live on the Baqala platform!` 
+              : `Your application "${app.title}" was not approved. Reason: ${app.rejectionReason}`,
+            type: isApproved ? 'success' : 'danger'
+          });
+        } catch (err) {
+          console.error('[NOTIFY_DETACHED_ERR]:', err.message);
+        }
+      })();
     }
 
     res.json({ message: `App status updated to ${status}.`, app });
@@ -603,22 +607,24 @@ exports.manualAppScan = async (req, res) => {
       return res.status(400).json({ message: 'App has no binary file to scan.' });
     }
 
+    // Trigger in backgound immediately
+    res.json({ message: 'Manual security scan initiated. Results will appear shortly.' });
+
     const { getFileBuffer } = require('../utils/b2Storage');
     const { runBackgroundScan } = require('../services/backgroundScan');
 
-    // Trigger in background to avoid timeout
-    // We fetch the buffer here to ensure it's available, but the scan itself is async
-    res.json({ message: 'Manual security scan initiated. Results will appear shortly.' });
-
-    try {
-      const buffer = await getFileBuffer(app.fileUrl);
-      const filename = `${app.title.replace(/\s+/g, '_')}_${app._id}.apk`;
-      
-      console.log(`[MANUAL_SCAN] Starting scan for ${app.title} (${app._id})`);
-      await runBackgroundScan(app._id, buffer, filename);
-    } catch (scanError) {
-      console.error(`[MANUAL_SCAN_ERROR] Failed to fetch buffer or start scan for ${app._id}:`, scanError.message);
-    }
+    setImmediate(async () => {
+      try {
+        console.log(`[MANUAL_SCAN] Fetching cloud buffer for ${app.title}...`);
+        const buffer = await getFileBuffer(app.fileUrl);
+        const filename = `${app.title.replace(/\s+/g, '_')}_${app._id}.apk`;
+        
+        console.log(`[MANUAL_SCAN] Starting engine for ${app._id}`);
+        await runBackgroundScan(app._id, buffer, filename);
+      } catch (scanError) {
+        console.error(`[MANUAL_SCAN_ERROR] Detached scan failed for ${app._id}:`, scanError.message);
+      }
+    });
 
   } catch (error) {
     console.error('Admin manual scan error:', error);

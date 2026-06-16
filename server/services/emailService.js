@@ -30,14 +30,20 @@ exports.sendEmail = async ({ to, subject, html }) => {
 
     // Try Nodemailer first (more flexible for development)
     if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-      console.log(`[EMAIL] Sending via SMTP to: ${to}`);
-      await transporter.sendMail({
-        from: `"Baqala" <${process.env.SMTP_USER}>`,
-        to,
-        subject,
-        html: emailContent,
-      });
-      return { success: true };
+      console.log(`[EMAIL] Attempting SMTP delivery to: ${to} (Subject: ${subject})`);
+      try {
+        const info = await transporter.sendMail({
+          from: `"Baqala" <${process.env.SMTP_USER}>`,
+          to,
+          subject,
+          html: emailContent,
+        });
+        console.log(`[EMAIL] SMTP Success: ${info.messageId}`);
+        return { success: true, messageId: info.messageId };
+      } catch (smtpError) {
+        console.error(`[EMAIL] SMTP Failed directly: ${smtpError.message}`);
+        // If SMTP fails, we'll try Resend as fallback below
+      }
     }
 
     // Fallback to Resend
