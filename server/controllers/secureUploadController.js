@@ -1,5 +1,5 @@
 const App = require('../models/App');
-const { uploadBinary } = require('../utils/b2Storage');
+const { uploadBinary, uploadImage } = require('../utils/b2Storage');
 const { runBackgroundScan } = require('../services/backgroundScan');
 const { v4: uuidv4 } = require('uuid');
 
@@ -10,56 +10,92 @@ exports.uploadApkSecure = async (req, res, next) => {
   try {
     const file = req.files && req.files['appFile'] ? req.files['appFile'][0] : req.file;
     if (!file) {
-      return res.status(400).json({ message: 'No file uploaded.' });
+      return res.status(400).json({ message: 'No payload file uploaded.' });
     }
 
-    // 1. Magic Bytes Check (PK\x03\x04 for ZIP/APK)
+    // 1. Magic Bytes Check (PK\x03\x04 for ZIP/APK, MZ for EXE)
     const magicBytes = file.buffer.slice(0, 4).toString('hex');
-    const ZIP_MAGIC = '504b0304'; // PK\x03\x04 in hex
+    const ZIP_MAGIC = '504b0304';
+    const EXE_MAGIC = '4d5a'; // MZ in hex
     
-    if (magicBytes !== ZIP_MAGIC) {
-      return res.status(400).json({ message: 'Invalid file type. Not a valid APK/ZIP signature.' });
+    const isZipBased = magicBytes === ZIP_MAGIC;
+    const isExe = magicBytes.startsWith(EXE_MAGIC);
+
+    if (!isZipBased && !isExe) {
+      return res.status(400).json({ 
+        message: 'Invalid file format signature. Supported: APK (ZIP-based) and EXE.',
+        detectedSignature: magicBytes.substring(0, 8)
+      });
     }
 
-    // 2. Upload to Storage (Using B2 to bypass Supabase RLS limits)
+    // 2. Upload Binary to Storage (Using B2)
     const uuid = uuidv4();
     const safeName = file.originalname.replace(/\s+/g, '_');
     const storagePath = `apps/pending/${uuid}-${safeName}`;
     
     const uploadResult = await uploadBinary(storagePath, file.buffer, file.mimetype);
     if (!uploadResult.success) {
-      return res.status(500).json({ message: 'Storage upload failed.', error: uploadResult.error });
+      return res.status(500).json({ message: `Binary storage upload failed: ${uploadResult.error}` });
     }
 
-    // 3. Create record in apps table (MongoDB in this project)
+    // 3. Handle Visual Assets (Icon & Screenshots)
+    let iconUrl = '';
+    let screenshotUrls = [];
+
+    // Upload Icon if present
+    if (req.files && req.files['icon'] && req.files['icon'][0]) {
+      const iconFile = req.files['icon'][0];
+      const iconPath = `apps/icons/${uuid}-${iconFile.originalname.replace(/\s+/g, '_')}`;
+      const iconUpload = await uploadImage(iconPath, iconFile.buffer, iconFile.mimetype);
+      if (iconUpload.success) iconUrl = iconUpload.url;
+    }
+
+    // Upload Screenshots if present
+    if (req.files && req.files['screenshots']) {
+      for (const [index, ssFile] of req.files['screenshots'].entries()) {
+        const ssPath = `apps/screenshots/${uuid}/ss-${index}-${ssFile.originalname.replace(/\s+/g, '_')}`;
+        const ssUpload = await uploadImage(ssPath, ssFile.buffer, ssFile.mimetype);
+        if (ssUpload.success) screenshotUrls.push(ssUpload.url);
+      }
+    }
+
+    // 4. Create record in apps table
     const app = await App.create({
       title: req.body.title || safeName,
       description: req.body.description || 'No description provided.',
+      tagline: req.body.tagline || '',
       category: req.body.category || ['Other'],
+      platform: req.body.platform || 'Android',
+      version: req.body.version || '1.0.0',
       developer: req.user._id,
-      developerName: req.user.name,
+      developerName: req.body.developerName || req.user.name,
       fileUrl: uploadResult.url,
       fileName: safeName,
       fileSize: file.size,
+      icon: iconUrl,
+      screenshots: screenshotUrls,
       status: 'pending_scan',
       vtResult: null
     });
 
-    // 4. Trigger VirusTotal scan asynchronously via setImmediate wrapper
+    // 5. Trigger VirusTotal scan asynchronously
     setImmediate(() => {
       runBackgroundScan(app._id, file.buffer, file.originalname)
         .catch(err => console.error('[SCAN_TRIGGER_ERROR]:', err.message));
     });
 
-    // 5. Success response (202 Accepted)
+    // 6. Success response
     res.status(202).json({ 
-      message: 'App submitted for security scanning.', 
+      message: 'App submitted successfully. Security scanning in progress.', 
       appId: app._id,
       status: 'pending_scan'
     });
 
   } catch (error) {
     console.error('[SECURE_UPLOAD_ERROR]:', error);
-    next(error);
+    res.status(error.statusCode || 500).json({ 
+      message: error.message || 'An unexpected error occurred during deployment.',
+      error: error.message 
+    });
   }
 };

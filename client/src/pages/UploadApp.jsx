@@ -56,8 +56,9 @@ const UploadApp = () => {
     
     // Check file extension
     const fileName = files.appFile.name.toLowerCase();
-    if (!fileName.endsWith('.apk')) {
-      return toast.error('Currently, only .apk files are supported for secure deployment.');
+    const allowedExts = ['.apk', '.exe', '.zip'];
+    if (!allowedExts.some(ext => fileName.endsWith(ext))) {
+      return toast.error('Currently, only .apk, .exe and .zip files are supported for secure deployment.');
     }
 
     // Check file size (Stage 1: check 100MB)
@@ -87,7 +88,9 @@ const UploadApp = () => {
       // Add files
       formDataToSend.append('appFile', files.appFile);
       formDataToSend.append('icon', files.icon);
-      files.screenshots.forEach(ss => formDataToSend.append('screenshots', ss));
+      if (files.screenshots && files.screenshots.length > 0) {
+        files.screenshots.forEach(ss => formDataToSend.append('screenshots', ss));
+      }
 
       // Stage 2 - Upload to Secure API
       const response = await api.post('/apps/upload-apk', formDataToSend, {
@@ -101,14 +104,17 @@ const UploadApp = () => {
       });
 
       setUploadProgress(100);
-      toast.success('Upload complete! Your app is now being scanned by VirusTotal.', { id: toastId, duration: 5000 });
+      toast.success(response.data?.message || 'Upload complete! Your app is now being scanned.', { id: toastId, duration: 5000 });
       
       // Delay navigation so they can see the success message
       setTimeout(() => navigate('/developer'), 2000);
 
     } catch (e) {
       console.error('Deployment Crash:', e);
-      toast.error(e.response?.data?.message || 'Deployment failed. Check connection or file formats.', { id: toastId });
+      const errorMsg = e.response?.data?.message || 
+                       e.response?.data?.errors?.[0]?.msg || 
+                       'Deployment failed. Check connection or file formats.';
+      toast.error(errorMsg, { id: toastId });
     } finally {
       setLoading(false);
     }
