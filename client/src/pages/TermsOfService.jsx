@@ -186,7 +186,7 @@ const TermsOfService = () => {
             <p>
               <strong>Baqala</strong><br />
               Email:{' '}
-              <a href="mailto:officialbaqala@gmail.com" className="text-accent-violet hover:underline font-semibold">officialbaqala@gmail.com</a><br />
+              <a href="mailto:legalbaqala@gmail.com" className="text-accent-violet hover:underline font-semibold">legalbaqala@gmail.com</a><br />
               Website:{' '}
               <a href="https://baqala-lovat.vercel.app" className="text-accent-violet hover:underline font-semibold" target="_blank" rel="noopener noreferrer">baqala-lovat.vercel.app</a>
             </p>

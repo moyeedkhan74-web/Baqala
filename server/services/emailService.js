@@ -1,24 +1,57 @@
 const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
 const resendKey = process.env.RESEND_API_KEY;
 const resend = resendKey ? new Resend(resendKey) : null;
 
+// Configure Nodemailer for Gmail SMTP
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: process.env.SMTP_PORT || 587,
+  secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
+
 /**
- * Send an email using Resend
+ * Send an email using SMTP (Primary) or Resend (Secondary)
  */
 exports.sendEmail = async ({ to, subject, html }) => {
   try {
-    if (!process.env.RESEND_API_KEY) {
-      console.warn('[EMAIL] Resend API Key missing. Falling back to console log.');
+    const emailContent = `
+      ${html}
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+      <p style="font-size: 12px; color: #666;">
+        Questions? Contact our legal team at <a href="mailto:legalbaqala@gmail.com">legalbaqala@gmail.com</a> or visit our <a href="https://baqala-lovat.vercel.app/terms">Terms of Service</a>.
+      </p>
+    `;
+
+    // Try Nodemailer first (more flexible for development)
+    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+      console.log(`[EMAIL] Sending via SMTP to: ${to}`);
+      await transporter.sendMail({
+        from: `"Baqala" <${process.env.SMTP_USER}>`,
+        to,
+        subject,
+        html: emailContent,
+      });
+      return { success: true };
+    }
+
+    // Fallback to Resend
+    if (!resendKey) {
+      console.warn('[EMAIL] No email provider configured. Falling back to console log.');
       console.log(`[SIMULATED EMAIL] To: ${to}, Subject: ${subject}`);
       return { success: true };
     }
 
     const { data, error } = await resend.emails.send({
-      from: 'Baqala <onboarding@resend.dev>', // Update this with verified domain in production
+      from: 'Baqala <onboarding@resend.dev>',
       to,
       subject,
-      html
+      html: emailContent
     });
 
     if (error) throw error;
