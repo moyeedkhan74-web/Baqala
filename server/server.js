@@ -1,5 +1,5 @@
 const express = require('express');
-process.setMaxListeners(20);
+process.setMaxListeners(50);
 const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
@@ -22,6 +22,35 @@ const notificationRoutes = require('./routes/notifications');
 const app = express();
 app.set('trust proxy', 1); // Trust Render's proxy for accurate IP tracking
 
+// CORS Configuration (Moved up for early execution)
+const allowedOrigins = [
+  'https://baqala-lovat.vercel.app',
+  'https://baqala-lovat-git-main-moyeedkhan74-webs-projects.vercel.app',
+  'http://localhost:3000',
+  'http://localhost:5173'
+];
+
+app.use(cors({
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true);
+    
+    const isAllowed = allowedOrigins.includes(origin);
+    const isVercelPreview = origin.endsWith('.vercel.app');
+    
+    if (isAllowed || isVercelPreview) {
+      return callback(null, true);
+    } else {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Set-Cookie', 'Content-Disposition', 'Content-Length', 'Access-Control-Allow-Origin'],
+  optionsSuccessStatus: 200
+}));
+
 const compression = require('compression');
 
 // Connect to MongoDB
@@ -36,31 +65,6 @@ app.use(compression({
     return compression.filter(req, res);
   }
 })); // Compress other responses
-
-// CORS Configuration
-const allowedOrigins = [
-  'https://baqala-lovat.vercel.app',
-  'https://baqala-lovat-git-main-moyeedkhan74-webs-projects.vercel.app',
-  'http://localhost:3000',
-  'http://localhost:5173'
-];
-
-app.use(cors({
-  origin: function(origin, callback) {
-    // allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  exposedHeaders: ['Set-Cookie', 'Content-Disposition', 'Content-Length'],
-  optionsSuccessStatus: 200
-}));
 
 // Helmet Configuration for enhanced security headers
 app.use(helmet({

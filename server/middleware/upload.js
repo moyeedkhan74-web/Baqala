@@ -17,7 +17,7 @@ const appFileFilter = (req, file, cb) => {
     } else {
       cb(new Error(`Invalid file type. Allowed: ${allowedAppExtensions.join(', ')}`), false);
     }
-  } else if (file.fieldname === 'icon' || file.fieldname === 'screenshots' || file.fieldname === 'file') {
+  } else if (file.fieldname === 'icon' || file.fieldname === 'screenshots' || file.fieldname === 'file' || file.fieldname === 'banner') {
     if (allowedImageExtensions.includes(ext)) {
       cb(null, true);
     } else {

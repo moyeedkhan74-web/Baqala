@@ -28,7 +28,30 @@ exports.sendEmail = async ({ to, subject, html }) => {
       </p>
     `;
 
-    // Try Nodemailer first (more flexible for development)
+    // Try Resend First (Most reliable on PaaS like Render)
+    if (resendKey) {
+      try {
+        console.log(`[EMAIL_SERVICE] [RESEND] Attempting delivery to: ${to} (Subject: ${subject})`);
+        const { data, error } = await resend.emails.send({
+          from: 'Baqala <onboarding@resend.dev>',
+          to,
+          subject,
+          html: emailContent
+        });
+
+        if (error) {
+          console.error('[EMAIL_SERVICE] [RESEND] Provider Error:', error);
+          throw error;
+        }
+        console.log(`[EMAIL_SERVICE] [RESEND] Success:`, data?.id);
+        return { success: true, data };
+      } catch (resendError) {
+        console.error('[EMAIL_SERVICE] [RESEND] Failed:', resendError.message);
+        // If Resend fails, we'll try SMTP as secondary below
+      }
+    }
+
+    // Secondary: Try Nodemailer/SMTP
     if (process.env.SMTP_USER && process.env.SMTP_PASS) {
       console.log(`[EMAIL_SERVICE] [SMTP] Attempting delivery to: ${to} (Subject: ${subject})`);
       try {
@@ -43,43 +66,20 @@ exports.sendEmail = async ({ to, subject, html }) => {
       } catch (smtpError) {
         console.error(`[EMAIL_SERVICE] [SMTP] Failed:`, {
           message: smtpError.message,
-          code: smtpError.code,
-          command: smtpError.command,
-          response: smtpError.response
+          code: smtpError.code
         });
         
         if (smtpError.code === 'EAUTH') {
-          console.error('[EMAIL_SERVICE] [CRITICAL] Authentication Failed. If using Gmail, you MUST use an "App Password", not your regular account password. Visit: https://myaccount.google.com/apppasswords');
+          console.error('[EMAIL_SERVICE] [CRITICAL] Authentication Failed. Gmail requires an "App Password".');
         }
-        // If SMTP fails and not a critical config error, we'll try Resend as fallback below
       }
     }
 
-    // Fallback to Resend
-    if (!resendKey) {
-      console.warn('[EMAIL_SERVICE] [WARNING] No email provider configured or SMTP failed. Falling back to console log.');
+    // Final Fallback: Simulated Logan
+    if (!resendKey && !(process.env.SMTP_USER && process.env.SMTP_PASS)) {
+      console.warn('[EMAIL_SERVICE] [WARNING] No email provider configured. Falling back to console log.');
       console.log(`[EMAIL_SERVICE] [SIMULATED] To: ${to}, Subject: ${subject}`);
       return { success: true };
-    }
-
-    try {
-      console.log(`[EMAIL_SERVICE] [RESEND] Attempting delivery to: ${to}`);
-      const { data, error } = await resend.emails.send({
-        from: 'Baqala <onboarding@resend.dev>',
-        to,
-        subject,
-        html: emailContent
-      });
-
-      if (error) {
-        console.error('[EMAIL_SERVICE] [RESEND] Provider Error:', error);
-        throw error;
-      }
-      console.log(`[EMAIL_SERVICE] [RESEND] Success:`, data?.id);
-      return { success: true, data };
-    } catch (resendError) {
-      console.error('[EMAIL_SERVICE] [RESEND] Failed:', resendError.message);
-      return { success: false, error: resendError };
     }
   } catch (globalError) {
     console.error('[EMAIL_SERVICE] [FATAL]:', globalError.message);
