@@ -30,7 +30,7 @@ const UploadApp = () => {
     title: '', 
     description: '', 
     tagline: '', 
-    category: ['Games'], 
+    category: 'Games', 
     version: '1.0.0', 
     platform: 'Windows', 
     developerName: user?.name || '' 
@@ -177,25 +177,15 @@ const UploadApp = () => {
                     <input type="text" required value={formData.developerName} onChange={e => setFormData({...formData, developerName: e.target.value})} className="input-field shadow-none" placeholder="Enter your display name..." />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-400 mb-2">Categories (Select up to 5)</label>
+                    <label className="block text-sm font-semibold text-gray-400 mb-2">Primary Category</label>
                     <div className="flex flex-wrap gap-2">
                       {categories.map(c => (
                         <button
                           key={c}
                           type="button"
-                          onClick={() => {
-                            const current = Array.isArray(formData.category) ? formData.category : [formData.category];
-                            if (current.includes(c)) {
-                              setFormData({ ...formData, category: current.filter(cat => cat !== c) });
-                            } else if (current.length < 5) {
-                              setFormData({ ...formData, category: [...current, c] });
-                            } else {
-                              toast.error('Maximum 5 categories allowed');
-                            }
-                          }}
+                          onClick={() => setFormData({ ...formData, category: c })}
                           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
-                            (Array.isArray(formData.category) ? formData.category : [formData.category]).includes(c)
+                            formData.category === c
                               ? 'bg-accent-violet border-accent-violet text-white shadow-glow-violet'
                               : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/30'
                           }`}
@@ -204,7 +194,6 @@ const UploadApp = () => {
                         </button>
                       ))}
                     </div>
-                  </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-400 mb-2">Platform</label>
                     <div className="relative">

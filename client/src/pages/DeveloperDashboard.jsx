@@ -144,7 +144,9 @@ const DeveloperDashboard = () => {
                           </div>
                           <div>
                             <p className="text-lg font-bold text-white group-hover:text-accent-neon transition-colors leading-tight">{app.title}</p>
-                            <p className="text-[10px] text-gray-500 font-bold tracking-widest uppercase mt-1">{app.category}</p>
+                            <p className="text-[10px] text-gray-500 font-bold tracking-widest uppercase mt-1">
+                              {Array.isArray(app.category) ? app.category[0] : app.category}
+                            </p>
                           </div>
                         </Link>
                       </td>

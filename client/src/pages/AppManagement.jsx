@@ -211,21 +211,11 @@ const AppManagement = () => {
                           <img src={app.icon} alt={app.title} className="w-8 h-8 object-contain" onError={(e) => { e.target.src = 'https://cdn-icons-png.flaticon.com/512/3344/3344153.png'; }} />
                         </div>
                         <div className="min-w-0">
-                          <p className="font-black text-slate-900 dark:text-white truncate max-w-[150px]">{app.title}</p>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {Array.isArray(app.category) ? app.category.map(cat => (
-                              <span key={cat} className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[8px] font-black uppercase text-slate-500">
-                                {cat}
-                              </span>
-                            )) : (
-                              <span className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[8px] font-black uppercase text-slate-500">
-                                {app.category || 'Uncategorized'}
-                              </span>
-                            )}
+                          <p className="font-black text-slate-900 dark:text-white truncate max-w-[150px] leading-tight">{app.title}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[10px] font-black text-accent-violet uppercase tracking-widest">{app.platform}</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">• {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : 'N/A'}</span>
                           </div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">
-                            {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : 'N/A'}
-                          </p>
                         </div>
                       </div>
                     </td>
@@ -260,7 +250,7 @@ const AppManagement = () => {
                           )}
                         </div>
                       ) : (
-                        <span className="text-[10px] font-black text-slate-400 italic">Analyzing binary...</span>
+                        <span className="text-[10px] font-black text-slate-400 italic">Scanned</span>
                       )}
                     </td>
                     <td className="px-6 py-4">

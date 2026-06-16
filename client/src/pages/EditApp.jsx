@@ -62,7 +62,7 @@ const EditApp = () => {
         description: appData.description || '',
         shortDescription: appData.shortDescription || '',
         tagline: appData.tagline || '',
-        category: Array.isArray(appData.category) ? appData.category : [appData.category || 'Other'],
+        category: Array.isArray(appData.category) ? appData.category[0] : (appData.category || 'Other'),
         platform: appData.platform || '',
         version: appData.version || '',
         developerName: appData.developerName || '',
@@ -344,7 +344,7 @@ const EditApp = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Classification (Select up to 5)</label>
+                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Primary Classification</label>
                   <div className="flex flex-wrap gap-2">
                     {[
                       'Games', 'Social', 'Productivity', 'Education',
@@ -355,18 +355,9 @@ const EditApp = () => {
                       <button
                         key={c}
                         type="button"
-                        onClick={() => {
-                          const current = Array.isArray(formData.category) ? formData.category : [formData.category];
-                          if (current.includes(c)) {
-                            setFormData({ ...formData, category: current.filter(cat => cat !== c) });
-                          } else if (current.length < 5) {
-                            setFormData({ ...formData, category: [...current, c] });
-                          } else {
-                            toast.error('Maximum 5 categories allowed');
-                          }
-                        }}
+                        onClick={() => setFormData({ ...formData, category: c })}
                         className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
-                          (Array.isArray(formData.category) ? formData.category : [formData.category]).includes(c)
+                          formData.category === c
                             ? 'bg-accent-violet border-accent-violet text-white shadow-glow-violet'
                             : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/30'
                         }`}
