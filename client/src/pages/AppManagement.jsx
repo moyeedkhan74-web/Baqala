@@ -189,7 +189,7 @@ const AppManagement = () => {
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-white/2 border-b border-slate-200 dark:border-white/5">
+                <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-white/5">
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">App Name</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Developer</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Security (VT)</th>
@@ -224,7 +224,7 @@ const AppManagement = () => {
                             )}
                           </div>
                           <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">
-                            {new Date(app.createdAt).toLocaleDateString()}
+                            {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : 'N/A'}
                           </p>
                         </div>
                       </div>
@@ -243,7 +243,7 @@ const AppManagement = () => {
                             app.vtResult === 'suspicious' ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
                             "bg-rose-500/10 text-rose-500 border-rose-500/20"
                           )}>
-                            {app.vtResult}
+                            {app.vtResult === 'clean' ? 'Scanned / Safe' : app.vtResult}
                           </div>
                           <p className="text-[10px] font-bold text-slate-500">
                              {app.vtMaliciousCount} / {app.vtTotalEngines || 72} engines
@@ -260,7 +260,7 @@ const AppManagement = () => {
                           )}
                         </div>
                       ) : (
-                        <span className="text-[10px] font-black text-slate-400 italic">Scanning...</span>
+                        <span className="text-[10px] font-black text-slate-400 italic">Analyzing binary...</span>
                       )}
                     </td>
                     <td className="px-6 py-4">

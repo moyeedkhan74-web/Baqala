@@ -9,7 +9,7 @@ const ConfigSchema = new mongoose.Schema({
   announcement: {
     enabled: { type: Boolean, default: false },
     text: { type: String, default: '' },
-    level: { type: String, enum: ['info', 'warning', 'critical'], default: 'info' }
+    level: { type: String, enum: ['info', 'warning', 'critical', 'celebratory'], default: 'info' }
   },
 
   // Maintenance & System
