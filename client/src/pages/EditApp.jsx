@@ -67,7 +67,8 @@ const EditApp = () => {
         version: appData.version || '',
         developerName: appData.developerName || '',
         tags: Array.isArray(appData.tags) ? appData.tags.join(', ') : '',
-        banner: appData.banner || ''
+        banner: appData.banner || '',
+        icon: appData.icon || ''
       });
       setLoading(false);
     } catch (error) {

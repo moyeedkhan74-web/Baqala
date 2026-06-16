@@ -45,7 +45,7 @@ exports.uploadApkSecure = async (req, res, next) => {
     // Upload Icon if present
     if (req.files && req.files['icon'] && req.files['icon'][0]) {
       const iconFile = req.files['icon'][0];
-      const iconPath = `apps/icons/${uuid}-${iconFile.originalname.replace(/\s+/g, '_')}`;
+      const iconPath = `icons/${uuid}-${iconFile.originalname.replace(/\s+/g, '_')}`;
       const iconUpload = await uploadImage(iconPath, iconFile.buffer, iconFile.mimetype);
       if (iconUpload.success) iconUrl = iconUpload.url;
     }
@@ -83,6 +83,26 @@ exports.uploadApkSecure = async (req, res, next) => {
       runBackgroundScan(app._id, file.buffer, file.originalname)
         .catch(err => console.error('[SCAN_TRIGGER_ERROR]:', err.message));
     });
+
+    // 6. Send Notifications
+    const { sendUploadConfirmationEmail } = require('../services/emailService');
+    const { createNotification } = require('../services/notificationService');
+    if (req.user && req.user.email) {
+       setImmediate(async () => {
+         try {
+           await sendUploadConfirmationEmail(req.user.email, app.title);
+           await createNotification({
+             recipient: req.user._id,
+             title: '📦 Upload Received',
+             message: `We've received your application "${app.title}". It's now in the queue for security scanning and moderation.`,
+             type: 'info',
+             link: `/developer/apps/${app._id}`
+           });
+         } catch (err) {
+           console.error('[NOTIFY_SECURE_UPLOAD_ERROR]:', err.message);
+         }
+       });
+    }
 
     // 6. Success response
     res.status(202).json({ 
