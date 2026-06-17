@@ -542,6 +542,18 @@ const EditApp = () => {
                   </div>
                 )}
 
+                <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-left mb-6">
+                  <div className="flex items-start gap-3">
+                    <HiExclamationCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-bold text-white mb-1">Security Enforcement Active</p>
+                      <p className="text-xs text-slate-400 leading-relaxed font-medium">
+                        Any change to the binary payload will automatically take the app offline for a mandatory security re-scan and administrative moderation. This ensures the safety of the Baqala network.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                   <label className="btn-primary flex items-center justify-center gap-2 cursor-pointer shadow-glow-violet disabled:opacity-50">
                     <HiArrowUpTray className="w-5 h-5" /> {saving ? 'Neural Link Active...' : 'Upload New Version'}
                     <input type="file" className="hidden" disabled={saving} onChange={handleAppFileReplacement} />

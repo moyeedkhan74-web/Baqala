@@ -620,11 +620,14 @@ exports.updateApp = async (req, res) => {
     } = req.body;
 
     // Handle binary replacement cleanup
+    let binaryChanged = false;
     if (fileUrl && fileUrl !== app.fileUrl) {
+      console.log(`[SECURITY ENFORCEMENT] Binary change detected for App ${app._id}. Forcing re-scan.`);
       await deleteFileFromB2(app.fileUrl);
       app.fileUrl = fileUrl;
       app.fileName = fileName || 'updated_file';
       app.fileSize = fileSize || 0;
+      binaryChanged = true;
     }
     
     // Global Scrubbing on Update: Ensure DB stays clean
@@ -662,8 +665,8 @@ exports.updateApp = async (req, res) => {
 
     // ── Re-deployment / Re-submission Logic ──
     const { reSubmit } = req.body;
-    if (reSubmit) {
-      console.log(`[RE-DEPLOY] Triggered for App: ${app._id} (${app.title})`);
+    if (reSubmit || binaryChanged) {
+      console.log(`[RE-DEPLOY] Triggered for App: ${app._id} (${app.title}) | Type: ${binaryChanged ? 'FORCED (Binary Change)' : 'MANUAL'}`);
       app.status = 'pending';
       app.scanStatus = 'scanning';
       
