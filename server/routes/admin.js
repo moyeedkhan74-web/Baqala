@@ -18,7 +18,8 @@ const {
   manualAppScan,
   getEmailLogs,
   resendEmailLog,
-  testEmailConfig
+  testEmailConfig,
+  getSystemInfo
 } = require('../controllers/adminController');
 const requireAdmin = require('../middleware/requireAdmin');
 
@@ -45,6 +46,7 @@ router.post('/apps/:id/scan', manualAppScan);
 router.get('/email-logs', getEmailLogs);
 router.post('/email-logs/:id/resend', resendEmailLog);
 router.get('/test-email', testEmailConfig);
+router.get('/system-info', getSystemInfo);
 
 // Reports
 router.get('/reports', getAllReports);

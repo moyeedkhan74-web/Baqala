@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const App = require('../models/App');
 const User = require('../models/User');
 const Review = require('../models/Review');
@@ -711,5 +712,30 @@ exports.testEmailConfig = async (req, res) => {
   } catch (error) {
     console.error('Test email error:', error);
     res.status(500).json({ message: 'Server error during test email.' });
+  }
+};
+
+// GET /api/admin/system-info
+// Diagnostic helper usable as a route or internal utility
+exports.getSystemInfo = async (req = null, res = null) => {
+  try {
+    const info = {
+      nodeEnv: process.env.NODE_ENV || 'development',
+      mongoConnected: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
+      resendConfigured: !!process.env.RESEND_API_KEY ? 'Yes' : 'No',
+      smtpConfigured: !!(process.env.SMTP_USER && process.env.SMTP_PASS) ? 'Yes' : 'No',
+      timestamp: new Date().toLocaleString(),
+      uptime: `${Math.floor(process.uptime())}s`
+    };
+
+    if (res) {
+      return res.json({ diagnostics: info });
+    }
+    return info;
+  } catch (error) {
+    if (res) {
+      return res.status(500).json({ message: 'Error collecting diagnostics' });
+    }
+    return { error: error.message };
   }
 };

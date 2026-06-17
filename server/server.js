@@ -133,7 +133,7 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`API: http://localhost:${PORT}/api`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
@@ -145,6 +145,20 @@ const server = app.listen(PORT, () => {
     console.warn('\x1b[33m%s\x1b[0m', '    Please set RESEND_API_KEY for reliable notification delivery.');
   } else {
     console.log('\x1b[32m%s\x1b[0m', '✅ [CONFIG]: Resend Email Service is configured.');
+  }
+
+  // System Diagnostics Snapshot
+  try {
+    const { getSystemInfo } = require('./controllers/adminController');
+    const diagnostics = await getSystemInfo();
+    console.log('\n🔍 [SYSTEM_DIAGNOSTICS_SNAPSHOT]');
+    console.log('-------------------------------------------');
+    Object.entries(diagnostics).forEach(([key, value]) => {
+      console.log(`${key.padEnd(20)}: ${value}`);
+    });
+    console.log('-------------------------------------------\n');
+  } catch (diagError) {
+    console.error('[DIAGNOSTICS_FAILED]:', diagError.message);
   }
 });
 
