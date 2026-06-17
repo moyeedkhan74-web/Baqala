@@ -47,6 +47,7 @@ const EditApp = () => {
   });
   
   const [files, setFiles] = useState({ newIcon: null, newScreenshots: [], newAppFile: null });
+  const [hasNewBinary, setHasNewBinary] = useState(false);
 
   useEffect(() => {
     loadApp();
@@ -70,6 +71,7 @@ const EditApp = () => {
         banner: appData.banner || '',
         icon: appData.icon || ''
       });
+      setHasNewBinary(false); // Reset on load
       setLoading(false);
     } catch (error) {
       toast.error('Failed to load project details');
@@ -77,12 +79,18 @@ const EditApp = () => {
     }
   };
 
-  const handleMetadataUpdate = async (e) => {
+  const handleMetadataUpdate = async (e, reSubmit = false) => {
     if (e) e.preventDefault();
     setSaving(true);
     try {
-      await api.put(`/apps/${id}`, formData);
-      toast.success('Project metadata synchronized perfectly!');
+      const payload = { ...formData, reSubmit };
+      await api.put(`/apps/${id}`, payload);
+      
+      if (reSubmit) {
+        toast.success('Project deployed for security review!');
+      } else {
+        toast.success('Project metadata synchronized perfectly!');
+      }
       navigate('/developer');
     } catch (error) {
       toast.error('Failed to update metadata');
@@ -248,13 +256,14 @@ const EditApp = () => {
       
       const combineRes = await api.post('/apps/combine-chunks', { uploadId, filePath, parts, fileName: file.name });
       
-      // Update the app record with the new binary URL
+      // Update the app record with the new binary URL locally & in DB
       await api.put(`/apps/${id}`, {
         fileUrl: combineRes.data.url,
         fileName: file.name,
         fileSize: file.size
       });
 
+      setHasNewBinary(true);
       setUploadProgress(100);
       toast.success('Payload overwritten successfully!', { id: toastId });
       loadApp();
@@ -555,13 +564,33 @@ const EditApp = () => {
 
       {/* STICKY DEPLOYMENT FOOTER */}
       <div className="fixed bottom-0 left-0 w-full z-[90] p-6 pointer-events-none">
-        <div className="max-w-6xl mx-auto flex justify-end">
+        <div className="max-w-6xl mx-auto flex justify-end items-center gap-4">
+          <AnimatePresence>
+            {(hasNewBinary || app.status === 'rejected') && (
+              <motion.button 
+                initial={{ x: 100, opacity: 0 }} 
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: 100, opacity: 0 }}
+                onClick={(e) => handleMetadataUpdate(e, true)} 
+                disabled={saving}
+                className="pointer-events-auto btn-primary flex items-center gap-3 px-8 py-5 rounded-2xl bg-gradient-to-r from-accent-emerald to-accent-neon shadow-[0_20px_50px_rgba(16,185,129,0.3)] border border-white/20 text-lg font-black transition-all hover:scale-105 active:scale-95 group"
+              >
+                {saving ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <HiArrowUpTray className="w-6 h-6 group-hover:-translate-y-1 transition-transform" />
+                )}
+                RE-DEPLOY & SUBMIT FOR REVIEW
+              </motion.button>
+            )}
+          </AnimatePresence>
+
           <motion.button 
             initial={{ y: 100 }} 
             animate={{ y: 0 }}
-            onClick={handleMetadataUpdate} 
+            onClick={(e) => handleMetadataUpdate(e, false)} 
             disabled={saving}
-            className="pointer-events-auto btn-primary flex items-center gap-3 px-12 py-5 rounded-2xl shadow-[0_20px_50px_rgba(139,92,246,0.5)] border border-white/20 text-lg font-black transition-all hover:scale-105 active:scale-95 group"
+            className="pointer-events-auto btn-primary flex items-center gap-3 px-10 py-5 rounded-2xl shadow-[0_20px_50px_rgba(139,92,246,0.3)] border border-white/20 text-lg font-black transition-all hover:scale-105 active:scale-95 group bg-slate-800"
           >
             {saving ? (
               <span className="flex items-center gap-3">
@@ -571,7 +600,7 @@ const EditApp = () => {
             ) : (
               <>
                 <HiCheckCircle className="w-7 h-7 group-hover:scale-110 transition-transform text-accent-neon" /> 
-                SYNCHRONIZE & PUBLISH PROJECT
+                SAVE METADATA
               </>
             )}
           </motion.button>

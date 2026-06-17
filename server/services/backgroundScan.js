@@ -2,6 +2,8 @@ const App = require('../models/App');
 const User = require('../models/User');
 const { uploadFileToVirusTotal, pollScanResult } = require('./virusScanner');
 const { sendAutoRejectEmail } = require('./emailService');
+const { getDownloadUrl } = require('../utils/b2Storage');
+const https = require('https');
 
 /**
  * Fire-and-forget background scan.
@@ -9,6 +11,9 @@ const { sendAutoRejectEmail } = require('./emailService');
  */
 exports.runBackgroundScan = async (appId, buffer, filename) => {
   let app;
+  let scanBuffer = buffer;
+  let scanFilename = filename;
+
   try {
     app = await App.findById(appId).populate('developer', 'email');
     if (!app) {
@@ -16,8 +21,39 @@ exports.runBackgroundScan = async (appId, buffer, filename) => {
       return;
     }
 
+    // If no buffer, download from B2 (common for re-deployments)
+    if (!scanBuffer) {
+      console.log(`[BG_SCAN] No buffer provided for ${appId}, downloading from B2...`);
+      if (!app.fileUrl) {
+        console.error(`[BG_SCAN] No fileUrl found for ${appId}, cannot scan.`);
+        return;
+      }
+
+      const dlResult = await getDownloadUrl(app.fileUrl, app.fileName);
+      if (!dlResult.success) {
+        console.error(`[BG_SCAN] Failed to get download URL for ${appId}:`, dlResult.error);
+        return;
+      }
+
+      scanBuffer = await new Promise((resolve, reject) => {
+        https.get(dlResult.url, (res) => {
+          if (res.statusCode !== 200) {
+            reject(new Error(`Download failed: ${res.statusCode}`));
+            return;
+          }
+          const chunks = [];
+          res.on('data', c => chunks.push(c));
+          res.on('end', () => resolve(Buffer.concat(chunks)));
+          res.on('error', reject);
+        }).on('error', reject);
+      });
+      
+      scanFilename = app.fileName || 'binary';
+      console.log(`[BG_SCAN] Download complete (${scanBuffer.length} bytes)`);
+    }
+
     // 1. Upload to VirusTotal
-    const { analysisId, permalink } = await uploadFileToVirusTotal(buffer, filename);
+    const { analysisId, permalink } = await uploadFileToVirusTotal(scanBuffer, scanFilename);
     app.vtScanId = analysisId;
     app.vtReportUrl = permalink;
     await app.save();

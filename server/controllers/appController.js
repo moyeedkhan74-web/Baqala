@@ -660,6 +660,29 @@ exports.updateApp = async (req, res) => {
     if (developerName) app.developerName = developerName;
     if (tags) app.tags = typeof tags === 'string' ? tags.split(',').map(t => t.trim()) : tags;
 
+    // ── Re-deployment / Re-submission Logic ──
+    const { reSubmit } = req.body;
+    if (reSubmit) {
+      console.log(`[RE-DEPLOY] Triggered for App: ${app._id} (${app.title})`);
+      app.status = 'pending';
+      app.scanStatus = 'scanning';
+      
+      // Detached Background Scan
+      const { runBackgroundScan } = require('../services/backgroundScan');
+      setImmediate(() => {
+        runBackgroundScan(app._id) // No buffer provided, will download from B2
+          .catch(err => console.error('[RE-DEPLOY_SCAN_ERR]:', err.message));
+      });
+
+      // Notification for developer
+      const { sendUploadConfirmation } = require('../services/notificationService');
+      setImmediate(async () => {
+        try {
+          await sendUploadConfirmation(req.user, app.title, app._id);
+        } catch (err) { console.error('[RE-DEPLOY_NOTIFY_ERR]:', err.message); }
+      });
+    }
+
     await app.save();
     const updatedApp = await App.findById(app._id).populate('developer', 'name email avatar');
 
