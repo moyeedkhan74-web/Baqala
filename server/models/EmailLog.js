@@ -12,7 +12,7 @@ const emailLogSchema = new mongoose.Schema({
   },
   provider: {
     type: String,
-    enum: ['resend', 'smtp', 'simulated'],
+    enum: ['brevo', 'resend', 'smtp', 'simulated'],
     required: true
   },
   status: {

@@ -139,12 +139,18 @@ const server = app.listen(PORT, async () => {
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   
   // Email Provider Sanity Check
-  if (!process.env.RESEND_API_KEY) {
-    console.warn('\x1b[33m%s\x1b[0m', '⚠️  [CONFIG_WARNING]: RESEND_API_KEY is not set.');
+  const emailDiagnostics = {
+    brevo: !!process.env.BREVO_API_KEY,
+    resend: !!process.env.RESEND_API_KEY,
+    smtp: !!(process.env.SMTP_USER && process.env.SMTP_PASS)
+  };
+
+  if (!emailDiagnostics.brevo && !emailDiagnostics.resend) {
+    console.warn('\x1b[33m%s\x1b[0m', '⚠️  [CONFIG_WARNING]: No reliable email provider (Brevo/Resend) is set.');
     console.warn('\x1b[33m%s\x1b[0m', '    Falling back to Gmail SMTP, which is known to time out frequently on Render.');
-    console.warn('\x1b[33m%s\x1b[0m', '    Please set RESEND_API_KEY for reliable notification delivery.');
   } else {
-    console.log('\x1b[32m%s\x1b[0m', '✅ [CONFIG]: Resend Email Service is configured.');
+    const primary = emailDiagnostics.brevo ? 'Brevo' : 'Resend';
+    console.log('\x1b[32m%s\x1b[0m', `✅ [CONFIG]: Email Service is active (Primary: ${primary}).`);
   }
 
   // System Diagnostics Snapshot

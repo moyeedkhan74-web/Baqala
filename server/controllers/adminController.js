@@ -705,7 +705,11 @@ exports.testEmailConfig = async (req, res) => {
     });
 
     if (result.success) {
-      res.json({ message: 'Test email sent successfully.', result });
+      res.json({ 
+        message: 'Test email sent successfully.', 
+        provider: result.provider,
+        result 
+      });
     } else {
       res.status(500).json({ message: 'Test email failed.', error: result.error });
     }
@@ -722,6 +726,7 @@ exports.getSystemInfo = async (req = null, res = null) => {
     const info = {
       nodeEnv: process.env.NODE_ENV || 'development',
       mongoConnected: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
+      brevoConfigured: !!process.env.BREVO_API_KEY ? 'Yes' : 'No',
       resendConfigured: !!process.env.RESEND_API_KEY ? 'Yes' : 'No',
       smtpConfigured: !!(process.env.SMTP_USER && process.env.SMTP_PASS) ? 'Yes' : 'No',
       timestamp: new Date().toLocaleString(),

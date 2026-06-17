@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 
 // Mock environment
 process.env.MONGODB_URI = 'mongodb://localhost:27017/test';
+process.env.BREVO_API_KEY = 'xkeysib-test';
 process.env.RESEND_API_KEY = 're_test';
 process.env.SMTP_USER = 'test@gmail.com';
 process.env.SMTP_PASS = 'pass';
@@ -15,7 +16,7 @@ Object.defineProperty(mongoose.connection, 'readyState', { value: 1 });
 const { getSystemInfo } = require('../server/controllers/adminController');
 
 async function test() {
-  console.log('--- STARTING DIAGNOSTICS VERIFICATION ---');
+  console.log('--- STARTING BREVO DIAGNOSTICS VERIFICATION ---');
 
   try {
     const info = await getSystemInfo();
@@ -26,8 +27,8 @@ async function test() {
     });
     console.log('-------------------------------------------\n');
 
-    if (info.mongoConnected === 'Connected' && info.resendConfigured === 'Yes') {
-      console.log('✅ Verification passed: Diagnostics collected correctly.');
+    if (info.brevoConfigured === 'Yes' && info.resendConfigured === 'Yes' && info.smtpConfigured === 'Yes') {
+      console.log('✅ Verification passed: All providers detected correctly.');
     } else {
       console.error('❌ Verification failed: Unexpected diagnostic values.');
       process.exit(1);

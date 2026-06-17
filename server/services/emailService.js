@@ -1,8 +1,20 @@
-const { Resend } = require('resend');
-const nodemailer = require('nodemailer');
+const SibApiV3Sdk = require('@getbrevo/brevo');
 const EmailLog = require('../models/EmailLog');
 
+// Configuration
+const brevoKey = process.env.BREVO_API_KEY?.trim() || null;
+const brevoFrom = process.env.BREVO_FROM_EMAIL || 'legalbaqala@gmail.com';
 const resendKey = process.env.RESEND_API_KEY;
+
+// Initialize Brevo
+let brevoApi = null;
+if (brevoKey) {
+  const defaultClient = SibApiV3Sdk.ApiClient.instance;
+  const apiKey = defaultClient.authentications['api-key'];
+  apiKey.apiKey = brevoKey;
+  brevoApi = new SibApiV3Sdk.TransactionalEmailsApi();
+}
+
 const resend = resendKey ? new Resend(resendKey) : null;
 
 // Configure Nodemailer for Gmail SMTP
@@ -27,7 +39,7 @@ const withTimeout = (promise, ms, providerName) => {
 };
 
 /**
- * Send an email using SMTP (Primary) or Resend (Secondary)
+ * Send an email using Brevo (Primary), Resend (Secondary), or SMTP (Last Resort)
  */
 exports.sendEmail = async ({ to, subject, html, appId = null }) => {
   const emailContent = `
@@ -39,20 +51,66 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
   `;
 
   let lastError = null;
+  let brevoFailed = false;
   let resendFailed = false;
 
-  // 1. Try Resend First (Primary for Render)
-  if (resendKey) {
+  // 1. Try Brevo First (New Primary)
+  if (brevoApi) {
     let logEntry;
     try {
-      console.log(`[EMAIL_SERVICE] [RESEND] Attempting delivery to: ${to}`);
+      console.log(`[EMAIL_SERVICE] [BREVO] Attempting delivery to: ${to}`);
+      
+      logEntry = await EmailLog.create({
+        recipient: to,
+        subject,
+        provider: 'brevo',
+        status: 'pending',
+        relatedAppId: appId
+      });
+
+      const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+      sendSmtpEmail.subject = subject;
+      sendSmtpEmail.htmlContent = emailContent;
+      sendSmtpEmail.sender = { name: "Baqala", email: brevoFrom };
+      sendSmtpEmail.to = [{ email: to }];
+
+      const result = await withTimeout(brevoApi.sendTransacEmail(sendSmtpEmail), 8000, 'BREVO');
+
+      console.log(`[EMAIL_SERVICE] [BREVO] Success: ${result.messageId || 'SENT'}`);
+      logEntry.status = 'sent';
+      logEntry.completedAt = new Date();
+      await logEntry.save();
+      
+      return { success: true, provider: 'brevo', messageId: result.messageId };
+    } catch (brevoError) {
+      brevoFailed = true;
+      const isTimeout = brevoError.message.includes('TIMEOUT');
+      console.error(`[EMAIL_SERVICE] [BREVO] ${isTimeout ? 'Timeout' : 'Failed'}:`, brevoError.message);
+      
+      if (logEntry) {
+        logEntry.status = isTimeout ? 'timeout' : 'failed';
+        logEntry.error = brevoError.message;
+        logEntry.completedAt = new Date();
+        await logEntry.save();
+      }
+      lastError = brevoError;
+    }
+  }
+
+  // 2. Try Resend Second (Sandbox Fallback)
+  if (resendKey && (!brevoApi || brevoFailed)) {
+    let logEntry;
+    try {
+      const isFallback = brevoApi && brevoFailed;
+      console.log(`[EMAIL_SERVICE] [RESEND] Attempting delivery to: ${to}${isFallback ? ' (FALLBACK)' : ''}`);
       
       logEntry = await EmailLog.create({
         recipient: to,
         subject,
         provider: 'resend',
         status: 'pending',
-        relatedAppId: appId
+        relatedAppId: appId,
+        error: isFallback ? 'Used as fallback after Brevo failed' : null
       });
 
       const { data, error } = await withTimeout(resend.emails.send({
@@ -69,7 +127,7 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
       logEntry.completedAt = new Date();
       await logEntry.save();
       
-      return { success: true, data };
+      return { success: true, provider: 'resend', data };
     } catch (resendError) {
       resendFailed = true;
       const isTimeout = resendError.message.includes('TIMEOUT');
@@ -85,12 +143,11 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
     }
   }
 
-  // 2. Secondary: Try Nodemailer/SMTP
-  // Only try SMTP if Resend is not configured OR if Resend failed
-  if (process.env.SMTP_USER && process.env.SMTP_PASS && (!resendKey || resendFailed)) {
+  // 3. Try Nodemailer/SMTP (Last Resort)
+  if (process.env.SMTP_USER && process.env.SMTP_PASS && (!brevoApi || brevoFailed) && (!resendKey || resendFailed)) {
     let logEntry;
     try {
-      const isFallback = resendKey && resendFailed;
+      const isFallback = (brevoApi && brevoFailed) || (resendKey && resendFailed);
       console.log(`[EMAIL_SERVICE] [SMTP] Attempting delivery to: ${to}${isFallback ? ' (FALLBACK)' : ''}`);
       
       logEntry = await EmailLog.create({
@@ -99,10 +156,9 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
         provider: 'smtp',
         status: 'pending',
         relatedAppId: appId,
-        error: isFallback ? 'Used as fallback after Resend failed' : null
+        error: isFallback ? 'Used as fallback after primary providers failed' : null
       });
 
-      // Reduced timeout to 8s as SMTP on Render usually fails fast if blocked
       const info = await withTimeout(transporter.sendMail({
         from: `"Baqala" <${process.env.SMTP_USER}>`,
         to,
@@ -115,7 +171,7 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
       logEntry.completedAt = new Date();
       await logEntry.save();
 
-      return { success: true, messageId: info.messageId };
+      return { success: true, provider: 'smtp', messageId: info.messageId };
     } catch (smtpError) {
       const isTimeout = smtpError.message.includes('TIMEOUT');
       console.error(`[EMAIL_SERVICE] [SMTP] ${isTimeout ? 'Timeout' : 'Failed'}:`, smtpError.message);
@@ -130,8 +186,8 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
     }
   }
 
-  // 3. Final Fallback: Simulated
-  if (!resendKey && !(process.env.SMTP_USER && process.env.SMTP_PASS)) {
+  // 4. Final Fallback: Simulated
+  if (!brevoKey && !resendKey && !(process.env.SMTP_USER && process.env.SMTP_PASS)) {
     console.warn('[EMAIL_SERVICE] [WARNING] No email provider configured. Falling back to console log.');
     console.log(`[EMAIL_SERVICE] [SIMULATED] To: ${to}, Subject: ${subject}`);
     
@@ -144,7 +200,7 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
       completedAt: new Date()
     });
 
-    return { success: true };
+    return { success: true, provider: 'simulated' };
   }
 
   return { success: false, error: lastError?.message || 'All providers failed' };
