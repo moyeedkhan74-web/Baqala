@@ -46,7 +46,7 @@ router.post('/upload-temp', auth, uploadImages, uploadTemp);
 
 // --- Individual App Action Fallbacks (POST versions for network safety) ---
 router.post('/:id/remove-screenshot', auth, removeScreenshot);
-router.post('/:id/images', auth, uploadImages, uploadAppImages);
+router.post('/:id/images', auth, requireOwner, uploadImages, uploadAppImages);
 
 // --- Resource Routes (Individual) ---
 router.get('/:id', generalLimiter, getApp);

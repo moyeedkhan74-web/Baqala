@@ -346,9 +346,15 @@ exports.createApp = async (req, res, next) => {
 
 exports.uploadAppImages = async (req, res, next) => {
   try {
-    const app = await App.findById(req.params.id);
+    // Use app from middleware if available, otherwise fetch it
+    const app = req.app || await App.findById(req.params.id);
     if (!app) return res.status(404).json({ message: 'App not found.' });
-    if (app.developer.toString() !== req.user._id.toString()) {
+    
+    // Authorization: Must be developer OR Admin
+    const isDeveloper = app.developer.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isDeveloper && !isAdmin) {
       return res.status(403).json({ message: 'Not authorized.' });
     }
 
