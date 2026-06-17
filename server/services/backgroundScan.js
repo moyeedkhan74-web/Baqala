@@ -46,7 +46,7 @@ exports.runBackgroundScan = async (appId, buffer, filename) => {
       
       // Notify Developer
       if (app.developer && app.developer.email) {
-        await sendAutoRejectEmail(app.developer.email, app.title, app.vtReportUrl);
+        await sendAutoRejectEmail(app.developer.email, app.title, app.vtReportUrl, app.vtMaliciousCount, app.vtTotalEngines);
       }
     } else if (malicious >= 1 && malicious <= 2) {
       // SUSPICIOUS
