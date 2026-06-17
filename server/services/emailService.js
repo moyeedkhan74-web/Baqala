@@ -6,6 +6,7 @@ const EmailLog = require('../models/EmailLog');
 // Configuration
 const brevoKey = process.env.BREVO_API_KEY?.trim() || null;
 const brevoFrom = process.env.BREVO_FROM_EMAIL || 'legalbaqala@gmail.com';
+const supportEmail = process.env.SUPPORT_EMAIL || 'officialbaqala@gmail.com';
 const resendKey = process.env.RESEND_API_KEY;
 
 // Initialize Brevo (v5.x SDK)
@@ -49,7 +50,7 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
     ${html}
     <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
     <p style="font-size: 12px; color: #666;">
-      Questions? Contact our legal team at <a href="mailto:legalbaqala@gmail.com">legalbaqala@gmail.com</a> or visit our <a href="https://baqala-lovat.vercel.app/terms">Terms of Service</a>.
+      Questions? Contact our support team at <a href="mailto:${supportEmail}">${supportEmail}</a> or visit our <a href="https://baqala-lovat.vercel.app/terms">Terms of Service</a>.
     </p>
   `;
 
@@ -76,7 +77,8 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
         subject: subject,
         htmlContent: emailContent,
         sender: { name: "Baqala", email: brevoFrom },
-        to: [{ email: to }]
+        to: [{ email: to }],
+        replyTo: { email: supportEmail }
       }), 8000, 'BREVO');
 
       console.log(`[EMAIL_SERVICE] [BREVO] Success: ${result.messageId || 'SENT'}`);
