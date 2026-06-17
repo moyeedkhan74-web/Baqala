@@ -220,9 +220,8 @@ exports.sendAutoRejectEmail = async (email, appName, reportUrl, maliciousCount, 
     subject: `Security Alert: Your app ${appName} was rejected`,
     html: `<div style="background-color:#f4f5f7; padding:32px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px; margin:0 auto; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-    <tr><td style="background-color:#0f172a; padding:28px 32px; text-align:center;">
-      <img src="https://baqala-lovat.vercel.app/logo.png" alt="Baqala" width="44" height="44" style="display:inline-block; vertical-align:middle; border-radius:10px;" />
-      <span style="display:inline-block; vertical-align:middle; margin-left:10px; font-size:22px; font-weight:700; color:#ffffff;">Baqala</span>
+    <tr><td style="background-color:#0f172a; padding:24px 32px; text-align:center;">
+      <img src="https://baqala-lovat.vercel.app/baqala-logo-email.png" alt="Baqala" width="178" height="32" style="display:block; margin:0 auto;" />
     </td></tr>
     <tr><td style="background-color:#fef2f2; padding:36px 32px 24px; text-align:center;">
       <div style="width:64px; height:64px; background-color:#ef4444; border-radius:50%; margin:0 auto 16px; line-height:64px; font-size:30px; color:#ffffff;">&#9888;</div>
@@ -264,9 +263,8 @@ exports.sendAdminRejectEmail = async (email, appName, reason) => {
     subject: `Update on your app: ${appName}`,
     html: `<div style="background-color:#f4f5f7; padding:32px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px; margin:0 auto; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-    <tr><td style="background-color:#0f172a; padding:28px 32px; text-align:center;">
-      <img src="https://baqala-lovat.vercel.app/logo.png" alt="Baqala" width="44" height="44" style="display:inline-block; vertical-align:middle; border-radius:10px;" />
-      <span style="display:inline-block; vertical-align:middle; margin-left:10px; font-size:22px; font-weight:700; color:#ffffff;">Baqala</span>
+    <tr><td style="background-color:#0f172a; padding:24px 32px; text-align:center;">
+      <img src="https://baqala-lovat.vercel.app/baqala-logo-email.png" alt="Baqala" width="178" height="32" style="display:block; margin:0 auto;" />
     </td></tr>
     <tr><td style="background-color:#fff7ed; padding:36px 32px 24px; text-align:center;">
       <div style="width:64px; height:64px; background-color:#f59e0b; border-radius:50%; margin:0 auto 16px; line-height:64px; font-size:30px; color:#ffffff;">!</div>
