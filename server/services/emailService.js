@@ -1,4 +1,6 @@
-const SibApiV3Sdk = require('@getbrevo/brevo');
+const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
+const { BrevoClient } = require('@getbrevo/brevo');
 const EmailLog = require('../models/EmailLog');
 
 // Configuration
@@ -6,13 +8,14 @@ const brevoKey = process.env.BREVO_API_KEY?.trim() || null;
 const brevoFrom = process.env.BREVO_FROM_EMAIL || 'legalbaqala@gmail.com';
 const resendKey = process.env.RESEND_API_KEY;
 
-// Initialize Brevo
-let brevoApi = null;
+// Initialize Brevo (v5.x SDK)
+let brevoClient = null;
 if (brevoKey) {
-  const defaultClient = SibApiV3Sdk.ApiClient.instance;
-  const apiKey = defaultClient.authentications['api-key'];
-  apiKey.apiKey = brevoKey;
-  brevoApi = new SibApiV3Sdk.TransactionalEmailsApi();
+  try {
+    brevoClient = new BrevoClient({ apiKey: brevoKey });
+  } catch (initError) {
+    console.error('[EMAIL_SERVICE] [BREVO_INIT_ERROR]:', initError.message);
+  }
 }
 
 const resend = resendKey ? new Resend(resendKey) : null;
@@ -55,7 +58,7 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
   let resendFailed = false;
 
   // 1. Try Brevo First (New Primary)
-  if (brevoApi) {
+  if (brevoClient) {
     let logEntry;
     try {
       console.log(`[EMAIL_SERVICE] [BREVO] Attempting delivery to: ${to}`);
@@ -68,13 +71,13 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
         relatedAppId: appId
       });
 
-      const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-      sendSmtpEmail.subject = subject;
-      sendSmtpEmail.htmlContent = emailContent;
-      sendSmtpEmail.sender = { name: "Baqala", email: brevoFrom };
-      sendSmtpEmail.to = [{ email: to }];
-
-      const result = await withTimeout(brevoApi.sendTransacEmail(sendSmtpEmail), 8000, 'BREVO');
+      // Brevo v5.x SDK uses transactionalEmails.sendTransacEmail
+      const result = await withTimeout(brevoClient.transactionalEmails.sendTransacEmail({
+        subject: subject,
+        htmlContent: emailContent,
+        sender: { name: "Baqala", email: brevoFrom },
+        to: [{ email: to }]
+      }), 8000, 'BREVO');
 
       console.log(`[EMAIL_SERVICE] [BREVO] Success: ${result.messageId || 'SENT'}`);
       logEntry.status = 'sent';
@@ -98,10 +101,10 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
   }
 
   // 2. Try Resend Second (Sandbox Fallback)
-  if (resendKey && (!brevoApi || brevoFailed)) {
+  if (resendKey && (!brevoClient || brevoFailed)) {
     let logEntry;
     try {
-      const isFallback = brevoApi && brevoFailed;
+      const isFallback = brevoClient && brevoFailed;
       console.log(`[EMAIL_SERVICE] [RESEND] Attempting delivery to: ${to}${isFallback ? ' (FALLBACK)' : ''}`);
       
       logEntry = await EmailLog.create({
