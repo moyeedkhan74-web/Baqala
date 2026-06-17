@@ -1,4 +1,5 @@
 const Notification = require('../models/Notification');
+const supabase = require('../config/supabase');
 
 /**
  * Send an in-app notification to a user.
@@ -18,6 +19,19 @@ exports.sendNotification = async ({ recipient, title, message, type = 'info', li
       type,
       link
     });
+
+    // Broadcast Real-time event via Supabase
+    try {
+      const channelName = `user_notifications_${recipient}`;
+      await supabase.channel(channelName).send({
+        type: 'broadcast',
+        event: 'new_notification',
+        payload: { notification }
+      });
+      console.log(`[NOTIFICATION_SERVICE] Broadcast: Sent to channel ${channelName}`);
+    } catch (broadcastErr) {
+      console.error('[NOTIFICATION_SERVICE] Real-time broadcast failed:', broadcastErr.message);
+    }
     
     console.log(`[NOTIFICATION_SERVICE] Success: Created for user ${recipient} (Type: ${type})`);
     return { success: true, notification };

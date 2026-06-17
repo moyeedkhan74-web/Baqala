@@ -4,8 +4,11 @@ import { HiBell, HiCheckCircle, HiTrash, HiInformationCircle, HiExclamationCircl
 import api from '../api/axios';
 import { cn } from '../utils/cn.js';
 import toast from 'react-hot-toast';
+import { supabase } from '../supabase';
+import { useAuth } from '../context/AuthContext';
 
 const NotificationBell = () => {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -33,11 +36,41 @@ const NotificationBell = () => {
   };
 
   useEffect(() => {
+    if (!user) return;
+    
     fetchNotifications();
-    // Poll every 60 seconds
+
+    // Set up Supabase Realtime Listener
+    const channelName = `user_notifications_${user._id}`;
+    const channel = supabase
+      .channel(channelName)
+      .on('broadcast', { event: 'new_notification' }, (payload) => {
+        console.log('[NOTIFICATION_BELL] Real-time notification received:', payload);
+        // Refresh notifications list immediately
+        fetchNotifications();
+        // Optional: Show a small toast for the new notification if the bell is closed
+        if (!open) {
+          toast.success(payload.payload.notification.title, {
+            icon: '🔔',
+            duration: 4000,
+            position: 'top-right'
+          });
+        }
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log(`[NOTIFICATION_BELL] Subscribed to ${channelName}`);
+        }
+      });
+
+    // Fallback Polling (Every 60s)
     const interval = setInterval(fetchNotifications, 60000);
-    return () => clearInterval(interval);
-  }, []);
+    
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   const handleMarkAsRead = async (id, e) => {
     if (e) e.stopPropagation();

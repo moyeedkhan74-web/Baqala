@@ -296,9 +296,11 @@ exports.updateAppStatus = async (req, res) => {
     // Notify Developer - BACKGROUND TASK (Queued to prevent process exit)
     const { 
       sendApprovalEmail, 
-      sendAdminRejectEmail,
+      sendAdminRejectEmail, 
       sendUploadConfirmationEmail 
     } = require('../services/emailService');
+    const notificationService = require('../services/notificationService');
+    const supabase = require('../config/supabase');
     
     if (app.developer && app.developer.email) {
       queueNotification(async () => {
@@ -309,21 +311,35 @@ exports.updateAppStatus = async (req, res) => {
             await sendAdminRejectEmail(app.developer.email, app.title, app.rejectionReason, app._id);
           }
 
-          // Also send In-App Notification (Awaited within queue worker)
+          // Send In-App Notification using service (which handles Real-time broadcast)
           const isApproved = status === 'approved';
-          await Notification.create({
+          await notificationService.sendNotification({
             recipient: app.developer._id,
             title: isApproved ? '🚀 Application Approved' : '❌ Application Rejected',
             message: isApproved 
               ? `Your application "${app.title}" has been approved and is now live on the Baqala platform!` 
               : `Your application "${app.title}" was not approved. Reason: ${app.rejectionReason}`,
-            type: isApproved ? 'success' : 'danger'
+            type: isApproved ? 'success' : 'danger',
+            link: isApproved ? `/app/${app._id}` : `/developer`
           });
+
+          // Broadcast App Refresh specifically for the dashboard
+          try {
+            await supabase.channel(`developer_dashboard_${app.developer._id}`).send({
+              type: 'broadcast',
+              event: 'app_update',
+              payload: { appId: app._id, status: app.status }
+            });
+            console.log(`[ADMIN_CONTROLLER] Broadcast: App update sent to developer ${app.developer._id}`);
+          } catch (broadcastErr) {
+            console.error('[ADMIN_CONTROLLER] Dashboard broadcast failed:', broadcastErr.message);
+          }
         } catch (err) {
           console.error('[NOTIFY_QUEUED_ERR]:', err.message);
         }
       });
     }
+   }
 
     res.json({ message: `App status updated to ${status}.`, app });
   } catch (error) {

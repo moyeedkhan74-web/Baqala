@@ -5,14 +5,13 @@ import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { HiPlus, HiCollection, HiDownload, HiStar, HiTrash, HiCog, HiChartBar } from 'react-icons/hi';
+import { supabase } from '../supabase';
 
 const DeveloperDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => { loadApps(); }, []);
 
   const loadApps = async () => {
     try {
@@ -21,6 +20,29 @@ const DeveloperDashboard = () => {
     } catch (error) { toast.error('Failed to load your portfolio'); }
     finally { setLoading(false); }
   };
+
+  useEffect(() => { 
+    if (!user) return;
+    loadApps(); 
+
+    // Real-time listener for app status updates
+    const channelName = `developer_dashboard_${user._id}`;
+    const channel = supabase
+      .channel(channelName)
+      .on('broadcast', { event: 'app_update' }, (payload) => {
+        console.log('[DEVELOPER_DASHBOARD] Real-time app update received:', payload);
+        loadApps(); // Refresh the list
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log(`[DEVELOPER_DASHBOARD] Subscribed to ${channelName}`);
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   const handleDelete = async (id) => {
     if (!window.confirm('Erase this creation from the network?')) return;
