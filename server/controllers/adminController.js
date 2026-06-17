@@ -4,7 +4,9 @@ const Review = require('../models/Review');
 const Download = require('../models/Download');
 const Report = require('../models/Report');
 const Notification = require('../models/Notification');
+const EmailLog = require('../models/EmailLog');
 const { deleteBinary, deleteImage, extractB2Key } = require('../utils/b2Storage');
+const { queueNotification } = require('../utils/notificationQueue');
 
 // GET /api/admin/apps
 exports.getAllApps = async (req, res) => {
@@ -290,19 +292,23 @@ exports.updateAppStatus = async (req, res) => {
     app.reviewedAt = new Date();
     await app.save();
     
-    // Notify Developer - BACKGROUND TASK (Don't await to keep response fast)
-    const { sendApprovalEmail, sendAdminRejectEmail } = require('../services/emailService');
+    // Notify Developer - BACKGROUND TASK (Queued to prevent process exit)
+    const { 
+      sendApprovalEmail, 
+      sendAdminRejectEmail,
+      sendUploadConfirmationEmail 
+    } = require('../services/emailService');
     
     if (app.developer && app.developer.email) {
-      (async () => {
+      queueNotification(async () => {
         try {
           if (status === 'approved' && previousStatus !== 'approved') {
-            await sendApprovalEmail(app.developer.email, app.title);
+            await sendApprovalEmail(app.developer.email, app.title, app._id);
           } else if (status === 'rejected') {
-            await sendAdminRejectEmail(app.developer.email, app.title, app.rejectionReason);
+            await sendAdminRejectEmail(app.developer.email, app.title, app.rejectionReason, app._id);
           }
 
-          // Also send In-App Notification
+          // Also send In-App Notification (Awaited within queue worker)
           const isApproved = status === 'approved';
           await Notification.create({
             recipient: app.developer._id,
@@ -313,9 +319,9 @@ exports.updateAppStatus = async (req, res) => {
             type: isApproved ? 'success' : 'danger'
           });
         } catch (err) {
-          console.error('[NOTIFY_DETACHED_ERR]:', err.message);
+          console.error('[NOTIFY_QUEUED_ERR]:', err.message);
         }
-      })();
+      });
     }
 
     res.json({ message: `App status updated to ${status}.`, app });
@@ -632,4 +638,78 @@ exports.manualAppScan = async (req, res) => {
   }
 };
 
+// GET /api/admin/email-logs
+exports.getEmailLogs = async (req, res) => {
+  try {
+    const logs = await EmailLog.find({})
+      .populate('relatedAppId', 'title')
+      .sort({ attemptedAt: -1 })
+      .limit(50);
+    res.json({ logs });
+  } catch (error) {
+    console.error('Get email logs error:', error);
+    res.status(500).json({ message: 'Server error fetching email logs.' });
+  }
+};
 
+// POST /api/admin/email-logs/:id/resend
+exports.resendEmailLog = async (req, res) => {
+  try {
+    const oldLog = await EmailLog.findById(req.params.id);
+    if (!oldLog) return res.status(404).json({ message: 'Log entry not found.' });
+
+    const { sendEmail } = require('../services/emailService');
+    
+    // We re-attempt by calling sendEmail directly. 
+    // It will create its own NEW log entries for the attempt.
+    queueNotification(async () => {
+      console.log(`[ADMIN] [RESEND_TRIGGER] Re-attempting email to: ${oldLog.recipient}`);
+      await sendEmail({
+        to: oldLog.recipient,
+        subject: oldLog.subject,
+        html: `(Resend Attempt) ${oldLog.subject}`, // In a real case we might want to re-derive the template
+        appId: oldLog.relatedAppId
+      });
+    });
+
+    res.json({ message: 'Resend task queued successfully.' });
+  } catch (error) {
+    console.error('Resend email error:', error);
+    res.status(500).json({ message: 'Server error during resend.' });
+  }
+};
+
+// GET /api/admin/test-email
+exports.testEmailConfig = async (req, res) => {
+  try {
+    const { to } = req.query;
+    if (!to) return res.status(400).json({ message: 'Recipient "to" is required.' });
+
+    const { sendEmail } = require('../services/emailService');
+    
+    console.log(`[ADMIN] [TEST_EMAIL] Sending test to: ${to}`);
+    const result = await sendEmail({
+      to,
+      subject: 'Baqala Backend: System Test',
+      html: `
+        <div style="font-family: sans-serif;">
+          <h1>System Configuration Test</h1>
+          <p>This is a manual test triggered by an administrator.</p>
+          <ul>
+            <li><strong>Timestamp:</strong> ${new Date().toISOString()}</li>
+            <li><strong>Requested by:</strong> ${req.user.email}</li>
+          </ul>
+        </div>
+      `
+    });
+
+    if (result.success) {
+      res.json({ message: 'Test email sent successfully.', result });
+    } else {
+      res.status(500).json({ message: 'Test email failed.', error: result.error });
+    }
+  } catch (error) {
+    console.error('Test email error:', error);
+    res.status(500).json({ message: 'Server error during test email.' });
+  }
+};

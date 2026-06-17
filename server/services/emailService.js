@@ -1,5 +1,6 @@
 const { Resend } = require('resend');
 const nodemailer = require('nodemailer');
+const EmailLog = require('../models/EmailLog');
 
 const resendKey = process.env.RESEND_API_KEY;
 const resend = resendKey ? new Resend(resendKey) : null;
@@ -16,75 +17,139 @@ const transporter = nodemailer.createTransport({
 });
 
 /**
+ * Helper to wrap a promise with a timeout
+ */
+const withTimeout = (promise, ms, providerName) => {
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error(`TIMEOUT: ${providerName} exceeded ${ms}ms`)), ms)
+  );
+  return Promise.race([promise, timeout]);
+};
+
+/**
  * Send an email using SMTP (Primary) or Resend (Secondary)
  */
-exports.sendEmail = async ({ to, subject, html }) => {
-  try {
-    const emailContent = `
-      ${html}
-      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-      <p style="font-size: 12px; color: #666;">
-        Questions? Contact our legal team at <a href="mailto:legalbaqala@gmail.com">legalbaqala@gmail.com</a> or visit our <a href="https://baqala-lovat.vercel.app/terms">Terms of Service</a>.
-      </p>
-    `;
+exports.sendEmail = async ({ to, subject, html, appId = null }) => {
+  const emailContent = `
+    ${html}
+    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+    <p style="font-size: 12px; color: #666;">
+      Questions? Contact our legal team at <a href="mailto:legalbaqala@gmail.com">legalbaqala@gmail.com</a> or visit our <a href="https://baqala-lovat.vercel.app/terms">Terms of Service</a>.
+    </p>
+  `;
 
-    // Try Resend First (Most reliable on PaaS like Render)
-    if (resendKey) {
-      try {
-        console.log(`[EMAIL_SERVICE] [RESEND] Attempting delivery to: ${to} (Subject: ${subject})`);
-        const { data, error } = await resend.emails.send({
-          from: 'Baqala <onboarding@resend.dev>',
-          to,
-          subject,
-          html: emailContent
-        });
+  let lastError = null;
 
-        if (error) {
-          console.error('[EMAIL_SERVICE] [RESEND] Provider Error:', error);
-          throw error;
-        }
-        console.log(`[EMAIL_SERVICE] [RESEND] Success:`, data?.id);
-        return { success: true, data };
-      } catch (resendError) {
-        console.error('[EMAIL_SERVICE] [RESEND] Failed:', resendError.message);
-        // If Resend fails, we'll try SMTP as secondary below
+  // 1. Try Resend First
+  if (resendKey) {
+    let logEntry;
+    try {
+      console.log(`[EMAIL_SERVICE] [RESEND] Attempting delivery to: ${to}`);
+      
+      // Create pending log
+      logEntry = await EmailLog.create({
+        recipient: to,
+        subject,
+        provider: 'resend',
+        status: 'pending',
+        relatedAppId: appId
+      });
+
+      const sendPromise = resend.emails.send({
+        from: 'Baqala <onboarding@resend.dev>',
+        to,
+        subject,
+        html: emailContent
+      });
+
+      const { data, error } = await withTimeout(sendPromise, 15000, 'RESEND');
+
+      if (error) throw error;
+
+      console.log(`[EMAIL_SERVICE] [RESEND] Success: ${data?.id}`);
+      
+      logEntry.status = 'sent';
+      logEntry.completedAt = new Date();
+      await logEntry.save();
+      
+      return { success: true, data };
+    } catch (resendError) {
+      const isTimeout = resendError.message.includes('TIMEOUT');
+      console.error(`[EMAIL_SERVICE] [RESEND] ${isTimeout ? 'Timeout' : 'Failed'}:`, resendError.message);
+      
+      if (logEntry) {
+        logEntry.status = isTimeout ? 'timeout' : 'failed';
+        logEntry.error = resendError.message;
+        logEntry.completedAt = new Date();
+        await logEntry.save();
       }
+      lastError = resendError;
     }
-
-    // Secondary: Try Nodemailer/SMTP
-    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-      console.log(`[EMAIL_SERVICE] [SMTP] Attempting delivery to: ${to} (Subject: ${subject})`);
-      try {
-        const info = await transporter.sendMail({
-          from: `"Baqala" <${process.env.SMTP_USER}>`,
-          to,
-          subject,
-          html: emailContent,
-        });
-        console.log(`[EMAIL_SERVICE] [SMTP] Success: ${info.messageId}`);
-        return { success: true, messageId: info.messageId };
-      } catch (smtpError) {
-        console.error(`[EMAIL_SERVICE] [SMTP] Failed:`, {
-          message: smtpError.message,
-          code: smtpError.code
-        });
-        
-        if (smtpError.code === 'EAUTH') {
-          console.error('[EMAIL_SERVICE] [CRITICAL] Authentication Failed. Gmail requires an "App Password".');
-        }
-      }
-    }
-
-    // Final Fallback: Simulated Logan
-    if (!resendKey && !(process.env.SMTP_USER && process.env.SMTP_PASS)) {
-      console.warn('[EMAIL_SERVICE] [WARNING] No email provider configured. Falling back to console log.');
-      console.log(`[EMAIL_SERVICE] [SIMULATED] To: ${to}, Subject: ${subject}`);
-      return { success: true };
-    }
-  } catch (globalError) {
-    console.error('[EMAIL_SERVICE] [FATAL]:', globalError.message);
-    return { success: false, error: globalError.message };
   }
+
+  // 2. Secondary: Try Nodemailer/SMTP
+  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+    let logEntry;
+    try {
+      console.log(`[EMAIL_SERVICE] [SMTP] Attempting delivery to: ${to}`);
+      
+      // Create pending log
+      logEntry = await EmailLog.create({
+        recipient: to,
+        subject,
+        provider: 'smtp',
+        status: 'pending',
+        relatedAppId: appId
+      });
+
+      const sendPromise = transporter.sendMail({
+        from: `"Baqala" <${process.env.SMTP_USER}>`,
+        to,
+        subject,
+        html: emailContent,
+      });
+
+      const info = await withTimeout(sendPromise, 15000, 'SMTP');
+
+      console.log(`[EMAIL_SERVICE] [SMTP] Success: ${info.messageId}`);
+      
+      logEntry.status = 'sent';
+      logEntry.completedAt = new Date();
+      await logEntry.save();
+
+      return { success: true, messageId: info.messageId };
+    } catch (smtpError) {
+      const isTimeout = smtpError.message.includes('TIMEOUT');
+      console.error(`[EMAIL_SERVICE] [SMTP] ${isTimeout ? 'Timeout' : 'Failed'}:`, smtpError.message);
+      
+      if (logEntry) {
+        logEntry.status = isTimeout ? 'timeout' : 'failed';
+        logEntry.error = smtpError.message;
+        logEntry.completedAt = new Date();
+        await logEntry.save();
+      }
+      lastError = smtpError;
+    }
+  }
+
+  // 3. Final Fallback: Simulated (only if no providers configured or all failed)
+  if (!resendKey && !(process.env.SMTP_USER && process.env.SMTP_PASS)) {
+    console.warn('[EMAIL_SERVICE] [WARNING] No email provider configured. Falling back to console log.');
+    console.log(`[EMAIL_SERVICE] [SIMULATED] To: ${to}, Subject: ${subject}`);
+    
+    await EmailLog.create({
+      recipient: to,
+      subject,
+      provider: 'simulated',
+      status: 'sent',
+      relatedAppId: appId,
+      completedAt: new Date()
+    });
+
+    return { success: true };
+  }
+
+  return { success: false, error: lastError?.message || 'All providers failed' };
 };
 
 /**

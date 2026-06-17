@@ -15,7 +15,10 @@ const {
   warnDeveloper,
   warnAppDeveloper,
   toggleUserVerified,
-  manualAppScan
+  manualAppScan,
+  getEmailLogs,
+  resendEmailLog,
+  testEmailConfig
 } = require('../controllers/adminController');
 const requireAdmin = require('../middleware/requireAdmin');
 
@@ -37,6 +40,11 @@ router.post('/users/:id/ban', banUser);
 router.post('/users/:id/unban', unbanUser);
 router.patch('/users/:id/verify', toggleUserVerified);
 router.post('/apps/:id/scan', manualAppScan);
+
+// Email Management
+router.get('/email-logs', getEmailLogs);
+router.post('/email-logs/:id/resend', resendEmailLog);
+router.get('/test-email', testEmailConfig);
 
 // Reports
 router.get('/reports', getAllReports);
