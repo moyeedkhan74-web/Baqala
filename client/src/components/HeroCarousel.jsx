@@ -60,9 +60,9 @@ const HeroCarousel = ({ apps }) => {
                 }}
               />
             ) : null}
-            <div className="absolute inset-0 bg-gradient-to-br from-accent-violet/30 via-accent-magenta/20 to-background-dark/80" />
-            <div className="absolute inset-0 bg-gradient-to-t from-background-light dark:from-background-dark via-background-light/60 dark:via-background-dark/80 to-transparent opacity-100" />
-            <div className="absolute inset-0 bg-gradient-to-r from-background-light dark:from-background-dark via-background-light/40 dark:via-background-dark/40 to-transparent w-full" />
+            <div className="absolute inset-0 bg-gradient-to-br from-accent-violet/20 via-accent-magenta/10 to-background-dark/30" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background-light/80 dark:from-background-dark/80 via-background-light/30 dark:via-background-dark/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-background-light dark:from-background-dark/70 via-background-light/20 dark:via-background-dark/30 to-transparent" />
           </div>
  
           <div className="relative z-10 h-full flex flex-col md:flex-row items-center p-6 md:p-10 gap-6 md:gap-10 text-dark-800 dark:text-white">
