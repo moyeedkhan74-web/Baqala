@@ -137,6 +137,15 @@ const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`API: http://localhost:${PORT}/api`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  
+  // Email Provider Sanity Check
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('\x1b[33m%s\x1b[0m', '⚠️  [CONFIG_WARNING]: RESEND_API_KEY is not set.');
+    console.warn('\x1b[33m%s\x1b[0m', '    Falling back to Gmail SMTP, which is known to time out frequently on Render.');
+    console.warn('\x1b[33m%s\x1b[0m', '    Please set RESEND_API_KEY for reliable notification delivery.');
+  } else {
+    console.log('\x1b[32m%s\x1b[0m', '✅ [CONFIG]: Resend Email Service is configured.');
+  }
 });
 
 // Graceful shutdown

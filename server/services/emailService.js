@@ -39,14 +39,14 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
   `;
 
   let lastError = null;
+  let resendFailed = false;
 
-  // 1. Try Resend First
+  // 1. Try Resend First (Primary for Render)
   if (resendKey) {
     let logEntry;
     try {
       console.log(`[EMAIL_SERVICE] [RESEND] Attempting delivery to: ${to}`);
       
-      // Create pending log
       logEntry = await EmailLog.create({
         recipient: to,
         subject,
@@ -55,25 +55,23 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
         relatedAppId: appId
       });
 
-      const sendPromise = resend.emails.send({
+      const { data, error } = await withTimeout(resend.emails.send({
         from: 'Baqala <onboarding@resend.dev>',
         to,
         subject,
         html: emailContent
-      });
-
-      const { data, error } = await withTimeout(sendPromise, 15000, 'RESEND');
+      }), 15000, 'RESEND');
 
       if (error) throw error;
 
       console.log(`[EMAIL_SERVICE] [RESEND] Success: ${data?.id}`);
-      
       logEntry.status = 'sent';
       logEntry.completedAt = new Date();
       await logEntry.save();
       
       return { success: true, data };
     } catch (resendError) {
+      resendFailed = true;
       const isTimeout = resendError.message.includes('TIMEOUT');
       console.error(`[EMAIL_SERVICE] [RESEND] ${isTimeout ? 'Timeout' : 'Failed'}:`, resendError.message);
       
@@ -88,31 +86,31 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
   }
 
   // 2. Secondary: Try Nodemailer/SMTP
-  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+  // Only try SMTP if Resend is not configured OR if Resend failed
+  if (process.env.SMTP_USER && process.env.SMTP_PASS && (!resendKey || resendFailed)) {
     let logEntry;
     try {
-      console.log(`[EMAIL_SERVICE] [SMTP] Attempting delivery to: ${to}`);
+      const isFallback = resendKey && resendFailed;
+      console.log(`[EMAIL_SERVICE] [SMTP] Attempting delivery to: ${to}${isFallback ? ' (FALLBACK)' : ''}`);
       
-      // Create pending log
       logEntry = await EmailLog.create({
         recipient: to,
         subject,
         provider: 'smtp',
         status: 'pending',
-        relatedAppId: appId
+        relatedAppId: appId,
+        error: isFallback ? 'Used as fallback after Resend failed' : null
       });
 
-      const sendPromise = transporter.sendMail({
+      // Reduced timeout to 8s as SMTP on Render usually fails fast if blocked
+      const info = await withTimeout(transporter.sendMail({
         from: `"Baqala" <${process.env.SMTP_USER}>`,
         to,
         subject,
         html: emailContent,
-      });
-
-      const info = await withTimeout(sendPromise, 15000, 'SMTP');
+      }), 8000, 'SMTP');
 
       console.log(`[EMAIL_SERVICE] [SMTP] Success: ${info.messageId}`);
-      
       logEntry.status = 'sent';
       logEntry.completedAt = new Date();
       await logEntry.save();
@@ -132,7 +130,7 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
     }
   }
 
-  // 3. Final Fallback: Simulated (only if no providers configured or all failed)
+  // 3. Final Fallback: Simulated
   if (!resendKey && !(process.env.SMTP_USER && process.env.SMTP_PASS)) {
     console.warn('[EMAIL_SERVICE] [WARNING] No email provider configured. Falling back to console log.');
     console.log(`[EMAIL_SERVICE] [SIMULATED] To: ${to}, Subject: ${subject}`);

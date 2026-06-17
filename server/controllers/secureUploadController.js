@@ -86,12 +86,12 @@ exports.uploadApkSecure = async (req, res, next) => {
 
     // 6. Send Notifications
     const { sendUploadConfirmationEmail } = require('../services/emailService');
-    const { createNotification } = require('../services/notificationService');
+    const { sendNotification } = require('../services/notificationService');
     if (req.user && req.user.email) {
        setImmediate(async () => {
          try {
            await sendUploadConfirmationEmail(req.user.email, app.title);
-           await createNotification({
+           await sendNotification({
              recipient: req.user._id,
              title: '📦 Upload Received',
              message: `We've received your application "${app.title}". It's now in the queue for security scanning and moderation.`,
