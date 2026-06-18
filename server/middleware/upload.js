@@ -5,7 +5,8 @@ const path = require('path');
 const storage = multer.memoryStorage();
 
 const allowedAppExtensions = ['.apk', '.zip', '.rar', '.tar', '.gz', '.exe', '.msi', '.dmg', '.deb', '.rpm', '.appimage', '.ipa', '.7z'];
-const allowedImageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'];
+// BUG-04 FIX: Removed .svg — SVGs can contain embedded <script> tags / XSS payloads
+const allowedImageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
 
 const appFileFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();

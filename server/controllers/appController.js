@@ -135,6 +135,7 @@ exports.getAppDownloadLink = async (req, res, next) => {
       return res.status(400).json({ message: 'This app is not approved for download.' });
     }
 
+    // BUG-08 FIX: Apply scan check BEFORE the URL-type branch so legacy URLs are also gated
     const blockedStatuses = ['scanning', 'scan_failed', 'not_scanned'];
     if (blockedStatuses.includes(app.scanStatus) || app.scanStatus !== 'clean') {
       return res.status(423).json({ message: 'This app is pending security review and cannot be downloaded.' });
@@ -310,9 +311,9 @@ exports.createApp = async (req, res, next) => {
         });
       }
     } else {
-      // VT was unreachable (req.vtError) or no scan data
+      // BUG-05 FIX: VT was unreachable — keep as pending for admin review; do NOT approve unscanned apps
       app.scanStatus = 'scan_failed';
-      app.status = 'approved';
+      app.status = 'pending';
       await app.save();
     }
 
@@ -366,8 +367,8 @@ exports.uploadAppImages = async (req, res, next) => {
     }
 
     if (req.files && req.files.banner && req.files.banner[0]) {
-      // Delete old banner if exists
-      const { deleteFileFromB2 } = require('../utils/b2Storage');
+      // BUG-11 FIX: Use the local deleteFileFromB2 helper (defined at top of this file),
+      // not a non-existent export from b2Storage. Silent failure was orphaning B2 files.
       if (app.banner) await deleteFileFromB2(app.banner);
       const url = await uploadAsset(req.files.banner[0], 'banners');
       if (url) app.banner = url;
@@ -506,7 +507,8 @@ exports.getApps = async (req, res) => {
       limit = 12
     } = req.query;
 
-    const query = { status: { $in: ['approved', 'pending'] } };
+    // BUG-03 FIX: Only show approved apps to public visitors; pending apps were leaking
+    const query = { status: 'approved' };
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },

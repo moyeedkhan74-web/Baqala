@@ -52,6 +52,7 @@ exports.getStats = async (req, res) => {
     
     const pendingApps = await App.countDocuments({ status: 'pending' });
     const pendingReports = await Report.countDocuments({ status: 'pending' });
+    const totalReports = await Report.countDocuments();
     
     // Sum up all totalDownloads from App model
     const appsData = await App.find({}, 'totalDownloads');
@@ -67,11 +68,16 @@ exports.getStats = async (req, res) => {
       return ((last24h / previousTotal) * 100).toFixed(1);
     };
 
+    // BUG-07 FIX: Calculate real report pending rate instead of hardcoded value
+    const reportPendingRate = totalReports > 0
+      ? ((pendingReports / totalReports) * 100).toFixed(1)
+      : '0';
+
     const changes = {
       apps: calculateChange(totalApps, appsLast24h),
       users: calculateChange(totalUsers, usersLast24h),
       downloads: calculateChange(totalDownloadsCount, downloadsLast24h),
-      reports: pendingReports > 0 ? '5' : '0' 
+      reports: reportPendingRate
     };
 
     const recentApps = await App.find({})
@@ -339,8 +345,8 @@ exports.updateAppStatus = async (req, res) => {
         }
       });
     }
-   }
 
+    // BUG-01 FIX: res.json was outside the try block due to a stray brace.
     res.json({ message: `App status updated to ${status}.`, app });
   } catch (error) {
     console.error('Admin update app status error:', error);

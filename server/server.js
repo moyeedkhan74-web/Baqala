@@ -125,10 +125,10 @@ app.use((err, req, res, next) => {
   console.error(`[SERVER ERROR] ${req.method} ${req.path}:`, err.message);
   if (isDevelopment) console.error(err.stack);
   
+  // BUG-02 FIX: Never expose raw error.message in production to prevent information leakage
   res.status(statusCode).json({
     message: isDevelopment ? err.message : 'Internal server error.',
-    error: err.message,
-    ...(isDevelopment && { stack: err.stack })
+    ...(isDevelopment && { error: err.message, stack: err.stack })
   });
 });
 

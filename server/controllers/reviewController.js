@@ -59,12 +59,13 @@ exports.getReviews = async (req, res) => {
 
     const total = await Review.countDocuments({ app: appId });
 
+    // BUG-06 FIX: Use `total` (DB count) not `reviews.length` (paginated slice)
     res.json({
       reviews,
       pagination: {
         current: parseInt(page),
         pages: Math.ceil(total / parseInt(limit)),
-        total: reviews.length
+        total
       }
     });
   } catch (error) {
@@ -84,7 +85,10 @@ exports.deleteReview = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to delete this review.' });
     }
 
-    await Review.findByIdAndDelete(req.params.id);
+    // BUG-10 FIX: Use review.deleteOne() instead of findByIdAndDelete().
+    // findByIdAndDelete() bypasses Mongoose post('findOneAndDelete') hooks,
+    // so averageRating was never recalculated after a deletion.
+    await review.deleteOne();
     res.json({ message: 'Review deleted successfully.' });
   } catch (error) {
     console.error('Delete review error:', error);

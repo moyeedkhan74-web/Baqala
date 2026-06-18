@@ -37,7 +37,21 @@ exports.updateConfig = async (req, res) => {
       delete updates.sections;
     }
 
-    Object.assign(config, updates);
+    // BUG-09 FIX: Whitelist only known safe fields. Object.assign with raw req.body
+    // allowed injecting internal Mongoose fields like _id, __v, etc.
+    const ALLOWED_CONFIG_FIELDS = [
+      'maxApkSize',
+      'maxImageSize',
+      'isMaintenanceMode',
+      'maintenanceMessage'
+    ];
+
+    ALLOWED_CONFIG_FIELDS.forEach(field => {
+      if (updates[field] !== undefined) {
+        config[field] = updates[field];
+      }
+    });
+
     await config.save();
 
     res.json({ message: 'Platform configuration updated.', config });
