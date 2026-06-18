@@ -16,6 +16,7 @@ const {
   warnAppDeveloper,
   toggleUserVerified,
   manualAppScan,
+  reanalyzeApp,
   getEmailLogs,
   resendEmailLog,
   testEmailConfig,
@@ -41,6 +42,7 @@ router.post('/users/:id/ban', banUser);
 router.post('/users/:id/unban', unbanUser);
 router.patch('/users/:id/verify', toggleUserVerified);
 router.post('/apps/:id/scan', manualAppScan);
+router.post('/apps/:id/reanalyze', reanalyzeApp);
 
 // Email Management
 router.get('/email-logs', getEmailLogs);

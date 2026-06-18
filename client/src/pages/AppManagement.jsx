@@ -24,6 +24,7 @@ import api from '../api/axios';
 import { cn } from '../utils/cn.js';
 import toast from 'react-hot-toast';
 import IssueWarningModal from '../components/admin/IssueWarningModal';
+import AdminAppDetailModal from '../components/admin/AdminAppDetailModal';
 
 const AppManagement = () => {
   const [activeTab, setActiveTab] = useState('all');
@@ -38,6 +39,8 @@ const AppManagement = () => {
   const [isScanningId, setIsScanningId] = useState(null);
   const [bannerTarget, setBannerTarget] = useState(null);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [sortByAiScore, setSortByAiScore] = useState(false);
+  const [detailTarget, setDetailTarget] = useState(null);
 
   const fetchApps = async () => {
     try {
@@ -158,6 +161,11 @@ const AppManagement = () => {
     const matchesSearch = app.title.toLowerCase().includes(search.toLowerCase()) || 
                           devName.toLowerCase().includes(search.toLowerCase());
     return matchesTab && matchesSearch;
+  }).sort((a, b) => {
+    if (!sortByAiScore) return 0;
+    const sa = a.aiModeration?.approvalScore ?? Infinity;
+    const sb = b.aiModeration?.approvalScore ?? Infinity;
+    return sa - sb; // ascending: lowest (riskiest) first
   });
 
   const getStatusStyles = (status) => {
@@ -229,6 +237,12 @@ const AppManagement = () => {
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">App Name</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Developer</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Security (VT)</th>
+                  <th 
+                    className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer select-none hover:text-accent-violet transition-colors"
+                    onClick={() => setSortByAiScore(prev => !prev)}
+                  >
+                    <span className="flex items-center gap-1.5">AI Score <ArrowUpDown className="w-3 h-3" /></span>
+                  </th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
                 </tr>
@@ -288,6 +302,20 @@ const AppManagement = () => {
                       ) : (
                         <span className="text-[10px] font-black text-slate-400 italic">Scanned</span>
                       )}
+                    </td>
+                    {/* AI Score Column */}
+                    <td className="px-6 py-4">
+                      {(() => {
+                        const score = app.aiModeration?.approvalScore;
+                        if (score == null) return <span className="text-sm font-bold text-slate-400">—</span>;
+                        const dotColor = score >= 85 ? 'bg-emerald-500' : score >= 60 ? 'bg-amber-500' : score >= 40 ? 'bg-orange-500' : 'bg-rose-500';
+                        return (
+                          <div className="flex items-center gap-2">
+                            <div className={cn('w-2.5 h-2.5 rounded-full', dotColor)} />
+                            <span className="text-sm font-black dark:text-white">{score}</span>
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-1.5">
@@ -354,9 +382,9 @@ const AppManagement = () => {
                           <Shield className={cn("w-5 h-5", isScanningId === app._id && "animate-spin")} />
                         </button>
                         <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
-                        <a href={`/app/${app._id}`} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
+                        <button onClick={() => setDetailTarget(app)} className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
                           <Eye className="w-5 h-5" />
-                        </a>
+                        </button>
                         <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
                         <button 
                           onClick={() => setBannerTarget(app)}
@@ -391,7 +419,7 @@ const AppManagement = () => {
                 
                 {filteredApps.length === 0 && (
                   <tr>
-                    <td colSpan="6" className="px-8 py-20 text-center text-slate-500 font-bold">
+                    <td colSpan="7" className="px-8 py-20 text-center text-slate-500 font-bold">
                       No applications found.
                     </td>
                   </tr>
@@ -471,6 +499,18 @@ const AppManagement = () => {
         onConfirm={handleWarningConfirm}
         isProcessing={isProcessingWarning}
       />
+
+      {/* App Detail Modal with AI Analysis */}
+      {detailTarget && (
+        <AdminAppDetailModal 
+          app={detailTarget} 
+          onClose={() => setDetailTarget(null)} 
+          onAiUpdate={(appId, newAi) => {
+            setApps(prev => prev.map(a => a._id === appId ? { ...a, aiModeration: newAi } : a));
+            setDetailTarget(prev => prev && prev._id === appId ? { ...prev, aiModeration: newAi } : prev);
+          }}
+        />
+      )}
 
       {/* Banner Upload Modal */}
       {bannerTarget && (

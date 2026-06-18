@@ -13,7 +13,7 @@ const { queueNotification } = require('../utils/notificationQueue');
 exports.getAllApps = async (req, res) => {
   try {
     const apps = await App.find({})
-      .select('title developerName status category icon developer isFeatured banner')
+      .select('title developerName status category icon developer isFeatured banner apkMetadata aiModeration')
       .populate('developer', 'name')
       .sort({ createdAt: -1 });
     console.log(`[ADMIN] Fetched ${apps.length} apps. Featured count: ${apps.filter(a => a.isFeatured).length}`);
@@ -764,5 +764,32 @@ exports.getSystemInfo = async (req = null, res = null) => {
       return res.status(500).json({ message: 'Error collecting diagnostics' });
     }
     return { error: error.message };
+  }
+};
+
+// POST /api/admin/apps/:id/reanalyze
+exports.reanalyzeApp = async (req, res) => {
+  try {
+    const app = await App.findById(req.params.id);
+    if (!app) return res.status(404).json({ message: 'App not found.' });
+
+    if (!app.apkMetadata || !app.apkMetadata.packageName) {
+      return res.status(400).json({ message: 'No APK metadata stored for this app. Upload the APK first.' });
+    }
+
+    const { runGeminiApkAnalysis } = require('../services/aiModerationService');
+    const result = await runGeminiApkAnalysis(app, app.apkMetadata);
+
+    app.aiModeration = {
+      ...result,
+      analysedAt: new Date()
+    };
+    await app.save();
+
+    console.log(`[ADMIN] Re-analysis complete for ${app.title} — score: ${result.approvalScore}, risk: ${result.riskLevel}`);
+    res.json({ message: 'AI re-analysis complete.', aiModeration: app.aiModeration });
+  } catch (error) {
+    console.error('Admin reanalyze app error:', error);
+    res.status(500).json({ message: 'Server error during re-analysis.' });
   }
 };

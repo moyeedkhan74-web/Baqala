@@ -12,8 +12,9 @@ import {
   Package
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import AiAnalysisCard from './AiAnalysisCard';
 
-const AdminAppDetailModal = ({ app, onClose }) => {
+const AdminAppDetailModal = ({ app, onClose, onAiUpdate }) => {
   if (!app) return null;
 
   return (
@@ -183,6 +184,12 @@ const AdminAppDetailModal = ({ app, onClose }) => {
                   </a>
                 </div>
               </div>
+
+              {/* AI Analysis Card */}
+              <AiAnalysisCard 
+                app={app} 
+                onUpdate={(newAi) => onAiUpdate && onAiUpdate(app._id, newAi)} 
+              />
             </div>
           </div>
         </div>

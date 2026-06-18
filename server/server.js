@@ -153,6 +153,9 @@ const server = app.listen(PORT, async () => {
     console.log('\x1b[32m%s\x1b[0m', `✅ [CONFIG]: Email Service is active (Primary: ${primary}).`);
   }
 
+  // AI Moderation Status
+  console.log('[STARTUP] AI moderation (Gemini):', process.env.GEMINI_API_KEY ? '✅ Free tier configured (1,500 req/day)' : '⚠️ GEMINI_API_KEY not set — AI analysis disabled');
+
   // System Diagnostics Snapshot
   try {
     const { getSystemInfo } = require('./controllers/adminController');

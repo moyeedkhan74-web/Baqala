@@ -121,6 +121,29 @@ const appSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  // AI & Internal Analytics
+  apkMetadata: {
+    packageName: String,
+    versionName: String,
+    permissions: [String],
+    services: [String],
+    receivers: [String],
+    fileCount: Number,
+    nativeLibCount: Number,
+    extractionError: String
+  },
+  aiModeration: {
+    analysedAt: Date,
+    appSummary: String,
+    approvalScore: { type: Number, default: null },
+    riskLevel: { type: String, enum: ['low', 'medium', 'high', 'critical', 'pending', 'error'], default: 'pending' },
+    permissionAnalysis: String,
+    contentFlags: [String],
+    suspiciousSignals: [String],
+    recommendation: { type: String, enum: ['approve', 'review', 'reject', null], default: null },
+    adminNote: String,
+    analysisError: String
+  },
   banner: { type: String, default: '' },
   fileHash: { type: String, default: null }
 }, {
