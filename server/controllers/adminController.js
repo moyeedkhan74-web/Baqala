@@ -782,10 +782,8 @@ exports.reanalyzeApp = async (req, res) => {
     const { runGeminiApkAnalysis } = require('../services/aiModerationService');
 
     // Uses stored apkMetadata — no APK re-download from B2 needed
-    const result = await runGeminiApkAnalysis(
-      { title: app.title, category: app.category, description: app.description, tags: app.tags },
-      app.apkMetadata || {}
-    );
+    const result = await aiModerationService.analyzeApp(app);
+    console.log(`[AI_SCAN] Gemini result for ${app.title}:`, JSON.stringify(result));
 
     const updated = await App.findByIdAndUpdate(
       req.params.id,
@@ -793,7 +791,11 @@ exports.reanalyzeApp = async (req, res) => {
       { new: true }
     );
 
-    console.log(`[REANALYZE] ✅ ${app.title} — score: ${result.approvalScore}, risk: ${result.riskLevel}`);
+    if (!updated.aiModeration?.approvalScore) {
+      console.warn(`[AI_SCAN] ⚠️ Field 'approvalScore' missing in saved document for ${app.title}`);
+    }
+
+    console.log(`[REANALYZE] ✅ ${app.title} — score: ${updated.aiModeration?.approvalScore}`);
     res.json({ message: 'Re-analysis complete.', app: updated });
   } catch (err) {
     console.error('[REANALYZE_ERROR]:', err.message);

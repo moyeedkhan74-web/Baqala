@@ -59,20 +59,29 @@ const AppApproval = () => {
     setAnalyzingId(appId);
     try {
       const { data } = await api.post(`/admin/apps/${appId}/reanalyze`);
-      console.log('[DEBUG] AI Update Response:', data);
+      console.log('[DEBUG] Server response data:', data);
       
+      if (!data.app) {
+        console.error('[DEBUG] Backend did not return "app" object!');
+      }
+
       setApps(prev => {
-        const newApps = prev.map(a => 
-          a._id === appId 
-            ? { ...(data.app || a), aiModeration: data.app?.aiModeration || data.aiModeration || a.aiModeration } 
-            : a
-        );
+        console.log('[DEBUG] Previous apps in state:', prev.length);
+        const newApps = prev.map(a => {
+          if (a._id === appId) {
+            console.log('[DEBUG] Found match for ID:', appId);
+            const updated = data.app || { ...a, aiModeration: data.aiModeration };
+            console.log('[DEBUG] Updated app object:', updated);
+            return updated;
+          }
+          return a;
+        });
         return newApps;
       });
       
       toast.success('AI analysis complete');
     } catch (err) {
-      console.error('[AI_REANALYZE_ERROR]:', err);
+      console.error('[DEBUG] handleAiAnalyze failed:', err.response?.data || err.message);
       toast.error('AI analysis failed');
     } finally {
       setAnalyzingId(null);
