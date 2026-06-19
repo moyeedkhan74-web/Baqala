@@ -84,6 +84,30 @@ exports.uploadApkSecure = async (req, res, next) => {
         .catch(err => console.error('[SCAN_TRIGGER_ERROR]:', err.message));
     });
 
+    // ─── AI + DEEP APK ANALYSIS (Auto-scan for new pending submission) ───
+    setImmediate(async () => {
+      try {
+        const { extractApkMetadata } = require('../services/apkAnalyzer');
+        const { runGeminiApkAnalysis } = require('../services/aiModerationService');
+        
+        console.log(`[ANALYSIS] Starting new upload AI analysis for ${app._id}`);
+        const apkMeta = await extractApkMetadata(file.buffer, app._id.toString());
+        await App.findByIdAndUpdate(app._id, { apkMetadata: apkMeta });
+
+        const aiResult = await runGeminiApkAnalysis(
+          { title: app.title, category: app.category, description: app.description, tagline: app.tagline },
+          apkMeta
+        );
+
+        await App.findByIdAndUpdate(app._id, {
+          aiModeration: { ...aiResult, analysedAt: new Date() }
+        });
+        console.log(`[ANALYSIS] ✅ Initial scan complete for ${app.title}`);
+      } catch (err) {
+        console.error('[INITIAL_ANALYSIS_ERR]:', err.message);
+      }
+    });
+
     // 6. Send Notifications
     const { sendUploadConfirmationEmail } = require('../services/emailService');
     const { sendNotification } = require('../services/notificationService');

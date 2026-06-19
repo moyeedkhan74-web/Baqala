@@ -730,6 +730,33 @@ exports.updateApp = async (req, res) => {
           await sendUploadConfirmation(req.user, app.title, app._id);
         } catch (err) { console.error('[RE-DEPLOY_NOTIFY_ERR]:', err.message); }
       });
+
+      // ─── AI + DEEP APK ANALYSIS (Auto-scan for pending approval) ───
+      setImmediate(async () => {
+        try {
+          // Note: Since this is re-deploy, we don't have the buffer in RAM (usually).
+          // However, if the user uploaded a new appFile in this request, we MIGHT have it.
+          // If not, extractApkMetadata handles downloading it from B2 internally if we pass null buffer.
+          const { extractApkMetadata } = require('../services/apkAnalyzer');
+          const { runGeminiApkAnalysis } = require('../services/aiModerationService');
+          
+          console.log(`[ANALYSIS] Starting re-deploy AI analysis for ${app._id}`);
+          const apkMeta = await extractApkMetadata(appFile ? appFile.buffer : null, app._id.toString());
+          await App.findByIdAndUpdate(app._id, { apkMetadata: apkMeta });
+
+          const aiResult = await runGeminiApkAnalysis(
+            { title: app.title, category: app.category, description: app.description, tags: app.tags },
+            apkMeta
+          );
+
+          await App.findByIdAndUpdate(app._id, {
+            aiModeration: { ...aiResult, analysedAt: new Date() }
+          });
+          console.log(`[ANALYSIS] ✅ Re-deploy scan complete for ${app.title}`);
+        } catch (err) {
+          console.error('[RE-DEPLOY_ANALYSIS_ERR]:', err.message);
+        }
+      });
     }
 
     await app.save();
