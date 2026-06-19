@@ -9,7 +9,8 @@ import {
   Loader2,
   Trophy,
   MousePointer2,
-  Eye
+  Eye,
+  Image as ImageIcon
 } from 'lucide-react';
 import { cn } from '../utils/cn.js';
 import api, { API_BASE_URL } from '../api/axios';
