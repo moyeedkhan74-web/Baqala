@@ -364,9 +364,9 @@ const AppManagement = () => {
                         <button 
                           onClick={() => setWarningTarget(app)}
                           title="Issue Warning"
-                          className="p-2.5 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+                          className="p-2.5 rounded-xl text-slate-400 hover:text-amber-500 hover:bg-amber-500/10 transition-colors"
                         >
-                          <Trash2 className="w-5 h-5" />
+                          <AlertCircle className="w-5 h-5" />
                         </button>
                         <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
                         <button 

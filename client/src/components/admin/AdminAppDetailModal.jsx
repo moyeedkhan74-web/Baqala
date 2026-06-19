@@ -106,6 +106,31 @@ const AdminAppDetailModal = ({ app, onClose, onUpdate }) => {
                 )}>
                   {app.status}
                 </span>
+                {app.aiModeration?.approvalScore != null ? (
+                  <div className="flex flex-col items-center gap-1.5 px-3 py-1 rounded-full border bg-accent-violet/[0.03] border-accent-violet/20">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-accent-violet">AI Rating</span>
+                    <div className="flex items-center gap-0.5 text-amber-500">
+                      {[...Array(5)].map((_, i) => (
+                        <StarIcon key={i} className={cn("w-3 h-3", i < Math.round(app.aiModeration.approvalScore / 20) ? "fill-current" : "opacity-20")} />
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="px-3 py-1 rounded-full border bg-slate-500/10 text-slate-400 border-slate-500/20 text-[10px] font-black uppercase tracking-widest">
+                    AI Scans Pending
+                  </div>
+                )}
+                {app.aiModeration?.approvalScore != null && (
+                  <span className={cn(
+                    "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border flex items-center gap-1.5",
+                    app.aiModeration.approvalScore >= 85 ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
+                    app.aiModeration.approvalScore >= 60 ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
+                    "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                  )}>
+                    <Shield className="w-3 h-3" />
+                    AI Score: {app.aiModeration.approvalScore}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -121,6 +146,17 @@ const AdminAppDetailModal = ({ app, onClose, onUpdate }) => {
                   {app.description || 'No description provided.'}
                 </p>
               </div>
+
+              {app.aiModeration?.appSummary && (
+                <div className="p-6 rounded-[2rem] bg-indigo-500/[0.03] border border-indigo-500/10">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-indigo-500 mb-3 flex items-center gap-2">
+                    <Shield className="w-4 h-4" /> AI Guard Summary
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 font-bold leading-relaxed italic">
+                    "{app.aiModeration.appSummary}"
+                  </p>
+                </div>
+              )}
 
               {app.screenshots && app.screenshots.length > 0 && (
                 <div>
