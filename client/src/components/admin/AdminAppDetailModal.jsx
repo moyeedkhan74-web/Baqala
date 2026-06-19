@@ -10,9 +10,11 @@ import {
   Globe,
   Star as StarIcon,
   Package,
-  Image as ImageIcon,
+  ImageIcon,
   Trash2,
-  RefreshCw
+  RefreshCw,
+  Check,
+  Zap
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import api from '../../api/axios';
@@ -33,11 +35,11 @@ const AdminAppDetailModal = ({ app, onClose, onUpdate }) => {
     setLoading(true);
     const toastId = toast.loading('Uploading promotional banner...');
     try {
-      const { data } = await api.post(`/apps/${app._id}/images`, formData);
-      toast.success('Promotional banner updated!', { id: toastId });
+      const { data } = await api.post(`/admin/apps/${app._id}/banner`, formData);
+      toast.success('Promotional banner updated by Admin!', { id: toastId });
       if (onUpdate) onUpdate(app._id, data.app);
     } catch (err) {
-      toast.error('Banner upload failed', { id: toastId });
+      toast.error('Banner upload failed: ' + (err.response?.data?.message || err.message), { id: toastId });
     } finally {
       setLoading(false);
     }
@@ -48,7 +50,7 @@ const AdminAppDetailModal = ({ app, onClose, onUpdate }) => {
     setLoading(true);
     const toastId = toast.loading('Removing banner...');
     try {
-      const { data } = await api.put(`/apps/${app._id}`, { banner: '' });
+      const { data } = await api.delete(`/admin/apps/${app._id}/banner`);
       toast.success('Banner removed', { id: toastId });
       if (onUpdate) onUpdate(app._id, data.app);
     } catch (err) {
@@ -148,13 +150,44 @@ const AdminAppDetailModal = ({ app, onClose, onUpdate }) => {
               </div>
 
               {app.aiModeration?.appSummary && (
-                <div className="p-6 rounded-[2rem] bg-indigo-500/[0.03] border border-indigo-500/10">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-indigo-500 mb-3 flex items-center gap-2">
-                    <Shield className="w-4 h-4" /> AI Guard Summary
-                  </h3>
+                <div className="p-6 rounded-[2rem] bg-indigo-500/[0.03] border border-indigo-500/10 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-indigo-500 flex items-center gap-2">
+                      <Shield className="w-4 h-4" /> AI Guard Summary
+                    </h3>
+                  </div>
                   <p className="text-sm text-slate-600 dark:text-slate-300 font-bold leading-relaxed italic">
                     "{app.aiModeration.appSummary}"
                   </p>
+                  
+                  {/* AI Metadata Sync - Short Description */}
+                  {app.aiModeration.shortDescription && (
+                    <div className="pt-4 border-t border-indigo-500/10">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <span className="text-[9px] font-black uppercase tracking-tighter text-slate-400">AI Suggested Hook</span>
+                          <p className="text-xs font-bold text-slate-500 mt-1">{app.aiModeration.shortDescription}</p>
+                        </div>
+                        <button 
+                          onClick={async () => {
+                            const tid = toast.loading('Syncing AI hook...');
+                            try {
+                              const { data } = await api.patch(`/admin/apps/${app._id}/status`, { 
+                                shortDescription: app.aiModeration.shortDescription 
+                              });
+                              toast.success('Short description updated!', { id: tid });
+                              onUpdate(app._id, data.app);
+                            } catch (e) {
+                              toast.error('Failed to sync description', { id: tid });
+                            }
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-indigo-500/20"
+                        >
+                          <Zap className="w-3 h-3 fill-current" /> Apply Hook
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

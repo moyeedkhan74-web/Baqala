@@ -20,9 +20,12 @@ const {
   getEmailLogs,
   resendEmailLog,
   testEmailConfig,
-  getSystemInfo
+  getSystemInfo,
+  uploadAppBannerAdmin,
+  removeAppBannerAdmin
 } = require('../controllers/adminController');
 const requireAdmin = require('../middleware/requireAdmin');
+const { uploadImages } = require('../middleware/upload');
 
 const router = express.Router();
 
@@ -43,6 +46,8 @@ router.post('/users/:id/unban', unbanUser);
 router.patch('/users/:id/verify', toggleUserVerified);
 router.post('/apps/:id/scan', manualAppScan);
 router.post('/apps/:id/reanalyze', reanalyzeApp);
+router.post('/apps/:id/banner', uploadImages, uploadAppBannerAdmin);
+router.delete('/apps/:id/banner', removeAppBannerAdmin);
 
 // Email Management
 router.get('/email-logs', getEmailLogs);

@@ -10,7 +10,7 @@ import {
   Trophy,
   MousePointer2,
   Eye,
-  Image as ImageIcon
+  Upload
 } from 'lucide-react';
 import { cn } from '../utils/cn.js';
 import api, { API_BASE_URL } from '../api/axios';
@@ -128,10 +128,11 @@ const FeaturedCuration = () => {
                         {/* Edit Banner / View Detail */}
                         <button 
                           onClick={() => setDetailTarget(app)}
-                          className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-accent-violet bg-accent-violet/10 hover:bg-accent-violet hover:text-white transition-all text-[10px] font-black uppercase tracking-widest border border-accent-violet/20"
                           title="Manage banners & details"
                         >
-                          <ImageIcon className="w-5 h-5" />
+                          <Upload className="w-3.5 h-3.5" />
+                          {app.banner ? 'Edit Banner' : 'Set Banner'}
                         </button>
                         {/* View App */}
                         <a 

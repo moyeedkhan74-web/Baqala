@@ -283,9 +283,11 @@ exports.deleteApp = async (req, res) => {
 // PATCH /api/admin/apps/:id/status
 exports.updateAppStatus = async (req, res) => {
   try {
-    const { status, rejectionReason } = req.body;
+    const { status, rejectionReason, shortDescription, tagline } = req.body;
     const validStatuses = ['approved', 'rejected', 'pending_review', 'pending_scan', 'auto_rejected'];
-    if (!validStatuses.includes(status)) {
+    
+    // Only validate status if it's explicitly provided (Syncing metadata might not change status)
+    if (status && !validStatuses.includes(status)) {
       return res.status(400).json({ message: 'Invalid status.' });
     }
     
@@ -293,8 +295,12 @@ exports.updateAppStatus = async (req, res) => {
     if (!app) return res.status(404).json({ message: 'App not found.' });
 
     const previousStatus = app.status;
-    app.status = status;
-    app.rejectionReason = rejectionReason || '';
+    
+    if (status) app.status = status;
+    if (rejectionReason !== undefined) app.rejectionReason = rejectionReason;
+    if (shortDescription !== undefined) app.shortDescription = shortDescription;
+    if (tagline !== undefined) app.tagline = tagline;
+
     app.reviewedBy = req.user._id;
     app.reviewedAt = new Date();
     await app.save();
@@ -792,5 +798,67 @@ exports.reanalyzeApp = async (req, res) => {
   } catch (err) {
     console.error('[REANALYZE_ERROR]:', err.message);
     res.status(500).json({ message: 'Re-analysis failed.', error: err.message });
+  }
+};
+
+// Admin Banner Management (Bypasses requireOwner)
+exports.uploadAppBannerAdmin = async (req, res) => {
+  try {
+    const app = await App.findById(req.params.id);
+    if (!app) return res.status(404).json({ message: 'App not found.' });
+
+    if (!req.files || !req.files.banner || !req.files.banner[0]) {
+      return res.status(400).json({ message: 'No banner file provided.' });
+    }
+
+    // Helper to delete any file from B2
+    const deleteFileFromB2Local = async (rawUrl) => {
+      if (!rawUrl || typeof rawUrl !== 'string') return;
+      try {
+        const b2Path = extractB2Key(rawUrl);
+        if (!b2Path) return;
+        await deleteImage(b2Path);
+      } catch (err) { console.error('B2 Delete Error:', err); }
+    };
+
+    // Helper to upload
+    const uploadAssetLocal = async (file, folder) => {
+      const fileName = `${Date.now()}_admin_${file.originalname.replace(/\s+/g, '_')}`;
+      const filePath = `${folder}/${fileName}`;
+      const result = await uploadImage(filePath, file.buffer, file.mimetype);
+      return result.success ? result.url : null;
+    };
+
+    // Cleanup old banner
+    if (app.banner) await deleteFileFromB2Local(app.banner);
+
+    // Upload new banner
+    const url = await uploadAssetLocal(req.files.banner[0], 'banners');
+    if (!url) return res.status(500).json({ message: 'Cloud upload failed.' });
+
+    app.banner = url;
+    await app.save();
+
+    res.json({ message: 'Promotional banner updated by Admin.', app });
+  } catch (err) {
+    res.status(500).json({ message: 'Banner update failed.', error: err.message });
+  }
+};
+
+exports.removeAppBannerAdmin = async (req, res) => {
+  try {
+    const app = await App.findById(req.params.id);
+    if (!app) return res.status(404).json({ message: 'App not found.' });
+
+    if (app.banner) {
+      const b2Path = extractB2Key(app.banner);
+      if (b2Path) await deleteImage(b2Path);
+      app.banner = '';
+      await app.save();
+    }
+
+    res.json({ message: 'Banner removed by Admin.', app });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to remove banner.', error: err.message });
   }
 };

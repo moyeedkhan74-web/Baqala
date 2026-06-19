@@ -13,6 +13,7 @@ async function runGeminiApkAnalysis(appData, apkMetadata) {
 
 {
   "appSummary": "2-3 sentences: what this app actually appears to do based on ALL evidence — developer claims AND APK code combined",
+  "shortDescription": "One-line catchy hook (max 80 chars) for store listings",
   "approvalScore": <integer 0-100>,
   "riskLevel": "low" | "medium" | "high" | "critical",
   "permissionAnalysis": "one paragraph: do the requested permissions match the claimed purpose? Flag mismatches explicitly.",
