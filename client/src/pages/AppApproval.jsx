@@ -59,9 +59,22 @@ const AppApproval = () => {
     setAnalyzingId(appId);
     try {
       const { data } = await api.post(`/admin/apps/${appId}/reanalyze`);
-      setApps(prev => prev.map(a => a._id === appId ? { ...a, aiModeration: data.aiModeration } : a));
+      console.log('[DEBUG] AI Update Response:', data);
+      
+      // Force a fresh object to guarantee React re-render
+      setApps(prev => {
+        const newApps = prev.map(a => 
+          a._id === appId 
+            ? { ...a, aiModeration: { ...data.aiModeration, analysedAt: new Date() } } 
+            : a
+        );
+        console.log('[DEBUG] New state for scanned app:', newApps.find(a => a._id === appId));
+        return newApps;
+      });
+      
       toast.success('AI analysis complete');
     } catch (err) {
+      console.error('[AI_REANALYZE_ERROR]:', err);
       toast.error('AI analysis failed');
     } finally {
       setAnalyzingId(null);

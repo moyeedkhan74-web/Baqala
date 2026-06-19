@@ -96,6 +96,19 @@ const FeaturedCuration = () => {
     }
   };
 
+  const handleRemoveBanner = async (appId) => {
+    if (!window.confirm('Delete this promotional banner?')) return;
+    
+    const toastId = toast.loading('Removing banner...');
+    try {
+      await api.delete(`/admin/apps/${appId}/banner`);
+      toast.success('Banner removed!', { id: toastId });
+      setAllApps(prev => prev.map(a => a._id === appId ? { ...a, banner: '' } : a));
+    } catch (err) {
+      toast.error('Failed to remove banner', { id: toastId });
+    }
+  };
+
   const triggerBannerUpload = (appId) => {
     bannerAppIdRef.current = appId;
     bannerInputRef.current?.click();
@@ -191,6 +204,15 @@ const FeaturedCuration = () => {
                           )}
                           {app.banner ? 'Edit Banner' : 'Set Banner'}
                         </button>
+                        {app.banner && (
+                          <button 
+                            onClick={() => handleRemoveBanner(app._id)}
+                            className="p-2.5 text-slate-400 hover:bg-rose-500/10 hover:text-rose-500 rounded-xl transition-all"
+                            title="Remove banner"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                         {/* View Details */}
                         <button 
                           onClick={() => setDetailTarget(app)}
