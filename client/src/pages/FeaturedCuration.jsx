@@ -14,6 +14,7 @@ import {
 import { cn } from '../utils/cn.js';
 import api, { API_BASE_URL } from '../api/axios';
 import toast from 'react-hot-toast';
+import AdminAppDetailModal from '../components/admin/AdminAppDetailModal';
 
 const getImageUrl = (url) => {
   if (!url) return '';
@@ -30,6 +31,7 @@ const FeaturedCuration = () => {
   const [togglingId, setTogglingId] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addSearch, setAddSearch] = useState('');
+  const [detailTarget, setDetailTarget] = useState(null);
 
   const fetchApps = async () => {
     try {
@@ -122,13 +124,21 @@ const FeaturedCuration = () => {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
+                        {/* Edit Banner / View Detail */}
+                        <button 
+                          onClick={() => setDetailTarget(app)}
+                          className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                          title="Manage banners & details"
+                        >
+                          <ImageIcon className="w-5 h-5" />
+                        </button>
                         {/* View App */}
                         <a 
                           href={`/app/${app._id}`} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-                          title="View app page"
+                          title="View live page"
                         >
                           <Eye className="w-5 h-5" />
                         </a>
@@ -281,6 +291,17 @@ const FeaturedCuration = () => {
             </div>
           </div>
         </div>
+      )}
+      {/* Detail Modal for Banner/Metadata Management */}
+      {detailTarget && (
+        <AdminAppDetailModal 
+          app={detailTarget} 
+          onClose={() => setDetailTarget(null)} 
+          onUpdate={(appId, updatedApp) => {
+            setAllApps(prev => prev.map(a => a._id === appId ? updatedApp : a));
+            setDetailTarget(prev => prev && prev._id === appId ? updatedApp : prev);
+          }}
+        />
       )}
     </AdminLayout>
   );

@@ -469,9 +469,9 @@ const AppManagement = () => {
         <AdminAppDetailModal 
           app={detailTarget} 
           onClose={() => setDetailTarget(null)} 
-          onAiUpdate={(appId, newAi) => {
-            setApps(prev => prev.map(a => a._id === appId ? { ...a, aiModeration: newAi } : a));
-            setDetailTarget(prev => prev && prev._id === appId ? { ...prev, aiModeration: newAi } : prev);
+          onUpdate={(appId, updatedApp) => {
+            setApps(prev => prev.map(a => a._id === appId ? updatedApp : a));
+            setDetailTarget(prev => prev && prev._id === appId ? updatedApp : prev);
           }}
         />
       )}

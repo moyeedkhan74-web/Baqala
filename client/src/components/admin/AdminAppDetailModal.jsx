@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   X, 
   ExternalLink, 
@@ -9,13 +9,54 @@ import {
   Tag, 
   Globe,
   Star as StarIcon,
-  Package
+  Package,
+  Image as ImageIcon,
+  Trash2,
+  RefreshCw
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import api from '../../api/axios';
+import toast from 'react-hot-toast';
 import AiAnalysisCard from './AiAnalysisCard';
 
-const AdminAppDetailModal = ({ app, onClose, onAiUpdate }) => {
+const AdminAppDetailModal = ({ app, onClose, onUpdate }) => {
+  const [loading, setLoading] = useState(false);
   if (!app) return null;
+
+  const handleBannerUpdate = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('banner', file);
+
+    setLoading(true);
+    const toastId = toast.loading('Uploading promotional banner...');
+    try {
+      const { data } = await api.post(`/apps/${app._id}/images`, formData);
+      toast.success('Promotional banner updated!', { id: toastId });
+      if (onUpdate) onUpdate(app._id, data.app);
+    } catch (err) {
+      toast.error('Banner upload failed', { id: toastId });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeBanner = async () => {
+    if (!window.confirm('Wipe this promotional banner?')) return;
+    setLoading(true);
+    const toastId = toast.loading('Removing banner...');
+    try {
+      const { data } = await api.put(`/apps/${app._id}`, { banner: '' });
+      toast.success('Banner removed', { id: toastId });
+      if (onUpdate) onUpdate(app._id, data.app);
+    } catch (err) {
+      toast.error('Failed to remove banner', { id: toastId });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8">
@@ -185,10 +226,46 @@ const AdminAppDetailModal = ({ app, onClose, onAiUpdate }) => {
                 </div>
               </div>
 
+              {/* Promotional Banner Curation */}
+              <div className="p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/10 space-y-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-5">
+                  <ImageIcon className="w-16 h-16" />
+                </div>
+                
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 relative z-10">Banner Curation</h3>
+                
+                {app.banner ? (
+                  <div className="space-y-4 relative z-10">
+                    <div className="aspect-[21/9] rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm relative group">
+                      <img src={app.banner} className="w-full h-full object-cover" alt="Banner Preview" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button onClick={removeBanner} className="p-3 bg-white/20 text-white rounded-full hover:bg-rose-500 transition-all transform hover:scale-110">
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                    <label className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-100 dark:bg-white/5 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-accent-violet transition-all cursor-pointer border border-slate-200 dark:border-white/5 disabled:opacity-50">
+                      <ImageIcon className="w-3.5 h-3.5" /> Replace Banner
+                      <input type="file" className="hidden" onChange={handleBannerUpdate} accept="image/*" disabled={loading} />
+                    </label>
+                  </div>
+                ) : (
+                  <label className="w-full h-32 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-all group disabled:opacity-50 relative z-10">
+                    <ImageIcon className="w-8 h-8 text-slate-300 group-hover:text-accent-violet transition-all" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-2">Upload Hero Banner</span>
+                    <input type="file" className="hidden" onChange={handleBannerUpdate} accept="image/*" disabled={loading} />
+                  </label>
+                )}
+                
+                <p className="text-[9px] font-bold text-slate-400 text-center leading-tight">
+                  High-res banners are essential for the home page slider. 1200x500px recommended.
+                </p>
+              </div>
+
               {/* AI Analysis Card */}
               <AiAnalysisCard 
                 app={app} 
-                onUpdate={(newAi) => onAiUpdate && onAiUpdate(app._id, newAi)} 
+                onUpdate={(newAi) => onUpdate && onUpdate(app._id, { ...app, aiModeration: newAi })} 
               />
             </div>
           </div>
