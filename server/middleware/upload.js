@@ -1,8 +1,18 @@
 const multer = require('multer');
 const path = require('path');
 
-// Storage in memory to ensure "NOTHING ON PC" requirement
-const storage = multer.memoryStorage();
+const os = require('os');
+
+// Storage on disk to allow APK extraction (required for metadata analysis)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, os.tmpdir());
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
 
 const allowedAppExtensions = ['.apk', '.zip', '.rar', '.tar', '.gz', '.exe', '.msi', '.dmg', '.deb', '.rpm', '.appimage', '.ipa', '.7z'];
 // BUG-04 FIX: Removed .svg — SVGs can contain embedded <script> tags / XSS payloads

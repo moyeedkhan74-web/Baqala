@@ -773,23 +773,24 @@ exports.reanalyzeApp = async (req, res) => {
     const app = await App.findById(req.params.id);
     if (!app) return res.status(404).json({ message: 'App not found.' });
 
-    if (!app.apkMetadata || !app.apkMetadata.packageName) {
-      return res.status(400).json({ message: 'No APK metadata stored for this app. Upload the APK first.' });
-    }
-
     const { runGeminiApkAnalysis } = require('../services/aiModerationService');
-    const result = await runGeminiApkAnalysis(app, app.apkMetadata);
 
-    app.aiModeration = {
-      ...result,
-      analysedAt: new Date()
-    };
-    await app.save();
+    // Uses stored apkMetadata — no APK re-download from B2 needed
+    const result = await runGeminiApkAnalysis(
+      { title: app.title, category: app.category, description: app.description, tags: app.tags },
+      app.apkMetadata || {}
+    );
 
-    console.log(`[ADMIN] Re-analysis complete for ${app.title} — score: ${result.approvalScore}, risk: ${result.riskLevel}`);
-    res.json({ message: 'AI re-analysis complete.', aiModeration: app.aiModeration });
-  } catch (error) {
-    console.error('Admin reanalyze app error:', error);
-    res.status(500).json({ message: 'Server error during re-analysis.' });
+    const updated = await App.findByIdAndUpdate(
+      req.params.id,
+      { aiModeration: { ...result, analysedAt: new Date() } },
+      { new: true }
+    );
+
+    console.log(`[REANALYZE] ✅ ${app.title} — score: ${result.approvalScore}, risk: ${result.riskLevel}`);
+    res.json({ message: 'Re-analysis complete.', aiModeration: updated.aiModeration });
+  } catch (err) {
+    console.error('[REANALYZE_ERROR]:', err.message);
+    res.status(500).json({ message: 'Re-analysis failed.', error: err.message });
   }
 };

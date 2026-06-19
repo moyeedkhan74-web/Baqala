@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../components/admin/AdminLayout';
-import { HiPhotograph, HiUpload, HiX } from 'react-icons/hi';
 import { 
   Search, 
   Filter, 
@@ -37,8 +36,6 @@ const AppManagement = () => {
   const [warningTarget, setWarningTarget] = useState(null);
   const [isProcessingWarning, setIsProcessingWarning] = useState(false);
   const [isScanningId, setIsScanningId] = useState(null);
-  const [bannerTarget, setBannerTarget] = useState(null);
-  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [sortByAiScore, setSortByAiScore] = useState(false);
   const [detailTarget, setDetailTarget] = useState(null);
 
@@ -126,28 +123,6 @@ const AppManagement = () => {
     }
   };
   
-  const handleBannerUpload = async (file) => {
-    if (!bannerTarget || !file) return;
-    
-    setIsUploadingBanner(true);
-    const loadingToast = toast.loading('Uploading promotional banner...');
-    
-    const formData = new FormData();
-    formData.append('banner', file);
-    
-    try {
-      const { data } = await api.post(`/apps/${bannerTarget._id}/images`, formData);
-      setApps(prev => prev.map(a => a._id === bannerTarget._id ? { ...a, banner: data.app.banner } : a));
-      toast.success('App banner synchronized perfectly!', { id: loadingToast });
-      setBannerTarget(null);
-    } catch (error) {
-      console.error('Banner upload failed:', error);
-      toast.error('Failed to transmit visual asset', { id: loadingToast });
-    } finally {
-      setIsUploadingBanner(false);
-    }
-  };
-
   const tabs = [
     { id: 'all', label: 'All Apps' },
     { id: 'pending', label: 'Pending' },
@@ -387,17 +362,6 @@ const AppManagement = () => {
                         </button>
                         <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
                         <button 
-                          onClick={() => setBannerTarget(app)}
-                          title="Manage Promotional Banner"
-                          className={cn(
-                            "p-2.5 rounded-xl transition-all",
-                            app.banner ? "text-accent-violet hover:bg-accent-violet/10" : "text-slate-400 hover:text-accent-violet hover:bg-accent-violet/10"
-                          )}
-                        >
-                          <HiPhotograph className="w-5 h-5" />
-                        </button>
-                        <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1"></div>
-                        <button 
                           onClick={() => setWarningTarget(app)}
                           title="Issue Warning"
                           className="p-2.5 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
@@ -512,60 +476,6 @@ const AppManagement = () => {
         />
       )}
 
-      {/* Banner Upload Modal */}
-      {bannerTarget && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => !isUploadingBanner && setBannerTarget(null)} />
-          <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="p-8">
-              <div className="flex items-center justify-between mb-8">
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white">Promotional Vision</h3>
-                <button onClick={() => setBannerTarget(null)} className="p-2 text-slate-400 hover:text-accent-violet transition-colors">
-                  <HiX className="w-6 h-6" />
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                <div className="aspect-[21/9] rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 flex items-center justify-center overflow-hidden">
-                  {bannerTarget.banner ? (
-                    <img src={getImageUrl(bannerTarget.banner)} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="text-center p-6">
-                      <HiPhotograph className="w-12 h-12 text-slate-300 dark:text-white/10 mx-auto mb-3" />
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No Banner Synchronized</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="relative">
-                  <input 
-                    type="file" 
-                    id="banner-upload"
-                    className="hidden" 
-                    onChange={(e) => handleBannerUpload(e.target.files[0])}
-                    accept="image/*"
-                    disabled={isUploadingBanner}
-                  />
-                  <label 
-                    htmlFor="banner-upload"
-                    className={cn(
-                      "w-full py-4 rounded-2xl bg-accent-violet text-white font-black text-sm uppercase tracking-widest shadow-xl shadow-accent-violet/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer",
-                      isUploadingBanner && "opacity-50 pointer-events-none"
-                    )}
-                  >
-                    {isUploadingBanner ? <RefreshCw className="w-5 h-5 animate-spin" /> : <HiUpload className="w-5 h-5" />}
-                    {bannerTarget.banner ? 'Update Vision' : 'Upload New Banner'}
-                  </label>
-                </div>
-                
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-center px-4">
-                  Note: High-resolution 1200x500 images provide optimal clarity for home page hero sections.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </AdminLayout>
   );
 };

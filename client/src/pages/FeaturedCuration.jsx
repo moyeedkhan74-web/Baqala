@@ -1,16 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '../components/admin/AdminLayout';
 import { 
   Star, 
   Plus, 
   Trash2, 
   Search,
-  Image,
   X,
   Loader2,
   Trophy,
   MousePointer2,
-  Upload,
   Eye
 } from 'lucide-react';
 import { cn } from '../utils/cn.js';
@@ -30,10 +28,8 @@ const FeaturedCuration = () => {
   const [allApps, setAllApps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [togglingId, setTogglingId] = useState(null);
-  const [uploadingBannerId, setUploadingBannerId] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addSearch, setAddSearch] = useState('');
-  const bannerInputRef = useRef({});
 
   const fetchApps = async () => {
     try {
@@ -67,36 +63,6 @@ const FeaturedCuration = () => {
       toast.error('Failed to toggle featured status');
     } finally {
       setTogglingId(null);
-    }
-  };
-
-  const handleBannerUpload = async (appId, file) => {
-    if (!file) return;
-    setUploadingBannerId(appId);
-    const formData = new FormData();
-    formData.append('banner', file);
-    try {
-      const { data } = await api.post(`/apps/${appId}/images`, formData);
-      setAllApps(prev => prev.map(a => a._id === appId ? { ...a, banner: data.app.banner } : a));
-      toast.success('Banner uploaded!');
-    } catch (error) {
-      toast.error('Banner upload failed');
-    } finally {
-      setUploadingBannerId(null);
-    }
-  };
-
-  const removeBanner = async (appId) => {
-    if (!window.confirm('Remove this promotional banner?')) return;
-    setUploadingBannerId(appId);
-    try {
-      await api.put(`/apps/${appId}`, { banner: '' });
-      setAllApps(prev => prev.map(a => a._id === appId ? { ...a, banner: '' } : a));
-      toast.success('Banner removed');
-    } catch (error) {
-      toast.error('Failed to remove banner');
-    } finally {
-      setUploadingBannerId(null);
     }
   };
 
@@ -156,28 +122,6 @@ const FeaturedCuration = () => {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        {/* Banner Upload */}
-                        <label 
-                          className={cn(
-                            "p-2.5 rounded-xl cursor-pointer transition-all",
-                            app.banner 
-                              ? "text-emerald-500 hover:bg-emerald-500/10" 
-                              : "text-slate-400 hover:text-accent-violet hover:bg-accent-violet/10",
-                            uploadingBannerId === app._id && "opacity-50 pointer-events-none"
-                          )}
-                          title={app.banner ? "Replace banner" : "Upload banner"}
-                        >
-                          {uploadingBannerId === app._id 
-                            ? <Loader2 className="w-5 h-5 animate-spin" />
-                            : <Image className="w-5 h-5" />
-                          }
-                          <input 
-                            type="file" 
-                            className="hidden" 
-                            accept="image/*"
-                            onChange={(e) => handleBannerUpload(app._id, e.target.files[0])}
-                          />
-                        </label>
                         {/* View App */}
                         <a 
                           href={`/app/${app._id}`} 
@@ -203,50 +147,6 @@ const FeaturedCuration = () => {
                       </div>
                     </div>
 
-                    {/* Banner Preview */}
-                    {app.banner && (
-                      <div className="mx-4 mb-4 relative rounded-xl overflow-hidden border border-white/10 group">
-                        <img 
-                          src={getImageUrl(app.banner)} 
-                          alt={`${app.title} banner`}
-                          className="w-full h-32 object-cover"
-                          onError={(e) => { e.target.parentElement.style.display = 'none'; }}
-                        />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                          <label className="p-2 bg-white/20 text-white rounded-full hover:bg-accent-violet cursor-pointer transition-all">
-                            <Upload className="w-4 h-4" />
-                            <input 
-                              type="file" 
-                              className="hidden" 
-                              accept="image/*"
-                              onChange={(e) => handleBannerUpload(app._id, e.target.files[0])}
-                            />
-                          </label>
-                          <button 
-                            onClick={() => removeBanner(app._id)} 
-                            className="p-2 bg-rose-500/20 text-rose-400 rounded-full hover:bg-rose-500 hover:text-white transition-all"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                        <div className="absolute top-2 right-2 px-2 py-0.5 bg-emerald-500/80 text-white text-[9px] font-black uppercase tracking-widest rounded-full">
-                          Banner Active
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* No Banner Notice */}
-                    {!app.banner && (
-                      <label className="mx-4 mb-4 h-20 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl flex items-center justify-center gap-2 text-sm text-slate-400 cursor-pointer hover:bg-accent-violet/5 hover:border-accent-violet/30 transition-all">
-                        <Upload className="w-4 h-4" /> Upload a promotional banner (1200×500)
-                        <input 
-                          type="file" 
-                          className="hidden" 
-                          accept="image/*"
-                          onChange={(e) => handleBannerUpload(app._id, e.target.files[0])}
-                        />
-                      </label>
-                    )}
                   </div>
                 ))}
               </div>

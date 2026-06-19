@@ -6,7 +6,8 @@ const {
   UploadPartCommand,
   CompleteMultipartUploadCommand,
   AbortMultipartUploadCommand,
-  GetObjectCommand
+  GetObjectCommand,
+  ListObjectsV2Command
 } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
@@ -180,6 +181,72 @@ exports.deleteBinary = async (filePath) => {
   } catch (error) {
     console.error(`B2 Binary Delete Error:`, error.message);
     return { success: false, error: error.message };
+  }
+};
+
+// ============================================
+// TEMP SCAN FUNCTIONS — baqala-temp-scans bucket
+// Uses imageS3 (Account 2) — same as baqala-private
+// 20% allocation = 2GB — weekly cleanup
+// ============================================
+
+exports.uploadTempApk = async (appId, buffer) => {
+  if (!process.env.B2_TEMP_BUCKET) {
+    return { success: false, error: 'B2_TEMP_BUCKET not set' };
+  }
+  try {
+    const key = `temp/${appId}.apk`;
+    await imageS3.send(new PutObjectCommand({
+      Bucket: process.env.B2_TEMP_BUCKET,
+      Key: key,
+      Body: buffer,
+      ContentType: 'application/vnd.android.package-archive',
+      ContentDisposition: 'attachment',
+    }));
+    console.log(`[B2_TEMP] Uploaded: ${key} (${(buffer.length / 1024 / 1024).toFixed(2)}MB)`);
+    return { success: true, key };
+  } catch (err) {
+    console.error('[B2_TEMP] Upload failed:', err.message);
+    return { success: false, error: err.message };
+  }
+};
+
+exports.downloadTempApk = async (key) => {
+  const response = await imageS3.send(new GetObjectCommand({
+    Bucket: process.env.B2_TEMP_BUCKET,
+    Key: key,
+  }));
+  const chunks = [];
+  for await (const chunk of response.Body) chunks.push(chunk);
+  return Buffer.concat(chunks);
+};
+
+exports.deleteTempApk = async (key) => {
+  try {
+    await imageS3.send(new DeleteObjectCommand({
+      Bucket: process.env.B2_TEMP_BUCKET,
+      Key: key,
+    }));
+    console.log(`[B2_TEMP] Deleted: ${key}`);
+  } catch (err) {
+    console.error('[B2_TEMP] Delete failed:', err.message);
+  }
+};
+
+exports.listTempApks = async () => {
+  try {
+    const response = await imageS3.send(new ListObjectsV2Command({
+      Bucket: process.env.B2_TEMP_BUCKET,
+      Prefix: 'temp/',
+    }));
+    return (response.Contents || []).map(f => ({
+      key: f.Key,
+      lastModified: f.LastModified,
+      sizeBytes: f.Size,
+    }));
+  } catch (err) {
+    console.error('[B2_TEMP] List failed:', err.message);
+    return [];
   }
 };
 

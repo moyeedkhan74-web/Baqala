@@ -153,8 +153,28 @@ const server = app.listen(PORT, async () => {
     console.log('\x1b[32m%s\x1b[0m', `✅ [CONFIG]: Email Service is active (Primary: ${primary}).`);
   }
 
-  // AI Moderation Status
-  console.log('[STARTUP] AI moderation (Gemini):', process.env.GEMINI_API_KEY ? '✅ Free tier configured (1,500 req/day)' : '⚠️ GEMINI_API_KEY not set — AI analysis disabled');
+  // APK Temp Scan Cleanup — weekly Sunday 3AM
+  const { cleanupTempBucket } = require('./services/apkAnalyzer');
+
+  // Startup cleanup — clear orphans from previous crashed deploys
+  setTimeout(() => cleanupTempBucket(), 10000);
+
+  // Weekly Sunday 3AM schedule
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+  const nowForCleanup = new Date();
+  const nextSunday = new Date(nowForCleanup);
+  const daysUntilSunday = (7 - nowForCleanup.getDay()) % 7 || 7;
+  nextSunday.setDate(nowForCleanup.getDate() + daysUntilSunday);
+  nextSunday.setHours(3, 0, 0, 0);
+  setTimeout(() => {
+    cleanupTempBucket();
+    setInterval(cleanupTempBucket, SEVEN_DAYS_MS);
+  }, nextSunday - nowForCleanup);
+
+  // Startup status logs
+  console.log(`[STARTUP] Gemini AI: ${process.env.GEMINI_API_KEY ? '✅ configured (1500 req/day free)' : '⚠️  GEMINI_API_KEY not set'}`);
+  console.log(`[STARTUP] B2 temp bucket: ${process.env.B2_TEMP_BUCKET ? `✅ ${process.env.B2_TEMP_BUCKET}` : '⚠️  B2_TEMP_BUCKET not set'}`);
+  console.log(`[APK_CLEANUP] Next weekly cleanup: ${nextSunday.toLocaleString()}`);
 
   // System Diagnostics Snapshot
   try {

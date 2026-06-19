@@ -14,7 +14,20 @@ module.exports = async (req, res, next) => {
 
   // Normalize: support both req.file (single) and req.files.appFile[0] (fields)
   const file = req.file || (req.files && req.files.appFile && req.files.appFile[0]);
-  if (!file || !file.buffer) {
+  if (!file) return next();
+
+  // If using disk storage, read the file into a buffer for VT checks
+  if (!file.buffer && file.path) {
+    const fs = require('fs');
+    try {
+      file.buffer = fs.readFileSync(file.path);
+    } catch (err) {
+      console.error('[SCAN_MIDDLEWARE] Failed to read disk file into buffer:', err.message);
+      return next();
+    }
+  }
+
+  if (!file.buffer) {
     return next();
   }
 

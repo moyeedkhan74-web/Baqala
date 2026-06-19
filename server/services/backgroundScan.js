@@ -4,6 +4,8 @@ const { uploadFileToVirusTotal, pollScanResult } = require('./virusScanner');
 const { sendAutoRejectEmail } = require('./emailService');
 const { getDownloadUrl } = require('../utils/b2Storage');
 const https = require('https');
+const { extractApkMetadata } = require('./apkAnalyzer');
+const { runGeminiApkAnalysis } = require('./aiModerationService');
 
 /**
  * Fire-and-forget background scan.
@@ -108,6 +110,26 @@ exports.runBackgroundScan = async (appId, buffer, filename) => {
         payload: { appId: app._id, status: app.status, vtResult: app.vtResult }
       })
       .catch(err => console.error('[REALTIME_ERROR]:', err.message));
+
+    // 5. AI Moderation & APK Analysis (Parallel)
+    console.log(`[BG_SCAN] Launching AI Analysis for ${appId}...`);
+    setImmediate(async () => {
+      try {
+        const apkMeta = await extractApkMetadata(scanBuffer, appId.toString());
+        await App.findByIdAndUpdate(appId, { apkMetadata: apkMeta });
+        
+        const aiResult = await runGeminiApkAnalysis(app, apkMeta);
+        await App.findByIdAndUpdate(appId, {
+          aiModeration: {
+            ...aiResult,
+            analysedAt: new Date()
+          }
+        });
+        console.log(`[BG_SCAN] AI Analysis complete for ${appId}`);
+      } catch (err) {
+        console.error('[BG_SCAN_AI_ERR]:', err.message);
+      }
+    });
 
     console.log(`[BG_SCAN] Complete for ${appId}. Result: ${app.vtResult}, Status: ${app.status}`);
 

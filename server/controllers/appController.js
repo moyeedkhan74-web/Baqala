@@ -1,6 +1,8 @@
 const App = require('../models/App');
 const Config = require('../models/Config');
 const { uploadImage, uploadBinary, deleteImage, deleteBinary, getDownloadUrl, extractB2Key } = require('../utils/b2Storage');
+const { extractApkMetadata } = require('../services/apkAnalyzer');
+const { runGeminiApkAnalysis } = require('../services/aiModerationService');
 
 // Helper to upload assets directly to cloud (no compression to maintain original quality)
 const uploadAsset = async (file, folder = 'icons') => {
@@ -309,6 +311,48 @@ exports.createApp = async (req, res, next) => {
           runBackgroundScan(app._id, scanBuffer, scanFilename)
             .catch(err => console.error('[SCAN_LAUNCH] Error:', err.message));
         });
+
+        // ─── AI + DEEP APK ANALYSIS (background, zero wait for developer) ───
+        if (appFile?.buffer) {
+          const _analysisBuffer = appFile.buffer;
+          const _analysisAppId  = app._id.toString();
+          const _analysisData   = {
+            title: app.title,
+            category: app.category,
+            description: app.description,
+            tags: app.tags,
+          };
+
+          setImmediate(async () => {
+            try {
+              // Step A: Extract APK metadata + dex strings (uses B2 temp internally)
+              console.log(`[ANALYSIS] Starting APK analysis for ${_analysisAppId}`);
+              const apkMeta = await extractApkMetadata(_analysisBuffer, _analysisAppId);
+              await App.findByIdAndUpdate(_analysisAppId, { apkMetadata: apkMeta });
+              console.log(`[ANALYSIS] APK metadata saved for ${_analysisAppId}`);
+
+              // Step B: Gemini AI analysis with full context
+              const aiResult = await runGeminiApkAnalysis(_analysisData, apkMeta);
+              await App.findByIdAndUpdate(_analysisAppId, {
+                aiModeration: {
+                  ...aiResult,
+                  analysedAt: new Date(),
+                },
+              });
+              console.log(`[ANALYSIS] ✅ Complete — ${_analysisData.title} — score: ${aiResult.approvalScore}, risk: ${aiResult.riskLevel}`);
+
+            } catch (err) {
+              console.error('[ANALYSIS_ERROR]:', err.message);
+              // Save error state so admin knows analysis failed
+              await App.findByIdAndUpdate(_analysisAppId, {
+                'aiModeration.riskLevel': 'error',
+                'aiModeration.analysisError': err.message,
+                'aiModeration.analysedAt': new Date(),
+              }).catch(() => {});
+            }
+          });
+        }
+        // ─────────────────────────────────────────────────────────────────────
       }
     } else {
       // BUG-05 FIX: VT was unreachable — keep as pending for admin review; do NOT approve unscanned apps

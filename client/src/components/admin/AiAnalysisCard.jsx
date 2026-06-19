@@ -143,13 +143,47 @@ const AiAnalysisCard = ({ app, onUpdate }) => {
         </div>
       )}
 
-      {/* Suspicious signals */}
+      {/* Suspicious signals (AI) */}
       {ai.suspiciousSignals && ai.suspiciousSignals.length > 0 && (
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Suspicious Signals</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Suspicious Signals (AI)</p>
           <div className="flex flex-wrap gap-2">
             {ai.suspiciousSignals.map((s, i) => (
-              <span key={i} className="px-2.5 py-1 rounded-lg bg-orange-500/10 text-orange-500 border border-orange-500/20 text-[10px] font-black uppercase tracking-wider">{s}</span>
+              <span key={i} className="px-2.5 py-1 rounded-lg bg-slate-500/10 text-slate-500 border border-slate-500/20 text-[10px] font-black uppercase tracking-wider">{s}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Suspicious code strings (DEX) */}
+      {app.apkMetadata?.dexStrings && app.apkMetadata.dexStrings.length > 0 && (
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 italic">Suspicious Code Strings (DEX)</p>
+          <div className="flex flex-wrap gap-1.5 leading-tight">
+            {app.apkMetadata.dexStrings.map((str, i) => (
+              <span key={i} className="px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 text-[9px] font-bold break-all">
+                {str}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Hardcoded URLs (DEX) */}
+      {app.apkMetadata?.suspiciousUrls && app.apkMetadata.suspiciousUrls.length > 0 && (
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 italic">Hardcoded URLs in Code</p>
+          <div className="flex flex-wrap gap-1.5 leading-tight">
+            {app.apkMetadata.suspiciousUrls.map((url, i) => (
+              <a 
+                key={i} 
+                href={url.startsWith('http') ? url : `http://${url}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-[9px] font-bold break-all hover:bg-rose-500 hover:text-white transition-all flex items-center gap-1"
+              >
+                {url}
+              </a>
             ))}
           </div>
         </div>
