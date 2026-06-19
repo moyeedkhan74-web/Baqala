@@ -149,7 +149,7 @@ const AdminAppDetailModal = ({ app, onClose, onUpdate }) => {
                 </p>
               </div>
 
-              {app.aiModeration?.appSummary && (
+              {(app.aiModeration?.appSummary || app.aiModeration?.shortDescription) && (
                 <div className="p-6 rounded-[2rem] bg-indigo-500/[0.03] border border-indigo-500/10 space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-xs font-black uppercase tracking-widest text-indigo-500 flex items-center gap-2">
@@ -157,7 +157,7 @@ const AdminAppDetailModal = ({ app, onClose, onUpdate }) => {
                     </h3>
                   </div>
                   <p className="text-sm text-slate-600 dark:text-slate-300 font-bold leading-relaxed italic">
-                    "{app.aiModeration.appSummary}"
+                    "{app.aiModeration.appSummary || app.aiModeration.shortDescription}"
                   </p>
                   
                   {/* AI Metadata Sync - Short Description */}

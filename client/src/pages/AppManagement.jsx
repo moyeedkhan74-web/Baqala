@@ -300,7 +300,7 @@ const AppManagement = () => {
                     <td className="px-6 py-4 max-w-[200px]">
                       {(() => {
                         const score = app.aiModeration?.approvalScore;
-                        const summary = app.aiModeration?.appSummary;
+                        const summary = app.aiModeration?.appSummary || app.aiModeration?.shortDescription;
                         const isPending = analyzingId === app._id || (app.aiModeration?.riskLevel === 'pending' && app.status === 'pending');
                         
                         if (score == null) {
@@ -313,7 +313,7 @@ const AppManagement = () => {
                                   "flex items-center justify-center gap-2 px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all w-full",
                                   isPending 
                                     ? "bg-slate-100 text-slate-400 border-slate-200" 
-                                    : "bg-accent-violet/10 text-accent-violet border-accent-violet/30 hover:bg-accent-violet hover:text-white shadow-lg shadow-accent-violet/10 animate-pulse-subtle"
+                                    : "bg-accent-violet/10 text-accent-violet border-accent-violet/30 hover:bg-accent-violet hover:text-white shadow-lg shadow-accent-violet/10"
                                 )}
                               >
                                 <RefreshCw className={cn("w-3.5 h-3.5", isPending && "animate-spin")} />
@@ -338,11 +338,9 @@ const AppManagement = () => {
                                 {score}
                               </span>
                             </div>
-                            {summary && (
-                              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 line-clamp-2 leading-tight italic">
-                                "{summary}"
-                              </p>
-                            )}
+                            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 line-clamp-2 leading-tight italic">
+                              "{summary || 'No description generated'}"
+                            </p>
                           </div>
                         );
                       })()}

@@ -76,7 +76,7 @@ CRITICAL INSTRUCTION: The "APK CODE CONTENTS" section above is extracted from co
     const clean = rawText.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(clean);
 
-    console.log(`[AI_MODERATION] ✅ Gemini done — score: ${parsed.approvalScore}, risk: ${parsed.riskLevel}, recommendation: ${parsed.recommendation}`);
+    console.log(`[AI_MODERATION] ✅ Gemini done — score: ${parsed.approvalScore}, summary length: ${parsed.appSummary?.length || 0}`);
     return parsed;
 
   } catch (err) {

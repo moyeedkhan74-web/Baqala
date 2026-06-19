@@ -123,7 +123,7 @@ const Analytics = () => {
             </select>
           </div>
 
-          <div className="h-[300px] w-full">
+          <div className="h-[300px] w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data.downloadTrend}>
                 <defs>
@@ -148,7 +148,7 @@ const Analytics = () => {
         <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 border border-slate-200 dark:border-white/5 shadow-sm overflow-hidden">
            <h2 className="text-xl font-black text-slate-900 dark:text-white mb-2">Top Performer Apps</h2>
            <p className="text-sm text-slate-500 font-bold mb-8">Highest lifetime downloads</p>
-           <div className="h-[300px] w-full">
+           <div className="h-[300px] w-full min-w-0">
             {(data.topApps && data.topApps.length > 0) ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.topApps} layout="vertical" margin={{ left: 20 }}>
@@ -176,8 +176,8 @@ const Analytics = () => {
         <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 border border-slate-200 dark:border-white/5 shadow-sm">
            <h2 className="text-xl font-black text-slate-900 dark:text-white mb-2">Category Ecosystem</h2>
            <p className="text-sm text-slate-500 font-bold mb-8">Distribution of all apps</p>
-           <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-8">
-             <div className="h-[200px]">
+           <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-8 min-w-0">
+             <div className="h-[200px] w-full min-w-0">
                {pieData.length > 0 ? (
                  <ResponsiveContainer width="100%" height="100%">
                    <PieChart>
