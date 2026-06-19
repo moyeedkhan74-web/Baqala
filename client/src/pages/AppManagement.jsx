@@ -35,6 +35,7 @@ const AppManagement = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [warningTarget, setWarningTarget] = useState(null);
   const [isProcessingWarning, setIsProcessingWarning] = useState(false);
+  const [analyzingId, setAnalyzingId] = useState(null);
   const [isScanningId, setIsScanningId] = useState(null);
   const [sortByAiScore, setSortByAiScore] = useState(false);
   const [detailTarget, setDetailTarget] = useState(null);
@@ -113,13 +114,30 @@ const AppManagement = () => {
   const handleScan = async (id) => {
     setIsScanningId(id);
     try {
-      const { data } = await api.post(`/admin/apps/${id}/scan`);
-      toast.success(data.message);
+      await api.post(`/admin/apps/${id}/scan`);
+      toast.success('Scan initiated. Refreshing soon.');
+      setTimeout(fetchApps, 3000);
     } catch (error) {
       console.error('Manual scan failed:', error);
       toast.error(error.response?.data?.message || 'Failed to initiate scan');
     } finally {
       setIsScanningId(null);
+    }
+  };
+
+  const handleAiAnalyze = async (appId) => {
+    setAnalyzingId(appId);
+    try {
+      const { data } = await api.post(`/admin/apps/${appId}/reanalyze`);
+      setApps(prev => prev.map(a => a._id === appId ? { ...a, aiModeration: data.aiModeration } : a));
+      if (detailTarget?._id === appId) {
+        setDetailTarget(prev => ({ ...prev, aiModeration: data.aiModeration }));
+      }
+      toast.success('AI analysis complete');
+    } catch (err) {
+      toast.error('AI analysis failed');
+    } finally {
+      setAnalyzingId(null);
     }
   };
   
@@ -282,12 +300,40 @@ const AppManagement = () => {
                     <td className="px-6 py-4">
                       {(() => {
                         const score = app.aiModeration?.approvalScore;
-                        if (score == null) return <span className="text-sm font-bold text-slate-400">—</span>;
+                        const isPending = analyzingId === app._id || app.aiModeration?.riskLevel === 'pending';
+                        
+                        if (score == null) {
+                          return (
+                            <button 
+                              onClick={() => handleAiAnalyze(app._id)}
+                              disabled={isPending}
+                              className={cn(
+                                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-widest transition-all",
+                                isPending 
+                                  ? "bg-slate-100 text-slate-400 border-slate-200" 
+                                  : "bg-accent-violet/10 text-accent-violet border-accent-violet/20 hover:bg-accent-violet hover:text-white shadow-sm"
+                              )}
+                            >
+                              <RefreshCw className={cn("w-3 h-3", isPending && "animate-spin")} />
+                              {isPending ? 'Scanning...' : 'Run AI Scan'}
+                            </button>
+                          );
+                        }
+                        
                         const dotColor = score >= 85 ? 'bg-emerald-500' : score >= 60 ? 'bg-amber-500' : score >= 40 ? 'bg-orange-500' : 'bg-rose-500';
+                        const stars = Math.round(score / 20);
+                        
                         return (
-                          <div className="flex items-center gap-2">
-                            <div className={cn('w-2.5 h-2.5 rounded-full', dotColor)} />
-                            <span className="text-sm font-black dark:text-white">{score}</span>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <div className={cn('w-2 h-2 rounded-full', dotColor)} />
+                              <span className="text-sm font-black dark:text-white">{score}</span>
+                            </div>
+                            <div className="flex items-center gap-0.5 text-amber-500">
+                              {[...Array(5)].map((_, i) => (
+                                <Star key={i} className={cn("w-2.5 h-2.5", i < stars ? "fill-current" : "opacity-20")} />
+                              ))}
+                            </div>
                           </div>
                         );
                       })()}
