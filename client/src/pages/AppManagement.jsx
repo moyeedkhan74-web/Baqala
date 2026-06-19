@@ -300,7 +300,7 @@ const AppManagement = () => {
                     <td className="px-6 py-4">
                       {(() => {
                         const score = app.aiModeration?.approvalScore;
-                        const isPending = analyzingId === app._id || app.aiModeration?.riskLevel === 'pending';
+                        const isPending = analyzingId === app._id || (app.aiModeration?.riskLevel === 'pending' && app.status === 'pending');
                         
                         if (score == null) {
                           return (
