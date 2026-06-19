@@ -230,12 +230,12 @@ const AppManagement = () => {
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">App Name</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Developer</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Security (VT)</th>
-                  <th 
-                    className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer select-none hover:text-accent-violet transition-colors"
-                    onClick={() => setSortByAiScore(prev => !prev)}
-                  >
-                    <span className="flex items-center gap-1.5">AI Score <ArrowUpDown className="w-3 h-3" /></span>
-                  </th>
+                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-accent-violet transition-colors group" onClick={() => setSortByAiScore(!sortByAiScore)}>
+                      <div className="flex items-center gap-2">
+                        AI INSIGHTS 🛡️
+                        <ArrowUpDown className={cn("w-3 h-3 transition-colors", sortByAiScore ? "text-accent-violet" : "text-slate-300 group-hover:text-slate-400")} />
+                      </div>
+                    </th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
                 </tr>
@@ -296,44 +296,53 @@ const AppManagement = () => {
                         <span className="text-[10px] font-black text-slate-400 italic">Scanned</span>
                       )}
                     </td>
-                    {/* AI Score Column */}
-                    <td className="px-6 py-4">
+                    {/* AI Insights Column */}
+                    <td className="px-6 py-4 max-w-[200px]">
                       {(() => {
                         const score = app.aiModeration?.approvalScore;
+                        const summary = app.aiModeration?.appSummary;
                         const isPending = analyzingId === app._id || (app.aiModeration?.riskLevel === 'pending' && app.status === 'pending');
                         
                         if (score == null) {
                           return (
-                            <button 
-                              onClick={() => handleAiAnalyze(app._id)}
-                              disabled={isPending}
-                              className={cn(
-                                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-widest transition-all",
-                                isPending 
-                                  ? "bg-slate-100 text-slate-400 border-slate-200" 
-                                  : "bg-accent-violet/10 text-accent-violet border-accent-violet/20 hover:bg-accent-violet hover:text-white shadow-sm"
-                              )}
-                            >
-                              <RefreshCw className={cn("w-3 h-3", isPending && "animate-spin")} />
-                              {isPending ? 'Scanning...' : 'Run AI Scan'}
-                            </button>
+                            <div className="flex flex-col gap-2">
+                              <button 
+                                onClick={() => handleAiAnalyze(app._id)}
+                                disabled={isPending}
+                                className={cn(
+                                  "flex items-center justify-center gap-2 px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all w-full",
+                                  isPending 
+                                    ? "bg-slate-100 text-slate-400 border-slate-200" 
+                                    : "bg-accent-violet/10 text-accent-violet border-accent-violet/30 hover:bg-accent-violet hover:text-white shadow-lg shadow-accent-violet/10 animate-pulse-subtle"
+                                )}
+                              >
+                                <RefreshCw className={cn("w-3.5 h-3.5", isPending && "animate-spin")} />
+                                {isPending ? 'Analyzing...' : 'Scan Now'}
+                              </button>
+                            </div>
                           );
                         }
                         
-                        const dotColor = score >= 85 ? 'bg-emerald-500' : score >= 60 ? 'bg-amber-500' : score >= 40 ? 'bg-orange-500' : 'bg-rose-500';
+                        const dotColor = score >= 85 ? 'text-emerald-500' : score >= 60 ? 'text-amber-500' : score >= 40 ? 'text-orange-500' : 'text-rose-500';
                         const stars = Math.round(score / 20);
                         
                         return (
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <div className={cn('w-2 h-2 rounded-full', dotColor)} />
-                              <span className="text-sm font-black dark:text-white">{score}</span>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-1.5">
+                              <div className="flex items-center text-amber-500">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star key={i} className={cn("w-3.5 h-3.5", i < stars ? "fill-current" : "opacity-20")} />
+                                ))}
+                              </div>
+                              <span className={cn("text-[10px] font-black px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/5", dotColor)}>
+                                {score}
+                              </span>
                             </div>
-                            <div className="flex items-center gap-0.5 text-amber-500">
-                              {[...Array(5)].map((_, i) => (
-                                <Star key={i} className={cn("w-2.5 h-2.5", i < stars ? "fill-current" : "opacity-20")} />
-                              ))}
-                            </div>
+                            {summary && (
+                              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 line-clamp-2 leading-tight italic">
+                                "{summary}"
+                              </p>
+                            )}
                           </div>
                         );
                       })()}
