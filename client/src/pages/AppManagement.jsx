@@ -129,10 +129,7 @@ const AppManagement = () => {
     setAnalyzingId(appId);
     try {
       const { data } = await api.post(`/admin/apps/${appId}/reanalyze`);
-      setApps(prev => prev.map(a => a._id === appId ? { ...a, aiModeration: data.aiModeration } : a));
-      if (detailTarget?._id === appId) {
-        setDetailTarget(prev => ({ ...prev, aiModeration: data.aiModeration }));
-      }
+      setApps(prev => prev.map(a => a._id === appId ? (data.app || a) : a));
       toast.success('AI analysis complete');
     } catch (err) {
       toast.error('AI analysis failed');

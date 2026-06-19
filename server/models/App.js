@@ -138,6 +138,7 @@ const appSchema = new mongoose.Schema({
   aiModeration: {
     analysedAt: Date,
     appSummary: String,
+    shortDescription: String,
     approvalScore: { type: Number, default: null },
     riskLevel: {
       type: String,

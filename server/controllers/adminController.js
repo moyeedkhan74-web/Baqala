@@ -794,7 +794,7 @@ exports.reanalyzeApp = async (req, res) => {
     );
 
     console.log(`[REANALYZE] ✅ ${app.title} — score: ${result.approvalScore}, risk: ${result.riskLevel}`);
-    res.json({ message: 'Re-analysis complete.', aiModeration: updated.aiModeration });
+    res.json({ message: 'Re-analysis complete.', app: updated });
   } catch (err) {
     console.error('[REANALYZE_ERROR]:', err.message);
     res.status(500).json({ message: 'Re-analysis failed.', error: err.message });

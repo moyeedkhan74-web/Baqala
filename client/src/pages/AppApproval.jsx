@@ -61,14 +61,12 @@ const AppApproval = () => {
       const { data } = await api.post(`/admin/apps/${appId}/reanalyze`);
       console.log('[DEBUG] AI Update Response:', data);
       
-      // Force a fresh object to guarantee React re-render
       setApps(prev => {
         const newApps = prev.map(a => 
           a._id === appId 
-            ? { ...a, aiModeration: { ...data.aiModeration, analysedAt: new Date() } } 
+            ? { ...(data.app || a), aiModeration: data.app?.aiModeration || data.aiModeration || a.aiModeration } 
             : a
         );
-        console.log('[DEBUG] New state for scanned app:', newApps.find(a => a._id === appId));
         return newApps;
       });
       
