@@ -13,7 +13,8 @@ import {
   Menu, 
   X,
   ChevronRight,
-  Bell
+  Bell,
+  ClipboardCheck
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
@@ -25,6 +26,7 @@ const AdminSidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) =>
   const menuItems = [
     { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
     { name: 'Apps', path: '/admin/apps', icon: Package },
+    { name: 'Approval', path: '/admin/approval', icon: ClipboardCheck },
     { name: 'Users', path: '/admin/users', icon: Users },
     { name: 'Moderation', path: '/admin/reviews', icon: MessageSquare },
     { name: 'Analytics', path: '/admin/analytics', icon: BarChart3 },

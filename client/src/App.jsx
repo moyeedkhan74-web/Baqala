@@ -38,6 +38,7 @@ const ModerationQueue = lazy(() => import('./pages/ModerationQueue'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const FeaturedCuration = lazy(() => import('./pages/FeaturedCuration'));
 const PlatformSettings = lazy(() => import('./pages/PlatformSettings'));
+const AppApproval = lazy(() => import('./pages/AppApproval'));
 
 function App() {
   const location = useLocation();
@@ -271,6 +272,11 @@ function App() {
                       <Route path="/admin/apps" element={
                         <ProtectedRoute roles={['admin']}>
                           <AnimatedLayout><AppManagement /></AnimatedLayout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/admin/approval" element={
+                        <ProtectedRoute roles={['admin']}>
+                          <AnimatedLayout><AppApproval /></AnimatedLayout>
                         </ProtectedRoute>
                       } />
                       <Route path="/admin/users" element={

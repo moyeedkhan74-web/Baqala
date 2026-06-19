@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AdminLayout from '../components/admin/AdminLayout';
 import { 
   Star, 
@@ -33,6 +33,9 @@ const FeaturedCuration = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addSearch, setAddSearch] = useState('');
   const [detailTarget, setDetailTarget] = useState(null);
+  const [uploadingBannerId, setUploadingBannerId] = useState(null);
+  const bannerInputRef = useRef(null);
+  const bannerAppIdRef = useRef(null);
 
   const fetchApps = async () => {
     try {
@@ -69,10 +72,48 @@ const FeaturedCuration = () => {
     }
   };
 
+  const handleBannerUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !bannerAppIdRef.current) return;
+    
+    const appId = bannerAppIdRef.current;
+    setUploadingBannerId(appId);
+    const toastId = toast.loading('Uploading promotional banner...');
+    
+    const formData = new FormData();
+    formData.append('banner', file);
+    
+    try {
+      const { data } = await api.post(`/admin/apps/${appId}/banner`, formData);
+      toast.success('Banner uploaded!', { id: toastId });
+      setAllApps(prev => prev.map(a => a._id === appId ? { ...a, banner: data.app.banner } : a));
+    } catch (err) {
+      toast.error('Banner upload failed', { id: toastId });
+    } finally {
+      setUploadingBannerId(null);
+      bannerAppIdRef.current = null;
+      if (bannerInputRef.current) bannerInputRef.current.value = '';
+    }
+  };
+
+  const triggerBannerUpload = (appId) => {
+    bannerAppIdRef.current = appId;
+    bannerInputRef.current?.click();
+  };
+
   const appOfTheWeek = featuredApps.length > 0 ? featuredApps[0] : null;
 
   return (
     <AdminLayout title="Homepage Curation">
+      {/* Hidden file input for banner uploads */}
+      <input 
+        ref={bannerInputRef}
+        type="file" 
+        className="hidden" 
+        accept="image/*" 
+        onChange={handleBannerUpload}
+      />
+
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         
         {/* Featured List */}
@@ -107,6 +148,12 @@ const FeaturedCuration = () => {
               <div className="space-y-4">
                 {featuredApps.map((app, index) => (
                   <div key={app._id} className="bg-accent-violet/[0.03] dark:bg-accent-violet/[0.05] rounded-2xl border border-accent-violet/20 hover:border-accent-violet/50 transition-all overflow-hidden shadow-sm shadow-accent-violet/5">
+                    {/* Banner Preview */}
+                    {app.banner && (
+                      <div className="h-24 w-full overflow-hidden">
+                        <img src={getImageUrl(app.banner)} className="w-full h-full object-cover opacity-60" alt="Banner" />
+                      </div>
+                    )}
                     {/* App Info Row */}
                     <div className="flex items-center gap-4 p-4">
                       <div className="text-xs font-black text-slate-400 w-6 text-center">{index + 1}</div>
@@ -125,25 +172,33 @@ const FeaturedCuration = () => {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        {/* Edit Banner / View Detail */}
+                        {/* Upload Banner — Opens file picker directly */}
                         <button 
-                          onClick={() => setDetailTarget(app)}
-                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-accent-violet bg-accent-violet/10 hover:bg-accent-violet hover:text-white transition-all text-[10px] font-black uppercase tracking-widest border border-accent-violet/20"
-                          title="Manage banners & details"
+                          onClick={() => triggerBannerUpload(app._id)}
+                          disabled={uploadingBannerId === app._id}
+                          className={cn(
+                            "flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all",
+                            uploadingBannerId === app._id
+                              ? "bg-slate-100 text-slate-400 border-slate-200"
+                              : "text-accent-violet bg-accent-violet/10 hover:bg-accent-violet hover:text-white border-accent-violet/20"
+                          )}
+                          title="Upload promotional banner"
                         >
-                          <Upload className="w-3.5 h-3.5" />
+                          {uploadingBannerId === app._id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Upload className="w-3.5 h-3.5" />
+                          )}
                           {app.banner ? 'Edit Banner' : 'Set Banner'}
                         </button>
-                        {/* View App */}
-                        <a 
-                          href={`/app/${app._id}`} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
+                        {/* View Details */}
+                        <button 
+                          onClick={() => setDetailTarget(app)}
                           className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-                          title="View live page"
+                          title="View full details"
                         >
                           <Eye className="w-5 h-5" />
-                        </a>
+                        </button>
                         {/* Remove from Featured */}
                         <button 
                           onClick={() => toggleFeatured(app._id)} 
@@ -158,7 +213,6 @@ const FeaturedCuration = () => {
                         </button>
                       </div>
                     </div>
-
                   </div>
                 ))}
               </div>
@@ -294,6 +348,7 @@ const FeaturedCuration = () => {
           </div>
         </div>
       )}
+
       {/* Detail Modal for Banner/Metadata Management */}
       {detailTarget && (
         <AdminAppDetailModal 
