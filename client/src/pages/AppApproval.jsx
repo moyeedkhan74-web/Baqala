@@ -317,9 +317,11 @@ const AiNotebookModal = ({ app, onClose }) => {
   if (!app) return null;
   const ai = app.aiModeration || {};
   const ratings = ai.ratings || {};
+  const ratingReasons = ai.ratingReasons || {};
+  const flags = ai.flags || {};
 
-  const RatingBar = ({ label, value, color }) => (
-    <div className="space-y-1.5">
+  const RatingBar = ({ label, value, reason, color }) => (
+    <div className="space-y-1.5 group relative">
       <div className="flex items-center justify-between">
         <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">{label}</span>
         <span className={`text-[10px] font-black ${color}`}>{value ?? '—'}/100</span>
@@ -329,6 +331,11 @@ const AiNotebookModal = ({ app, onClose }) => {
           (value ?? 0) >= 80 ? 'bg-emerald-500' : (value ?? 0) >= 50 ? 'bg-amber-500' : 'bg-rose-500'
         }`} style={{ width: `${value ?? 0}%` }} />
       </div>
+      {reason && (
+        <p className="text-[9px] font-bold text-slate-400 mt-1 leading-tight opacity-0 group-hover:opacity-100 transition-opacity">
+          {reason}
+        </p>
+      )}
     </div>
   );
 
@@ -346,7 +353,7 @@ const AiNotebookModal = ({ app, onClose }) => {
                  <StickyNote className="w-7 h-7 text-amber-600 dark:text-amber-400" />
                </div>
                <div>
-                 <h2 className="text-xl font-black text-slate-900 dark:text-white leading-none tracking-tight">AI Insight Memo</h2>
+                 <h2 className="text-xl font-black text-slate-900 dark:text-white leading-none tracking-tight">Security Audit Memo</h2>
                  <p className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mt-1">{app.title}</p>
                </div>
              </div>
@@ -357,58 +364,89 @@ const AiNotebookModal = ({ app, onClose }) => {
 
           <div className="space-y-5 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
 
-            {/* Verdict Banner */}
-            {ai.verdict && (
-              <div className="p-5 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-500/5 dark:to-orange-500/5 rounded-2xl border border-amber-200 dark:border-amber-500/10">
-                <p className="text-[10px] font-black uppercase text-amber-600 tracking-widest mb-2">⚡ Verdict</p>
+            {/* Decision & Verdict */}
+            {(ai.verdict || ai.decision) && (
+              <div className={cn(
+                "p-5 rounded-2xl border-2",
+                ai.decision === 'APPROVE' ? "bg-emerald-50/50 border-emerald-200/50 dark:bg-emerald-500/5" :
+                ai.decision === 'REJECT' ? "bg-rose-50/50 border-rose-200/50 dark:bg-rose-500/5" :
+                "bg-amber-50/50 border-amber-200/50 dark:bg-amber-500/5"
+              )}>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">⚡ Technical Verdict</p>
+                  <span className={cn(
+                    "text-[10px] font-black px-2 py-0.5 rounded-md",
+                    ai.decision === 'APPROVE' ? "bg-emerald-500 text-white" :
+                    ai.decision === 'REJECT' ? "bg-rose-500 text-white" :
+                    "bg-amber-500 text-white"
+                  )}>
+                    {ai.decision || 'PENDING'}
+                  </span>
+                </div>
                 <p className="text-sm font-black text-slate-800 dark:text-white leading-snug">{ai.verdict}</p>
               </div>
             )}
 
-            {/* Category Ratings */}
+            {/* Performance Indicators */}
             {(ratings.security != null || ratings.privacy != null) && (
-              <div className="p-5 bg-white/50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-white/5 space-y-3">
-                <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Category Ratings</p>
-                <RatingBar label="Security" value={ratings.security} color="text-emerald-500" />
-                <RatingBar label="Privacy" value={ratings.privacy} color="text-blue-500" />
-                <RatingBar label="Content" value={ratings.content} color="text-violet-500" />
-                <RatingBar label="Quality" value={ratings.quality} color="text-amber-500" />
+              <div className="p-5 bg-white/50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-white/5 space-y-4">
+                <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Audit Ratings</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                  <RatingBar label="Security" value={ratings.security} reason={ratingReasons.security} color="text-emerald-500" />
+                  <RatingBar label="Privacy" value={ratings.privacy} reason={ratingReasons.privacy} color="text-blue-500" />
+                  <RatingBar label="Content" value={ratings.content} reason={ratingReasons.content} color="text-violet-500" />
+                  <RatingBar label="Quality" value={ratings.quality} reason={ratingReasons.quality} color="text-amber-500" />
+                </div>
               </div>
             )}
 
-            {/* Executive Summary */}
+            {/* Flags & Warnings */}
+            {Object.values(flags).some(v => v === true) && (
+              <div className="flex flex-wrap gap-2">
+                {flags.emptyApp && <span className="px-3 py-1 bg-slate-200 text-slate-600 rounded-full text-[10px] font-black uppercase">Empty APK</span>}
+                {flags.suspiciousUrls && <span className="px-3 py-1 bg-rose-100 text-rose-600 rounded-full text-[10px] font-black uppercase animate-pulse">Suspicious URLs</span>}
+                {flags.dangerousPermissions && <span className="px-3 py-1 bg-amber-100 text-amber-600 rounded-full text-[10px] font-black uppercase">Dangerous Permissions</span>}
+                {flags.hiddenServices && <span className="px-3 py-1 bg-violet-100 text-violet-600 rounded-full text-[10px] font-black uppercase">Hidden Services</span>}
+              </div>
+            )}
+
+            {/* Detailed Summary */}
             <div className="relative p-6 bg-white/40 dark:bg-slate-800/40 rounded-2xl border border-amber-100 dark:border-white/5 shadow-sm">
               <div className="absolute -left-1 top-5 bottom-5 w-1 bg-amber-400 rounded-full" />
               <h3 className="text-[10px] font-black uppercase text-amber-600 tracking-widest mb-3">Executive Summary</h3>
               <p className="text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed italic">
-                "{ai.appSummary || 'Analysis processed.'}"
+                "{ai.summary || ai.appSummary || 'Analysis processed.'}"
               </p>
             </div>
 
-            {/* Audience + Features Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {ai.targetAudience && (
-                <div className="p-5 rounded-2xl bg-indigo-50/50 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/10">
-                  <h4 className="text-[10px] font-black uppercase text-indigo-500 tracking-wider mb-2">Target Audience</h4>
-                  <p className="text-xs font-bold text-slate-600 dark:text-slate-200 leading-relaxed">{ai.targetAudience}</p>
-                </div>
-              )}
-              {ai.keyFeatures?.length > 0 && (
-                <div className="p-5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/10">
-                  <h4 className="text-[10px] font-black uppercase text-emerald-500 tracking-wider mb-2">Key Features</h4>
-                  <ul className="space-y-1.5">
-                    {ai.keyFeatures.slice(0, 6).map((f, i) => (
-                      <li key={i} className="text-[11px] font-bold text-slate-600 dark:text-slate-200 flex items-start gap-2">
-                        <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full shrink-0 mt-1" /> <span>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            {/* Security Audit */}
-            {ai.permissionAnalysis && (
+            {/* Permission Audit (Structured) */}
+            {ai.permissionAudit?.length > 0 ? (
+               <div className="p-5 rounded-2xl bg-slate-50/50 dark:bg-slate-800/40 border border-slate-200 dark:border-white/5">
+                 <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-wider mb-4 flex items-center gap-2">
+                   <Shield className="w-3.5 h-3.5" /> Granular Permission Audit
+                 </h4>
+                 <div className="space-y-4">
+                   {ai.permissionAudit.map((p, i) => (
+                     <div key={i} className="flex gap-3">
+                       <div className={cn(
+                         "w-1 h-8 rounded-full shrink-0",
+                         p.risk === 'HIGH' ? "bg-rose-500" : p.risk === 'MEDIUM' ? "bg-amber-500" : "bg-emerald-500"
+                       )} />
+                       <div className="min-w-0">
+                         <div className="flex items-center gap-2 mb-0.5">
+                           <span className="text-[10px] font-black text-slate-900 dark:text-white truncate">{p.permission}</span>
+                           <span className={cn(
+                             "text-[8px] font-black px-1.5 rounded",
+                             p.risk === 'HIGH' ? "text-rose-500 bg-rose-50" : p.risk === 'MEDIUM' ? "text-amber-500 bg-amber-50" : "text-emerald-500 bg-emerald-50"
+                           )}>{p.risk}</span>
+                         </div>
+                         <p className="text-[11px] font-bold text-slate-500 leading-tight">{p.reason}</p>
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+               </div>
+            ) : ai.permissionAnalysis && (
               <div className="p-5 rounded-2xl bg-rose-50/50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/10">
                 <h4 className="text-[10px] font-black uppercase text-rose-500 tracking-wider mb-2">🔒 Permission Audit</h4>
                 <p className="text-xs font-bold text-slate-600 dark:text-slate-200 leading-relaxed">
@@ -417,11 +455,33 @@ const AiNotebookModal = ({ app, onClose }) => {
               </div>
             )}
 
-            {/* Admin Note */}
-            {ai.adminNote && (
-              <div className="p-5 rounded-2xl bg-sky-50/50 dark:bg-sky-500/5 border border-sky-100 dark:border-sky-500/10">
-                <h4 className="text-[10px] font-black uppercase text-sky-500 tracking-wider mb-2">📋 Reviewer Notes</h4>
-                <p className="text-xs font-bold text-slate-600 dark:text-slate-200 leading-relaxed">{ai.adminNote}</p>
+            {/* Rejection Reasons / Conditions */}
+            {(ai.rejectionReasons?.length > 0 || ai.approvalConditions?.length > 0) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {ai.rejectionReasons?.length > 0 && (
+                  <div className="p-5 rounded-2xl bg-rose-50/50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/10">
+                    <h4 className="text-[10px] font-black uppercase text-rose-500 tracking-wider mb-2">Reject Criteria</h4>
+                    <ul className="space-y-1">
+                      {ai.rejectionReasons.map((r, i) => (
+                        <li key={i} className="text-[11px] font-bold text-slate-600 dark:text-slate-200 flex items-start gap-2">
+                           <div className="w-1 h-1 bg-rose-400 rounded-full shrink-0 mt-1.5" /> {r}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {ai.approvalConditions?.length > 0 && (
+                  <div className="p-5 rounded-2xl bg-sky-50/50 dark:bg-sky-500/5 border border-sky-100 dark:border-sky-500/10">
+                    <h4 className="text-[10px] font-black uppercase text-sky-500 tracking-wider mb-2">Approval Conditions</h4>
+                    <ul className="space-y-1">
+                      {ai.approvalConditions.map((c, i) => (
+                        <li key={i} className="text-[11px] font-bold text-slate-600 dark:text-slate-200 flex items-start gap-2">
+                           <div className="w-1 h-1 bg-sky-400 rounded-full shrink-0 mt-1.5" /> {c}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
           </div>

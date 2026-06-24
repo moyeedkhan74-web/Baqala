@@ -18,61 +18,80 @@ async function runGeminiApkAnalysis(appData, apkMetadata) {
     ? 'https://api.groq.com/openai/v1/chat/completions'
     : `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
-  const prompt = `You are an expert Android app store security reviewer for Baqala App Store. Analyze this submission thoroughly and respond ONLY with valid JSON.
+  // Mapping variables for the prompt
+  const appTitle = appData.title || 'Unknown';
+  const appDescription = appData.description || 'No description provided';
+  const appCategory = Array.isArray(appData.category) ? appData.category.join(', ') : (appData.category || 'Not specified');
+  const packageName = apkMetadata.packageName || 'unknown';
+  const permissions = apkMetadata.permissions || [];
+  const services = apkMetadata.services || [];
+  const urls = apkMetadata.suspiciousUrls || [];
+  const suspiciousStrings = apkMetadata.dexStrings || [];
+
+  const prompt = `
+You are a senior Android app security auditor. Analyze the following APK data and return ONLY a valid JSON object — no markdown, no explanation, no extra text.
+
+=== APP DATA ===
+Title: ${appTitle}
+Description: ${appDescription}
+Category: ${appCategory}
+Package Name: ${packageName}
+Permissions: ${permissions.length > 0 ? permissions.join(', ') : 'NONE DETECTED'}
+Background Services: ${services.length > 0 ? services.join(', ') : 'NONE DETECTED'}
+Hardcoded URLs: ${urls.length > 0 ? urls.join(', ') : 'NONE DETECTED'}
+Suspicious Strings: ${suspiciousStrings.length > 0 ? suspiciousStrings.join(', ') : 'NONE DETECTED'}
+
+Return this exact JSON structure:
 
 {
-  "appSummary": "3-4 detailed sentences about what this app does, its purpose, and quality assessment. Be specific and informative.",
-  "shortDescription": "One-line catchy hook (max 80 chars) for store listings",
-  "approvalScore": <integer 0-100>,
-  "riskLevel": "low" | "medium" | "high" | "critical",
-  "verdict": "One powerful sentence: your final recommendation as if briefing a CEO. Example: 'Safe utility app with clean permissions — approve immediately.' or 'Suspicious gambling wrapper disguised as a calculator — reject.'",
-  "ratings": {
-    "security": <integer 0-100, "How safe is this app from a security standpoint?">,
-    "privacy": <integer 0-100, "Does it respect user privacy? Minimal data collection?">,
-    "content": <integer 0-100, "Is the content appropriate for all audiences?">,
-    "quality": <integer 0-100, "How well-built and professional does the app appear?">
+  "appInfo": {
+    "title": "",
+    "packageName": "",
+    "category": "",
+    "riskLevel": "LOW | MEDIUM | HIGH | CRITICAL"
   },
-  "targetAudience": "One clear sentence describing who this app is built for",
-  "keyFeatures": ["4-6 specific functionalities detected — be detailed, e.g. 'Offline GPS navigation with map caching' not just 'Maps'"],
-  "permissionAnalysis": "Detailed paragraph: list each permission, explain why it would be needed, and explicitly flag any that don't match the app's stated purpose. If no permissions, explain what that means.",
-  "contentFlags": ["specific policy concerns — empty array [] if none"],
-  "suspiciousSignals": ["technical red flags from APK internals — empty array [] if none"],
-  "recommendation": "approve" | "review" | "reject",
-  "adminNote": "2-3 sentences of direct, actionable advice for the human reviewer. Be specific about what to check."
+  "ratings": {
+    "security": 0,
+    "privacy": 0,
+    "content": 0,
+    "quality": 0,
+    "overall": 0
+  },
+  "ratingReasons": {
+    "security": "",
+    "privacy": "",
+    "content": "",
+    "quality": ""
+  },
+  "permissionAudit": [
+    {
+      "permission": "",
+      "risk": "LOW | MEDIUM | HIGH",
+      "reason": ""
+    }
+  ],
+  "flags": {
+    "emptyApp": false,
+    "suspiciousUrls": false,
+    "dangerousPermissions": false,
+    "hiddenServices": false
+  },
+  "verdict": "",
+  "decision": "APPROVE | REJECT | REVIEW",
+  "rejectionReasons": [],
+  "approvalConditions": [],
+  "summary": ""
 }
 
-SCORING GUIDE:
-- 85-100: Clearly safe, well-built app. Approve confidently.
-- 60-84: Probably fine but has minor concerns worth reviewing.
-- 40-59: Suspicious elements detected. Needs careful human review.
-- 20-39: Strong reject signals. Multiple red flags found.
-- 0-19: Malicious or fraudulent. Reject immediately.
-
-IMPORTANT: Even if an app has minimal metadata, still provide thoughtful analysis. Rate quality lower if the submission lacks proper descriptions, icons, or metadata — this itself is a quality concern. Never leave ratings at 0 unless the app is actively malicious.
-
-Flag HIGH or CRITICAL if ANY of these: package name contains bet/casino/slot/adult/xxx/porn/hack/cheat; app requests SMS+CONTACTS+CALL_LOG without a communication purpose; package name impersonates known brands; description contradicts dex code strings (FRAUD — score 0-15); vague description with 5+ dangerous permissions.
-
-DEVELOPER SUBMISSION:
-Title: ${appData.title}
-Category: ${Array.isArray(appData.category) ? appData.category.join(', ') : (appData.category || 'Not specified')}
-Description: ${appData.description || 'No description provided'}
-Tags: ${(appData.tags || []).join(', ') || 'none'}
-
-APK MANIFEST (extracted from AndroidManifest.xml):
-Package name: ${apkMetadata.packageName || 'unknown'}
-Version: ${apkMetadata.versionName || 'unknown'}
-Permissions (${(apkMetadata.permissions || []).length} total): ${(apkMetadata.permissions || []).join(', ') || 'none'}
-Background services: ${(apkMetadata.services || []).join(', ') || 'none'}
-Broadcast receivers: ${(apkMetadata.receivers || []).join(', ') || 'none'}
-Native libraries: ${apkMetadata.nativeLibCount || 0}
-Total files in APK: ${apkMetadata.fileCount || 0}
-
-APK CODE CONTENTS (extracted from classes.dex — cannot be faked by developer):
-Suspicious keywords: ${(apkMetadata.dexStrings || []).join(' | ') || 'none found'}
-Hardcoded URLs: ${(apkMetadata.suspiciousUrls || []).join(' | ') || 'none found'}
-Extraction error: ${apkMetadata.extractionError || 'none'}
-
-CRITICAL: Code contents above are from compiled bytecode — cannot be altered by developer. If description claims one thing but code contains gambling/adult/fraud strings, that is deception — score 0-15 and riskLevel "critical".`;
+RULES:
+1. All rating values must be integers between 0-100.
+2. overall = weighted average of security(30%) + privacy(30%) + content(20%) + quality(20%).
+3. If permissions, services, URLs, and strings are ALL empty, set emptyApp: true and quality below 30.
+4. permissionAudit must never be an empty array — if no permissions, return one entry with "NONE DETECTED".
+5. decision must be exactly: APPROVE, REJECT, or REVIEW.
+6. ratingReasons must always have a sentence for all four categories.
+7. Return ONLY the JSON. No markdown. No extra text.
+`;
 
   const MAX_RETRIES = 2;
   let attempt = 0;
@@ -97,7 +116,7 @@ CRITICAL: Code contents above are from compiled bytecode — cannot be altered b
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
-            maxOutputTokens: 800,
+            maxOutputTokens: 1000,
             temperature: 0.1,
             responseMimeType: 'application/json',
           },
@@ -108,9 +127,8 @@ CRITICAL: Code contents above are from compiled bytecode — cannot be altered b
 
       if (!response.ok) {
         const errBody = await response.text();
-        // If it's a 429 and we have retries left, wait and retry
         if (response.status === 429 && attempt < MAX_RETRIES) {
-          const waitTime = (attempt + 1) * 3000; // 3s, 6s
+          const waitTime = (attempt + 1) * 3000;
           console.warn(`[AI_MODERATION] ⚠️ Quota hit (429). Retrying in ${waitTime}ms... (Attempt ${attempt + 1}/${MAX_RETRIES})`);
           await new Promise(resolve => setTimeout(resolve, waitTime));
           attempt++;
@@ -131,8 +149,22 @@ CRITICAL: Code contents above are from compiled bytecode — cannot be altered b
       const clean = rawText.replace(/```json|```/g, '').trim();
       const parsed = JSON.parse(clean);
 
-      console.log(`[AI_MODERATION] ✅ ${useGroq ? 'Groq' : 'Gemini'} done — score: ${parsed.approvalScore}, summary length: ${parsed.appSummary?.length || 0}`);
-      return parsed;
+      // --- COMPATIBILITY SHIM (Optional but recommended for stability) ---
+      // This ensures existing UI components and background scan logic don't break immediately
+      const flattened = {
+        ...parsed,
+        approvalScore: parsed.ratings?.overall,
+        riskLevel: parsed.appInfo?.riskLevel?.toLowerCase(),
+        recommendation: parsed.decision?.toLowerCase(),
+        appSummary: parsed.summary,
+        // Map permissionAudit back to the format the UI expects for permissionAnalysis if needed
+        permissionAnalysis: Array.isArray(parsed.permissionAudit) 
+          ? parsed.permissionAudit.map(p => `${p.permission} (${p.risk}): ${p.reason}`).join('\n')
+          : ''
+      };
+
+      console.log(`[AI_MODERATION] ✅ ${useGroq ? 'Groq' : 'Gemini'} done — score: ${flattened.approvalScore}, decision: ${flattened.decision}`);
+      return flattened;
 
     } catch (err) {
       if (attempt >= MAX_RETRIES) {
