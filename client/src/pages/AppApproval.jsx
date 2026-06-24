@@ -317,6 +317,12 @@ const AiNotebookModal = ({ app, onClose }) => {
   if (!app) return null;
   const ai = app.aiModeration || {};
   const ratings = ai.ratings || {};
+  
+  // Legacy Fallbacks for older scans
+  const displayOverall = ratings.overall || ai.approvalScore || 0;
+  const displayDecision = ai.decision || (ai.recommendation ? ai.recommendation.toUpperCase() : null);
+  const displayVerdict = ai.verdict || ai.appSummary || "Scan Complete (Legacy Format)";
+
   const ratingReasons = ai.ratingReasons || {};
   const flags = ai.flags || {};
   const legal = ai.legalAnalysis || {};
@@ -410,20 +416,20 @@ const AiNotebookModal = ({ app, onClose }) => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className={cn(
                 "md:col-span-3 p-5 rounded-2xl border-2",
-                ai.decision === 'APPROVE' ? "bg-emerald-50/50 border-emerald-200/50 dark:bg-emerald-500/5" :
-                ai.decision === 'REJECT' ? "bg-rose-50/50 border-rose-200/50 dark:bg-rose-500/5" :
+                displayDecision === 'APPROVE' ? "bg-emerald-50/50 border-emerald-200/50 dark:bg-emerald-500/5" :
+                displayDecision === 'REJECT' ? "bg-rose-50/50 border-rose-200/50 dark:bg-rose-500/5" :
                 "bg-amber-50/50 border-amber-200/50 dark:bg-amber-500/5"
               )}>
                 <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2">⚡ Final Decision</p>
-                <p className="text-sm font-black text-slate-800 dark:text-white leading-snug">{ai.verdict || "Analysis in progress."}</p>
+                <p className="text-sm font-black text-slate-800 dark:text-white leading-snug">{displayVerdict}</p>
               </div>
               <div className="bg-slate-900 dark:bg-white rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-xl">
                  <p className="text-[9px] font-black uppercase text-slate-400 dark:text-slate-500 mb-1">Overall Score</p>
                  <span className={cn(
                    "text-3xl font-black",
-                   (ratings.overall || 0) >= 80 ? "text-emerald-400" : (ratings.overall || 0) >= 50 ? "text-amber-400" : "text-rose-400"
-                 )}>{ratings.overall || 0}</span>
-                 <p className="text-[8px] font-bold text-slate-500 uppercase mt-1 tracking-tighter">{ai.decision}</p>
+                   (displayOverall || 0) >= 80 ? "text-emerald-400" : (displayOverall || 0) >= 50 ? "text-amber-400" : "text-rose-400"
+                 )}>{displayOverall}</span>
+                 <p className="text-[8px] font-bold text-slate-500 uppercase mt-1 tracking-tighter">{displayDecision || 'PENDING'}</p>
               </div>
             </div>
 
