@@ -324,10 +324,19 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
   const ratings = ai.ratings || {};
   
   // Legacy Fallbacks for older scans
-  const displayOverall = ratings.overall || ai.approvalScore || 0;
   const isLegacy = !ratings.overall && ai.approvalScore;
+  const displayOverall = ratings.overall || ai.approvalScore || 0;
   const displayDecision = ai.decision || (ai.recommendation ? ai.recommendation.toUpperCase() : null);
-  const displayVerdict = ai.verdict || ai.appSummary || "Scan Complete (Legacy Format)";
+  
+  const displayVerdict = ai.verdict || 
+    (isLegacy ? `Legacy Scan Verified (Baseline Score: ${ai.approvalScore})` : 
+    (ai.appSummary && ai.appSummary !== app.title ? ai.appSummary : "Full spectrum audit results pending."));
+
+  const getRatingValue = (key) => {
+    if (typeof ratings[key] === 'number') return ratings[key];
+    if (isLegacy) return ai.approvalScore;
+    return undefined;
+  };
 
   const ratingReasons = ai.ratingReasons || {};
   const flags = ai.flags || {};
@@ -340,7 +349,10 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
       <div className="space-y-1 group relative">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">{label}</span>
-          <span className={`text-[10px] font-black ${color}`}>{hasValue ? `${safeValue}/100` : 'N/A'}</span>
+          <span className={cn(
+            "text-[10px] font-black",
+            hasValue ? color : "text-slate-400"
+          )}>{hasValue ? `${safeValue}/100` : 'N/A'}</span>
         </div>
         {description && <p className="text-[7px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] leading-none mb-1.5">{description}</p>}
         <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
@@ -481,13 +493,13 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <RatingBar label="Security (25%)" value={ratings.security} reason={ratingReasons.security} color="text-emerald-500" description="Permissions & Malware Scan" />
-                <RatingBar label="Privacy (20%)" value={ratings.privacy} reason={ratingReasons.privacy} color="text-blue-500" description="Data Access & Tracking" />
-                <RatingBar label="Content (15%)" value={ratings.content} reason={ratingReasons.content} color="text-violet-500" description="Motive vs Reality Audit" />
-                <RatingBar label="Legal (15%)" value={ratings.legal} reason={ratingReasons.legal} color="text-rose-500" description="Policy & GDPR Compliance" />
-                <RatingBar label="Performance (10%)" value={ratings.performance} reason={ratingReasons.performance} color="text-sky-500" description="Resource & Service Load" />
-                <RatingBar label="Transparency (10%)" value={ratings.transparency} reason={ratingReasons.transparency} color="text-amber-500" description="Metadata & Dev Honesty" />
-                <RatingBar label="Data Handling (5%)" value={ratings.dataHandling} reason={ratingReasons.dataHandling} color="text-indigo-500" description="Network & Exfiltration" />
+                <RatingBar label="Security (25%)" value={getRatingValue('security')} reason={ratingReasons.security || (isLegacy && app.vtResult ? `Legacy VT Status: ${app.vtResult.toUpperCase()}` : null)} color="text-emerald-500" description="Permissions & Malware Scan" />
+                <RatingBar label="Privacy (20%)" value={getRatingValue('privacy')} reason={ratingReasons.privacy} color="text-blue-500" description="Data Access & Tracking" />
+                <RatingBar label="Content (15%)" value={getRatingValue('content')} reason={ratingReasons.content} color="text-violet-500" description="Motive vs Reality Audit" />
+                <RatingBar label="Legal (15%)" value={getRatingValue('legal')} reason={ratingReasons.legal} color="text-rose-500" description="Policy & GDPR Compliance" />
+                <RatingBar label="Performance (10%)" value={getRatingValue('performance')} reason={ratingReasons.performance} color="text-sky-500" description="Resource & Service Load" />
+                <RatingBar label="Transparency (10%)" value={getRatingValue('transparency')} reason={ratingReasons.transparency} color="text-amber-500" description="Metadata & Dev Honesty" />
+                <RatingBar label="Data Handling (5%)" value={getRatingValue('dataHandling')} reason={ratingReasons.dataHandling} color="text-indigo-500" description="Network & Exfiltration" />
               </div>
             </div>
 
@@ -537,7 +549,11 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
                      ))}
                    </ul>
                  ) : (
-                   <p className="text-[10px] font-bold text-slate-400">{isLegacy ? 'N/A' : 'No major policy flags detected.'}</p>
+                   <p className="text-[10px] font-bold text-slate-400">
+                      {isLegacy 
+                        ? (app.vtResult === 'clean' ? '✅ VirusTotal: Clean' : app.vtResult ? `⚠️ VT Result: ${app.vtResult}` : 'N/A')
+                        : 'No major policy flags detected.'}
+                    </p>
                  )}
               </div>
             </div>
