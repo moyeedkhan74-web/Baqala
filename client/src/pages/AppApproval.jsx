@@ -347,7 +347,8 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
           }`} style={{ width: `${safeValue}%` }} />
         </div>
         {reason && (
-          <p className="text-[9px] font-bold text-slate-400 mt-1 leading-tight opacity-0 group-hover:opacity-100 transition-opacity">
+          <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-1.5 leading-tight flex items-start gap-1 p-2 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5">
+            <span className="text-accent-violet">●</span>
             {reason}
           </p>
         )}
@@ -440,22 +441,30 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
             </div>
 
             {/* Comprehensive Rating Matrix */}
-            <div className="p-6 bg-white/50 dark:bg-slate-800/40 rounded-[2rem] border border-slate-100 dark:border-white/5 relative overflow-hidden">
-              <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-4">Risk & Performance Matrix</p>
-              
-              {isLegacy && (
-                <div className="absolute inset-0 bg-[#fdfcf0]/80 dark:bg-slate-900/80 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center text-center p-6 transition-all">
-                   <Sparkles className="w-8 h-8 text-amber-500 mb-2 animate-pulse" />
-                   <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase">Deep Audit Required</h4>
-                   <p className="text-[10px] font-bold text-slate-500 max-w-[200px] mt-1 mb-4">This report uses the legacy format. Generate a 7-point matrix to fill these values.</p>
+            <div className="p-6 bg-white/50 dark:bg-slate-800/40 rounded-[2rem] border border-slate-100 dark:border-white/5 relative">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Risk & Performance Matrix</p>
+                {isLegacy && (
                    <button 
                      onClick={() => onReanalyze(app._id)}
                      disabled={isAnalyzing}
-                     className="px-6 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-transform disabled:opacity-50"
+                     className="px-4 py-1.5 bg-amber-500 text-white rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/20 disabled:opacity-50"
                    >
-                     {isAnalyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                     {isAnalyzing ? 'Recalculating...' : 'Generate Matrix Now'}
+                     {isAnalyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                     {isAnalyzing ? 'Recalculating...' : 'Generate Deep Audit Matrix'}
                    </button>
+                )}
+              </div>
+              
+              {isLegacy && (
+                <div className="mb-6 p-4 bg-amber-50/50 dark:bg-amber-500/5 border border-amber-200/50 dark:border-amber-500/10 rounded-xl flex items-center gap-4">
+                   <div className="p-2 bg-amber-100 dark:bg-amber-500/10 rounded-lg shrink-0">
+                     <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                   </div>
+                   <div className="min-w-0">
+                     <h4 className="text-[10px] font-black text-slate-800 dark:text-white uppercase leading-none">Legacy Report Format</h4>
+                     <p className="text-[9px] font-bold text-slate-500 mt-1 leading-tight">This app was scanned with an older engine. Detailed metrics are currently unavailable. Generate a Deep Audit to populate the matrix below.</p>
+                   </div>
                 </div>
               )}
 
