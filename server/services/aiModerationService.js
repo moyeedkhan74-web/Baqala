@@ -1,13 +1,22 @@
 async function runGeminiApkAnalysis(appData, apkMetadata) {
-  const apiKey = process.env.GEMINI_API_KEY?.trim();
-  if (!apiKey) {
-    console.warn('[AI_MODERATION] GEMINI_API_KEY not set — skipping AI analysis');
+  const geminiKey = process.env.GEMINI_API_KEY?.trim();
+  const groqKey = process.env.GROQ_API_KEY?.trim();
+  
+  if (!geminiKey && !groqKey) {
+    console.warn('[AI_MODERATION] No AI API Key (Gemini/Groq) set — skipping AI analysis');
     return {
       riskLevel: 'pending',
-      analysisError: 'GEMINI_API_KEY not configured',
+      analysisError: 'AI integration not configured',
       approvalScore: null,
     };
   }
+
+  // Define extraction logic for different vendors
+  const useGroq = !!groqKey && (!geminiKey || process.env.AI_PRIORITY === 'groq');
+  const apiKey = useGroq ? groqKey : geminiKey;
+  const endpoint = useGroq 
+    ? 'https://api.groq.com/openai/v1/chat/completions'
+    : `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
   const prompt = `You are a strict Android app store security reviewer for Baqala App Store. Analyze this app submission and respond ONLY with valid JSON — no markdown, no backticks, no explanation outside the JSON object.
 
@@ -51,10 +60,24 @@ Extraction error: ${apkMetadata.extractionError || 'none'}
 
 CRITICAL INSTRUCTION: The "APK CODE CONTENTS" section above is extracted from compiled bytecode and cannot be altered by the developer. If the description claims one thing but the code contains gambling/adult/fraud-related strings, that is deliberate deception — assign approvalScore 0-15 and riskLevel "critical".`;
 
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
+  const MAX_RETRIES = 2;
+  let attempt = 0;
+
+  while (attempt <= MAX_RETRIES) {
+    try {
+      const fetchOptions = useGroq ? {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'llama3-70b-8192',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.1,
+          response_format: { type: 'json_object' }
+        })
+      } : {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -65,30 +88,51 @@ CRITICAL INSTRUCTION: The "APK CODE CONTENTS" section above is extracted from co
             responseMimeType: 'application/json',
           },
         }),
+      };
+
+      const response = await fetch(endpoint, fetchOptions);
+
+      if (!response.ok) {
+        const errBody = await response.text();
+        // If it's a 429 and we have retries left, wait and retry
+        if (response.status === 429 && attempt < MAX_RETRIES) {
+          const waitTime = (attempt + 1) * 3000; // 3s, 6s
+          console.warn(`[AI_MODERATION] ⚠️ Quota hit (429). Retrying in ${waitTime}ms... (Attempt ${attempt + 1}/${MAX_RETRIES})`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          attempt++;
+          continue;
+        }
+        throw new Error(`AI API error ${response.status}: ${errBody.slice(0, 200)}`);
       }
-    );
 
-    if (!response.ok) {
-      const errBody = await response.text();
-      throw new Error(`Gemini API error ${response.status}: ${errBody.slice(0, 200)}`);
+      const data = await response.json();
+      let rawText = '';
+      
+      if (useGroq) {
+        rawText = data.choices?.[0]?.message?.content || '';
+      } else {
+        rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      }
+
+      const clean = rawText.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(clean);
+
+      console.log(`[AI_MODERATION] ✅ ${useGroq ? 'Groq' : 'Gemini'} done — score: ${parsed.approvalScore}, summary length: ${parsed.appSummary?.length || 0}`);
+      return parsed;
+
+    } catch (err) {
+      if (attempt >= MAX_RETRIES) {
+        console.error('[AI_MODERATION] Gemini failed after retries:', err.message);
+        return {
+          analysisError: err.message,
+          riskLevel: 'error',
+          approvalScore: null,
+          recommendation: null,
+        };
+      }
+      attempt++;
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
-
-    const data = await response.json();
-    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const clean = rawText.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean);
-
-    console.log(`[AI_MODERATION] ✅ Gemini done — score: ${parsed.approvalScore}, summary length: ${parsed.appSummary?.length || 0}`);
-    return parsed;
-
-  } catch (err) {
-    console.error('[AI_MODERATION] Gemini failed:', err.message);
-    return {
-      analysisError: err.message,
-      riskLevel: 'error',
-      approvalScore: null,
-      recommendation: null,
-    };
   }
 }
 
