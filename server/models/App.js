@@ -159,7 +159,12 @@ const appSchema = new mongoose.Schema({
     analysisError: String,
   },
   banner: { type: String, default: '' },
-  fileHash: { type: String, default: null }
+  fileHash: { type: String, default: null },
+  tier: {
+    type: String,
+    enum: ['low', 'mid', 'high', 'advance'],
+    default: 'low'
+  }
 }, {
   timestamps: true
 });

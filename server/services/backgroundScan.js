@@ -118,7 +118,7 @@ exports.runBackgroundScan = async (appId, buffer, filename) => {
         const apkMeta = await extractApkMetadata(scanBuffer, appId.toString());
         await App.findByIdAndUpdate(appId, { apkMetadata: apkMeta });
         
-        const aiResult = await runGeminiApkAnalysis(app, apkMeta);
+        const aiResult = await runGeminiApkAnalysis(app, apkMeta, app.tier);
         
         const updatePayload = {
           aiModeration: { ...aiResult, analysedAt: new Date() }

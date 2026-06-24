@@ -1,4 +1,4 @@
-async function runGeminiApkAnalysis(appData, apkMetadata) {
+async function runGeminiApkAnalysis(appData, apkMetadata, tier = 'low') {
   const geminiKey = process.env.GEMINI_API_KEY?.trim();
   const groqKey = process.env.GROQ_API_KEY?.trim();
   
@@ -28,8 +28,24 @@ async function runGeminiApkAnalysis(appData, apkMetadata) {
   const urls = apkMetadata.suspiciousUrls || [];
   const suspiciousStrings = apkMetadata.dexStrings || [];
 
+  const tierInstructions = {
+    low: "Leniency: HIGH. This is a leisure/hobbyist tier. Focus primarily on blatant malware and absolute privacy violations. Minor resource usage or unoptimized code is acceptable.",
+    mid: "Leniency: MEDIUM. Balanced audit. Verify that the app's functionality (permissions/services) generally aligns with its description. Standard security checks apply.",
+    high: "Leniency: LOW. Professional tier. Heavy scrutiny on privacy. Any permission that isn't clearly explained in the description should be flagged as a risk.",
+    advance: "Leniency: ZERO. Enterprise/Experimental tier. Maximum scrutiny. Cross-reference every internal Dex string and hardcoded URL against the description. Flag any 'Hidden Features' or undocumented behaviors."
+  };
+
   const prompt = `
 You are a senior Android app security auditor. Analyze the following APK data and return ONLY a valid JSON object — no markdown, no explanation, no extra text.
+
+=== AUDIT TIER: ${tier.toUpperCase()} ===
+INSTRUCTIONS: ${tierInstructions[tier]}
+
+=== MOTIVE VS REALITY CHECK ===
+A human developer has provided a description of what this app does. Your primary mission is to compare their "Motive" (Description) against the "Reality" (Technical Artifacts). 
+1. Check if the app requests sensitive permissions (GPS, SMS, CAMERA) that aren't mentioned or justified by the description.
+2. Check if internal code strings suggest features (e.g., ad-tracking, data scraping) that are hidden from the user description.
+3. Be especially vigilant about privacy details.
 
 === APP DATA ===
 Title: ${appTitle}

@@ -33,9 +33,17 @@ const UploadApp = () => {
     category: 'Games', 
     version: '1.0.0', 
     platform: 'Windows', 
-    developerName: user?.name || '' 
+    developerName: user?.name || '',
+    tier: 'low'
   });
   const [files, setFiles] = useState({ appFile: null, icon: null, screenshots: [] });
+
+  const tiers = [
+    { id: 'low', label: 'Casual', desc: 'Basic functional check' },
+    { id: 'mid', label: 'Balanced', desc: 'Standard security scan' },
+    { id: 'high', label: 'Strict', desc: 'Deep privacy audit' },
+    { id: 'advance', label: 'Advance', desc: 'Full enterprise scrutiny' }
+  ];
 
   const categories = [
     'Games', 'Social', 'Productivity', 'Education',
@@ -211,6 +219,31 @@ const UploadApp = () => {
                   <div>
                     <label className="block text-sm font-semibold text-gray-400 mb-2">Version</label>
                     <input type="text" required value={formData.version} onChange={e => setFormData({...formData, version: e.target.value})} className="input-field shadow-none" placeholder="1.0.0" />
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <label className="block text-sm font-semibold text-gray-400 mb-4 flex items-center gap-2">
+                    <HiOutlineSparkles className="text-accent-neon" /> 
+                    Security Tier <span className="text-gray-500 text-[10px] font-normal">(Defines moderation depth & leniency)</span>
+                  </label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {tiers.map(t => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, tier: t.id })}
+                        className={`px-4 py-3 rounded-2xl border-2 transition-all flex flex-col items-center text-center gap-1 ${
+                          formData.tier === t.id
+                            ? 'bg-accent-violet/20 border-accent-violet text-white shadow-glow-violet'
+                            : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/20'
+                        }`}
+                      >
+                        <span className="text-[10px] font-black uppercase tracking-widest">{t.id}</span>
+                        <span className="text-[11px] font-bold block">{t.label}</span>
+                        <span className="text-[8px] opacity-60 leading-tight">{t.desc}</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>

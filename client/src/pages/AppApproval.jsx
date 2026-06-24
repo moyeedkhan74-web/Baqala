@@ -388,7 +388,12 @@ const AiNotebookModal = ({ app, onClose }) => {
                </div>
                <div>
                  <h2 className="text-xl font-black text-slate-900 dark:text-white leading-none tracking-tight">Full Spectrum Security Ledger</h2>
-                 <p className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mt-1">{app.title}</p>
+                 <div className="flex items-center gap-2 mt-1">
+                   <p className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em]">{app.title}</p>
+                   <span className="px-2 py-0.5 rounded-full bg-accent-violet/10 border border-accent-violet/20 text-[8px] font-black uppercase text-accent-violet flex items-center gap-1">
+                     <Shield className="w-2 h-2" /> Tier: {app.tier || 'low'}
+                   </span>
+                 </div>
                </div>
              </div>
              <button onClick={onClose} className="p-3 hover:bg-slate-200 dark:hover:bg-white/5 rounded-2xl transition-all">
