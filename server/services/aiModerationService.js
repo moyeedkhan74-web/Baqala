@@ -122,9 +122,10 @@ CRITICAL INSTRUCTION: The "APK CODE CONTENTS" section above is extracted from co
 
     } catch (err) {
       if (attempt >= MAX_RETRIES) {
-        console.error('[AI_MODERATION] Gemini failed after retries:', err.message);
+        const timestampedError = `[${new Date().toLocaleTimeString()}] ${err.message}`;
+        console.error(`[AI_MODERATION] ${useGroq ? 'Groq' : 'Gemini'} failed after retries:`, timestampedError);
         return {
-          analysisError: err.message,
+          analysisError: timestampedError,
           riskLevel: 'error',
           approvalScore: null,
           recommendation: null,
