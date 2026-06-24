@@ -776,12 +776,12 @@ exports.getSystemInfo = async (req = null, res = null) => {
 // POST /api/admin/apps/:id/reanalyze
 exports.reanalyzeApp = async (req, res) => {
   try {
-    const aiModerationService = require('../services/aiModerationService');
+    const { runGeminiApkAnalysis } = require('../services/aiModerationService');
     const app = await App.findById(req.params.id);
     if (!app) return res.status(404).json({ message: 'App not found.' });
 
     // Ensure we use the proper analyzeApp method from the service
-    const result = await aiModerationService.analyzeApp(app);
+    const result = await runGeminiApkAnalysis(app, app.apkMetadata || {});
     console.log(`[AI_SCAN] Gemini result for ${app.title}:`, JSON.stringify(result));
 
     const updated = await App.findByIdAndUpdate(

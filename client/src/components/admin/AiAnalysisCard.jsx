@@ -48,6 +48,23 @@ const AiAnalysisCard = ({ app, onUpdate }) => {
     }
   };
 
+  /* ── error state ── */
+  if (ai.analysisError) {
+    return (
+      <div className="p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900">
+        <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-6">AI Analysis</h3>
+        <div className="flex flex-col items-center py-6 gap-3">
+          <p className="text-sm font-bold text-slate-400">AI analysis unavailable</p>
+          <p className="text-xs text-slate-400 text-center max-w-xs">{ai.analysisError}</p>
+          <button onClick={handleReanalyze} disabled={loading}
+            className="mt-2 px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-white/5 text-sm font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest hover:bg-accent-violet/10 hover:text-accent-violet transition-all flex items-center gap-2 border border-slate-200 dark:border-white/5">
+            <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} /> Re-analyze
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   /* ── pending state ── */
   if (ai.riskLevel === 'pending' || (!ai.riskLevel && !ai.analysisError)) {
     return (
@@ -65,22 +82,6 @@ const AiAnalysisCard = ({ app, onUpdate }) => {
     );
   }
 
-  /* ── error state ── */
-  if (ai.analysisError) {
-    return (
-      <div className="p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900">
-        <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-6">AI Analysis</h3>
-        <div className="flex flex-col items-center py-6 gap-3">
-          <p className="text-sm font-bold text-slate-400">AI analysis unavailable</p>
-          <p className="text-xs text-slate-400 text-center max-w-xs">{ai.analysisError}</p>
-          <button onClick={handleReanalyze} disabled={loading}
-            className="mt-2 px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-white/5 text-sm font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest hover:bg-accent-violet/10 hover:text-accent-violet transition-all flex items-center gap-2 border border-slate-200 dark:border-white/5">
-            <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} /> Re-analyze
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   /* ── full result ── */
   return (
