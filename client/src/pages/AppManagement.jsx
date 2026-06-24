@@ -14,10 +14,11 @@ import {
   ArrowUpDown,
   RefreshCw,
   AlertTriangle,
-  Shield,
-  AlertCircle,
-  ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  Sparkles,
+  BookOpen,
+  StickyNote,
+  X
 } from 'lucide-react';
 import api from '../api/axios';
 import { cn } from '../utils/cn.js';
@@ -538,7 +539,94 @@ const AppManagement = () => {
         />
       )}
 
+      {notebookTarget && (
+        <AiNotebookModal 
+          app={notebookTarget} 
+          onClose={() => setNotebookTarget(null)} 
+        />
+      )}
     </AdminLayout>
+  );
+};
+
+/* ── AI Notebook Modal ───────────────────────────────── */
+const AiNotebookModal = ({ app, onClose }) => {
+  if (!app) return null;
+  const ai = app.aiModeration || {};
+
+  return (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-xl bg-[#fdfcf0] dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-amber-200 dark:border-white/10 overflow-hidden animate-in zoom-in-95 duration-300">
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/notebook.png')]" />
+
+        <div className="p-10 space-y-8 relative z-10">
+          <div className="flex items-center justify-between">
+             <div className="flex items-center gap-4">
+               <div className="p-3 bg-amber-100 dark:bg-amber-500/10 rounded-2xl">
+                 <StickyNote className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+               </div>
+               <div>
+                 <h2 className="text-2xl font-black text-slate-900 dark:text-white leading-none tracking-tight">AI Insight Memo</h2>
+                 <p className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mt-2">Analysis: {app.title}</p>
+               </div>
+             </div>
+             <button onClick={onClose} className="p-3 hover:bg-slate-200 dark:hover:bg-white/5 rounded-2xl transition-all">
+               <X className="w-6 h-6 text-slate-400" />
+             </button>
+          </div>
+
+          <div className="space-y-8 max-h-[50vh] overflow-y-auto pr-4 custom-scrollbar">
+            <div className="relative p-8 bg-white/40 dark:bg-slate-800/40 rounded-3xl border border-amber-100 dark:border-white/5 shadow-sm">
+              <div className="absolute -left-1 top-6 bottom-6 w-1 bg-amber-400 rounded-full" />
+              <h3 className="text-[10px] font-black uppercase text-amber-600 tracking-widest mb-4">Executive Summary</h3>
+              <p className="text-base font-bold text-slate-700 dark:text-slate-300 leading-relaxed italic">
+                "{ai.appSummary || 'Detailed analysis processed.'}"
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {ai.targetAudience && (
+                <div className="p-6 rounded-[2rem] bg-indigo-50/50 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/10">
+                  <h4 className="text-[10px] font-black uppercase text-indigo-500 tracking-wider mb-2">Audience</h4>
+                  <p className="text-sm font-bold text-slate-600 dark:text-slate-200 leading-tight">{ai.targetAudience}</p>
+                </div>
+              )}
+              {ai.keyFeatures?.length > 0 && (
+                <div className="p-6 rounded-[2rem] bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/10">
+                  <h4 className="text-[10px] font-black uppercase text-emerald-500 tracking-wider mb-2">Traits</h4>
+                  <ul className="space-y-1.5">
+                    {ai.keyFeatures.slice(0, 4).map((f, i) => (
+                      <li key={i} className="text-[11px] font-bold text-slate-600 dark:text-slate-200 flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full shrink-0" /> <span className="line-clamp-1">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            {ai.permissionAnalysis && (
+              <div className="p-6 rounded-[2rem] bg-rose-50/50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/10">
+                <h4 className="text-[10px] font-black uppercase text-rose-500 tracking-wider mb-2">Security Audit</h4>
+                <p className="text-xs font-bold text-slate-600 dark:text-slate-200 leading-relaxed italic">
+                  {ai.permissionAnalysis}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="pt-6 border-t border-amber-100 dark:border-white/5">
+            <button 
+              onClick={onClose}
+              className="w-full py-5 bg-slate-950 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-2xl hover:scale-[1.01] active:scale-95 transition-all"
+            >
+              Close Ledger
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
