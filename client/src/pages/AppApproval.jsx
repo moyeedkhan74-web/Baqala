@@ -472,21 +472,21 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
                    <div className="p-2 bg-amber-100 dark:bg-amber-500/10 rounded-lg shrink-0">
                      <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                    </div>
-                   <div className="min-w-0">
-                     <h4 className="text-[10px] font-black text-slate-800 dark:text-white uppercase leading-none">Legacy Report Format</h4>
-                     <p className="text-[9px] font-bold text-slate-500 mt-1 leading-tight">This app was scanned with an older engine. Detailed metrics are currently unavailable. Generate a Deep Audit to populate the matrix below.</p>
-                   </div>
+                    <div className="min-w-0">
+                      <h4 className="text-[10px] font-black text-slate-800 dark:text-white uppercase leading-none">Legacy Report Format</h4>
+                      <p className="text-[9px] font-bold text-slate-500 mt-1 leading-tight">This app was scanned with an older engine. The "Overall Score" of {displayOverall} is a standalone legacy metric. Category breakdown (Security, Privacy, etc.) is currently N/A until a v3.0 Deep Audit is generated.</p>
+                    </div>
                 </div>
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <RatingBar label="Security" value={ratings.security} reason={ratingReasons.security} color="text-emerald-500" />
-                <RatingBar label="Privacy" value={ratings.privacy} reason={ratingReasons.privacy} color="text-blue-500" />
-                <RatingBar label="Content" value={ratings.content} reason={ratingReasons.content} color="text-violet-500" />
-                <RatingBar label="Legal" value={ratings.legal} reason={ratingReasons.legal} color="text-rose-500" />
-                <RatingBar label="Performance" value={ratings.performance} reason={ratingReasons.performance} color="text-sky-500" />
-                <RatingBar label="Transparency" value={ratings.transparency} reason={ratingReasons.transparency} color="text-amber-500" />
-                <RatingBar label="Data Handling" value={ratings.dataHandling} reason={ratingReasons.dataHandling} color="text-indigo-500" />
+                <RatingBar label="Security (25%)" value={ratings.security} reason={ratingReasons.security} color="text-emerald-500" />
+                <RatingBar label="Privacy (20%)" value={ratings.privacy} reason={ratingReasons.privacy} color="text-blue-500" />
+                <RatingBar label="Content (15%)" value={ratings.content} reason={ratingReasons.content} color="text-violet-500" />
+                <RatingBar label="Legal (15%)" value={ratings.legal} reason={ratingReasons.legal} color="text-rose-500" />
+                <RatingBar label="Performance (10%)" value={ratings.performance} reason={ratingReasons.performance} color="text-sky-500" />
+                <RatingBar label="Transparency (10%)" value={ratings.transparency} reason={ratingReasons.transparency} color="text-amber-500" />
+                <RatingBar label="Data Handling (5%)" value={ratings.dataHandling} reason={ratingReasons.dataHandling} color="text-indigo-500" />
               </div>
             </div>
 
@@ -522,11 +522,16 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
               
               <div className="p-5 rounded-2xl bg-amber-50/50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/10">
                  <h4 className="text-[10px] font-black uppercase text-amber-600 tracking-wider mb-2">⚠️ Policy Violations</h4>
-                 {legal.playPolicyViolations?.length > 0 ? (
+                 {legal.playPolicyViolations?.length > 0 || legal.concerns?.length > 0 ? (
                    <ul className="space-y-1">
-                     {legal.playPolicyViolations.map((v, i) => (
-                       <li key={i} className="text-[10px] font-bold text-amber-700 dark:text-amber-300 flex items-start gap-1.5">
+                     {legal.playPolicyViolations?.map((v, i) => (
+                       <li key={`v-${i}`} className="text-[10px] font-bold text-amber-700 dark:text-amber-300 flex items-start gap-1.5">
                          <AlertCircle className="w-3 h-3 shrink-0 mt-0.5" /> {v}
+                       </li>
+                     ))}
+                     {legal.concerns?.map((c, i) => (
+                       <li key={`c-${i}`} className="text-[10px] font-bold text-slate-600 dark:text-slate-400 flex items-start gap-1.5 italic">
+                         <span className="text-amber-500">•</span> {c}
                        </li>
                      ))}
                    </ul>
@@ -585,6 +590,36 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
                 reasonKey="reason" 
               />
             </div>
+
+            {/* Conditional Audits: Rejections & Conditions */}
+            {(ai.rejectionReasons?.length > 0 || ai.approvalConditions?.length > 0) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {ai.rejectionReasons?.length > 0 && (
+                  <div className="p-5 rounded-2xl bg-rose-50/50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/10">
+                    <h4 className="text-[10px] font-black uppercase text-rose-500 tracking-wider mb-2">🚩 Rejection Reasons</h4>
+                    <ul className="space-y-1">
+                      {ai.rejectionReasons.map((r, i) => (
+                        <li key={i} className="text-[10px] font-bold text-rose-700 dark:text-rose-300 flex items-start gap-1.5">
+                          <AlertCircle className="w-3 h-3 shrink-0 mt-0.5" /> {r}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {ai.approvalConditions?.length > 0 && (
+                  <div className="p-5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/10">
+                    <h4 className="text-[10px] font-black uppercase text-emerald-500 tracking-wider mb-2">📝 Approval Conditions</h4>
+                    <ul className="space-y-1">
+                      {ai.approvalConditions.map((c, i) => (
+                        <li key={i} className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 flex items-start gap-1.5">
+                          <CheckCircle2 className="w-3 h-3 shrink-0 mt-0.5" /> {c}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Executive Summary */}
             <div className="relative p-6 bg-white/40 dark:bg-slate-800/40 rounded-2xl border border-amber-100 dark:border-white/5 shadow-inner">
