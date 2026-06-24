@@ -36,7 +36,7 @@ const UploadApp = () => {
     developerName: user?.name || '',
     tier: 'low'
   });
-  const [files, setFiles] = useState({ appFile: null, icon: null, screenshots: [] });
+  const [files, setFiles] = useState({ appFile: null, icon: null, banner: null, screenshots: [] });
 
   const tiers = [
     { id: 'low', label: 'Casual', desc: 'Basic functional check' },
@@ -96,6 +96,9 @@ const UploadApp = () => {
       // Add files
       formDataToSend.append('appFile', files.appFile);
       formDataToSend.append('icon', files.icon);
+      if (files.banner) {
+        formDataToSend.append('banner', files.banner);
+      }
       if (files.screenshots && files.screenshots.length > 0) {
         files.screenshots.forEach(ss => formDataToSend.append('screenshots', ss));
       }
@@ -261,18 +264,24 @@ const UploadApp = () => {
                   <p className="text-gray-400 text-sm">{files.appFile ? files.appFile.name : 'Drag & drop or click to select (.exe, .apk, .zip)'}</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="p-6 border-2 border-dashed border-white/20 rounded-2xl bg-white/5 hover:bg-white/10 hover:border-accent-violet/50 transition-colors text-center relative">
                     <input type="file" required={!files.icon} onChange={e => setFiles({...files, icon: e.target.files[0]})} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/jpeg,image/png,image/webp" />
-                    <HiPhotograph className="w-8 h-8 text-accent-violet mx-auto mb-3" />
-                    <p className="text-white font-medium mb-1">App Icon</p>
-                    <p className="text-gray-400 text-sm overflow-hidden text-ellipsis">{files.icon ? files.icon.name : 'PNG/JPG'}</p>
+                    <HiPhotograph className="w-8 h-8 text-accent-violet mx-auto mb-2" />
+                    <p className="text-white text-xs font-bold uppercase tracking-wider mb-1">App Icon</p>
+                    <p className="text-gray-500 text-[10px] truncate px-2">{files.icon ? files.icon.name : 'Square PNG/JPG'}</p>
+                  </div>
+                  <div className="p-6 border-2 border-dashed border-white/20 rounded-2xl bg-white/5 hover:bg-white/10 hover:border-accent-neon/50 transition-colors text-center relative">
+                    <input type="file" onChange={e => setFiles({...files, banner: e.target.files[0]})} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/jpeg,image/png,image/webp" />
+                    <HiPhotograph className="w-8 h-8 text-accent-neon mx-auto mb-2" />
+                    <p className="text-white text-xs font-bold uppercase tracking-wider mb-1">App Banner</p>
+                    <p className="text-gray-500 text-[10px] truncate px-2">{files.banner ? files.banner.name : 'Optional Promo'}</p>
                   </div>
                   <div className="p-6 border-2 border-dashed border-white/20 rounded-2xl bg-white/5 hover:bg-white/10 hover:border-accent-emerald/50 transition-colors text-center relative">
                     <input type="file" multiple onChange={e => setFiles({...files, screenshots: Array.from(e.target.files)})} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/jpeg,image/png,image/webp" />
-                    <HiPhotograph className="w-8 h-8 text-accent-emerald mx-auto mb-3" />
-                    <p className="text-white font-medium mb-1">Screenshots</p>
-                    <p className="text-gray-400 text-sm">{files.screenshots?.length ? `${files.screenshots.length} visual(s) selected` : 'Multiple allowed'}</p>
+                    <HiPhotograph className="w-8 h-8 text-accent-emerald mx-auto mb-2" />
+                    <p className="text-white text-xs font-bold uppercase tracking-wider mb-1">Screenshots</p>
+                    <p className="text-gray-500 text-[10px]">{files.screenshots?.length ? `${files.screenshots.length} visual(s)` : 'Multiple allowed'}</p>
                   </div>
                 </div>
               </div>

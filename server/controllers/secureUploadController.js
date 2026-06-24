@@ -38,8 +38,9 @@ exports.uploadApkSecure = async (req, res, next) => {
       return res.status(500).json({ message: `Binary storage upload failed: ${uploadResult.error}` });
     }
 
-    // 3. Handle Visual Assets (Icon & Screenshots)
+    // 3. Handle Visual Assets (Icon, Banner & Screenshots)
     let iconUrl = '';
+    let bannerUrl = '';
     let screenshotUrls = [];
 
     // Upload Icon if present
@@ -48,6 +49,14 @@ exports.uploadApkSecure = async (req, res, next) => {
       const iconPath = `icons/${uuid}-${iconFile.originalname.replace(/\s+/g, '_')}`;
       const iconUpload = await uploadImage(iconPath, iconFile.buffer, iconFile.mimetype);
       if (iconUpload.success) iconUrl = iconUpload.url;
+    }
+
+    // Upload Banner if present
+    if (req.files && req.files['banner'] && req.files['banner'][0]) {
+      const bannerFile = req.files['banner'][0];
+      const bannerPath = `banners/${uuid}-${bannerFile.originalname.replace(/\s+/g, '_')}`;
+      const bannerUpload = await uploadImage(bannerPath, bannerFile.buffer, bannerFile.mimetype);
+      if (bannerUpload.success) bannerUrl = bannerUpload.url;
     }
 
     // Upload Screenshots if present
@@ -73,6 +82,7 @@ exports.uploadApkSecure = async (req, res, next) => {
       fileName: safeName,
       fileSize: file.size,
       icon: iconUrl,
+      banner: bannerUrl,
       screenshots: screenshotUrls,
       status: 'pending_scan',
       vtResult: null
