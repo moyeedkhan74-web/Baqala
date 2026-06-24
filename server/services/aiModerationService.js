@@ -11,8 +11,8 @@ async function runGeminiApkAnalysis(appData, apkMetadata) {
     };
   }
 
-  // Define extraction logic for different vendors
-  const useGroq = !!groqKey && (!geminiKey || process.env.AI_PRIORITY === 'groq');
+  // Prioritize Groq if key exists, otherwise fallback to Gemini
+  const useGroq = !!groqKey;
   const apiKey = useGroq ? groqKey : geminiKey;
   const endpoint = useGroq 
     ? 'https://api.groq.com/openai/v1/chat/completions'

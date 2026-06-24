@@ -174,10 +174,9 @@ const server = app.listen(PORT, async () => {
   // Startup status logs
   const hasGroq = !!process.env.GROQ_API_KEY;
   const hasGemini = !!process.env.GEMINI_API_KEY;
-  const priority = process.env.AI_PRIORITY || 'gemini';
   
-  console.log(`[STARTUP] AI Status: Groq=${hasGroq ? 'YES' : 'NO'}, Gemini=${hasGemini ? 'YES' : 'NO'}, Priority=${priority}`);
-  console.log(`[STARTUP] Active Engine: ${hasGroq && (priority === 'groq' || !hasGemini) ? '🟢 GROQ' : hasGemini ? '🔵 GEMINI' : '🔴 NONE'}`);
+  console.log(`[STARTUP] AI Status: Groq=${hasGroq ? 'YES' : 'NO'}, Gemini=${hasGemini ? 'YES' : 'NO'}`);
+  console.log(`[STARTUP] Active Engine: ${hasGroq ? '🟢 GROQ (Preferred)' : hasGemini ? '🔵 GEMINI' : '🔴 NONE'}`);
   console.log(`[STARTUP] B2 Status: ${process.env.B2_PRIVATE_BUCKET ? `✅ ${process.env.B2_PRIVATE_BUCKET}` : '⚠️  B2_PRIVATE_BUCKET not set'}`);
   console.log(`[APK_CLEANUP] Next weekly cleanup: ${nextSunday.toLocaleString()}`);
 
