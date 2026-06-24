@@ -76,9 +76,9 @@ const AppApproval = () => {
     } catch (err) {
       const errMsg = err.response?.data?.message || err.response?.data?.error || 'AI analysis failed';
       console.error('[AI_ANALYZE]', errMsg);
-      toast.error(errMsg);
+      toast.error('AI scan could not complete. Hover the icon for details.');
       
-      // Update local state to show the error in UI
+      // Update local state to show the error in UI (tooltip only)
       setApps(prev => prev.map(a => {
         if (a._id === appId) {
           return { ...a, aiModeration: { ...(a.aiModeration || {}), analysisError: errMsg } };
