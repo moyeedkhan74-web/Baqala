@@ -18,25 +18,39 @@ async function runGeminiApkAnalysis(appData, apkMetadata) {
     ? 'https://api.groq.com/openai/v1/chat/completions'
     : `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
-  const prompt = `You are a strict Android app store security reviewer for Baqala App Store. Analyze this app submission and respond ONLY with valid JSON — no markdown, no backticks, no explanation outside the JSON object.
+  const prompt = `You are an expert Android app store security reviewer for Baqala App Store. Analyze this submission thoroughly and respond ONLY with valid JSON.
 
 {
-  "appSummary": "2-3 sentences: what this app actually appears to do based on ALL evidence — developer claims AND APK code combined",
+  "appSummary": "3-4 detailed sentences about what this app does, its purpose, and quality assessment. Be specific and informative.",
   "shortDescription": "One-line catchy hook (max 80 chars) for store listings",
   "approvalScore": <integer 0-100>,
   "riskLevel": "low" | "medium" | "high" | "critical",
-  "targetAudience": "one sentence describing the likely intended users",
-  "keyFeatures": ["3-5 core functionalities detected from code"],
-  "permissionAnalysis": "one paragraph: do the requested permissions match the claimed purpose? Flag mismatches explicitly.",
-  "contentFlags": ["specific policy concerns — empty array if none"],
-  "suspiciousSignals": ["technical red flags from APK internals — empty array if none"],
+  "verdict": "One powerful sentence: your final recommendation as if briefing a CEO. Example: 'Safe utility app with clean permissions — approve immediately.' or 'Suspicious gambling wrapper disguised as a calculator — reject.'",
+  "ratings": {
+    "security": <integer 0-100, "How safe is this app from a security standpoint?">,
+    "privacy": <integer 0-100, "Does it respect user privacy? Minimal data collection?">,
+    "content": <integer 0-100, "Is the content appropriate for all audiences?">,
+    "quality": <integer 0-100, "How well-built and professional does the app appear?">
+  },
+  "targetAudience": "One clear sentence describing who this app is built for",
+  "keyFeatures": ["4-6 specific functionalities detected — be detailed, e.g. 'Offline GPS navigation with map caching' not just 'Maps'"],
+  "permissionAnalysis": "Detailed paragraph: list each permission, explain why it would be needed, and explicitly flag any that don't match the app's stated purpose. If no permissions, explain what that means.",
+  "contentFlags": ["specific policy concerns — empty array [] if none"],
+  "suspiciousSignals": ["technical red flags from APK internals — empty array [] if none"],
   "recommendation": "approve" | "review" | "reject",
-  "adminNote": "1-2 sentences of direct, actionable advice for the human reviewer"
+  "adminNote": "2-3 sentences of direct, actionable advice for the human reviewer. Be specific about what to check."
 }
 
-approvalScore: 85-100 clearly safe approve; 60-84 probably fine but review; 40-59 suspicious careful review; 0-39 strong reject signals.
+SCORING GUIDE:
+- 85-100: Clearly safe, well-built app. Approve confidently.
+- 60-84: Probably fine but has minor concerns worth reviewing.
+- 40-59: Suspicious elements detected. Needs careful human review.
+- 20-39: Strong reject signals. Multiple red flags found.
+- 0-19: Malicious or fraudulent. Reject immediately.
 
-Flag HIGH or CRITICAL if ANY of these: package name contains bet/casino/slot/adult/xxx/porn/hack/cheat; app requests SMS+CONTACTS+CALL_LOG without a communication purpose in description; package name impersonates known brands (com.google.*, com.whatsapp.*, com.facebook.*, com.instagram.*); description says one thing but dex code strings say another (this is FRAUD — score 0-20); vague description with 5+ dangerous permissions; services/receivers suggesting background data collection without disclosure.
+IMPORTANT: Even if an app has minimal metadata, still provide thoughtful analysis. Rate quality lower if the submission lacks proper descriptions, icons, or metadata — this itself is a quality concern. Never leave ratings at 0 unless the app is actively malicious.
+
+Flag HIGH or CRITICAL if ANY of these: package name contains bet/casino/slot/adult/xxx/porn/hack/cheat; app requests SMS+CONTACTS+CALL_LOG without a communication purpose; package name impersonates known brands; description contradicts dex code strings (FRAUD — score 0-15); vague description with 5+ dangerous permissions.
 
 DEVELOPER SUBMISSION:
 Title: ${appData.title}
@@ -54,11 +68,11 @@ Native libraries: ${apkMetadata.nativeLibCount || 0}
 Total files in APK: ${apkMetadata.fileCount || 0}
 
 APK CODE CONTENTS (extracted from classes.dex — cannot be faked by developer):
-Suspicious keywords found in compiled code: ${(apkMetadata.dexStrings || []).join(' | ') || 'none found'}
-Hardcoded URLs and API endpoints in code: ${(apkMetadata.suspiciousUrls || []).join(' | ') || 'none found'}
+Suspicious keywords: ${(apkMetadata.dexStrings || []).join(' | ') || 'none found'}
+Hardcoded URLs: ${(apkMetadata.suspiciousUrls || []).join(' | ') || 'none found'}
 Extraction error: ${apkMetadata.extractionError || 'none'}
 
-CRITICAL INSTRUCTION: The "APK CODE CONTENTS" section above is extracted from compiled bytecode and cannot be altered by the developer. If the description claims one thing but the code contains gambling/adult/fraud-related strings, that is deliberate deception — assign approvalScore 0-15 and riskLevel "critical".`;
+CRITICAL: Code contents above are from compiled bytecode — cannot be altered by developer. If description claims one thing but code contains gambling/adult/fraud strings, that is deception — score 0-15 and riskLevel "critical".`;
 
   const MAX_RETRIES = 2;
   let attempt = 0;

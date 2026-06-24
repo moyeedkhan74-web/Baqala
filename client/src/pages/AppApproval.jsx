@@ -316,52 +316,90 @@ const AppApproval = () => {
 const AiNotebookModal = ({ app, onClose }) => {
   if (!app) return null;
   const ai = app.aiModeration || {};
+  const ratings = ai.ratings || {};
+
+  const RatingBar = ({ label, value, color }) => (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">{label}</span>
+        <span className={`text-[10px] font-black ${color}`}>{value ?? '—'}/100</span>
+      </div>
+      <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full transition-all duration-700 ${
+          (value ?? 0) >= 80 ? 'bg-emerald-500' : (value ?? 0) >= 50 ? 'bg-amber-500' : 'bg-rose-500'
+        }`} style={{ width: `${value ?? 0}%` }} />
+      </div>
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-xl bg-[#fdfcf0] dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-amber-200 dark:border-white/10 overflow-hidden animate-in zoom-in-95 duration-300">
+      <div className="relative w-full max-w-2xl bg-[#fdfcf0] dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-amber-200 dark:border-white/10 overflow-hidden">
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/notebook.png')]" />
 
-        <div className="p-10 space-y-8 relative z-10">
+        <div className="p-8 md:p-10 space-y-6 relative z-10">
+          {/* Header */}
           <div className="flex items-center justify-between">
              <div className="flex items-center gap-4">
                <div className="p-3 bg-amber-100 dark:bg-amber-500/10 rounded-2xl">
-                 <StickyNote className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+                 <StickyNote className="w-7 h-7 text-amber-600 dark:text-amber-400" />
                </div>
                <div>
-                 <h2 className="text-2xl font-black text-slate-900 dark:text-white leading-none tracking-tight">AI Insight Memo</h2>
-                 <p className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mt-2">Product Analysis: {app.title}</p>
+                 <h2 className="text-xl font-black text-slate-900 dark:text-white leading-none tracking-tight">AI Insight Memo</h2>
+                 <p className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mt-1">{app.title}</p>
                </div>
              </div>
              <button onClick={onClose} className="p-3 hover:bg-slate-200 dark:hover:bg-white/5 rounded-2xl transition-all">
-               <X className="w-6 h-6 text-slate-400" />
+               <X className="w-5 h-5 text-slate-400" />
              </button>
           </div>
 
-          <div className="space-y-8 max-h-[50vh] overflow-y-auto pr-4 custom-scrollbar">
-            <div className="relative p-8 bg-white/40 dark:bg-slate-800/40 rounded-3xl border border-amber-100 dark:border-white/5 shadow-sm">
-              <div className="absolute -left-1 top-6 bottom-6 w-1 bg-amber-400 rounded-full" />
-              <h3 className="text-[10px] font-black uppercase text-amber-600 tracking-widest mb-4">Executive Summary</h3>
-              <p className="text-base font-bold text-slate-700 dark:text-slate-300 leading-relaxed italic">
-                "{ai.appSummary || 'Analysis processed successfully but no summary text was returned.'}"
+          <div className="space-y-5 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+
+            {/* Verdict Banner */}
+            {ai.verdict && (
+              <div className="p-5 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-500/5 dark:to-orange-500/5 rounded-2xl border border-amber-200 dark:border-amber-500/10">
+                <p className="text-[10px] font-black uppercase text-amber-600 tracking-widest mb-2">⚡ Verdict</p>
+                <p className="text-sm font-black text-slate-800 dark:text-white leading-snug">{ai.verdict}</p>
+              </div>
+            )}
+
+            {/* Category Ratings */}
+            {(ratings.security != null || ratings.privacy != null) && (
+              <div className="p-5 bg-white/50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-white/5 space-y-3">
+                <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Category Ratings</p>
+                <RatingBar label="Security" value={ratings.security} color="text-emerald-500" />
+                <RatingBar label="Privacy" value={ratings.privacy} color="text-blue-500" />
+                <RatingBar label="Content" value={ratings.content} color="text-violet-500" />
+                <RatingBar label="Quality" value={ratings.quality} color="text-amber-500" />
+              </div>
+            )}
+
+            {/* Executive Summary */}
+            <div className="relative p-6 bg-white/40 dark:bg-slate-800/40 rounded-2xl border border-amber-100 dark:border-white/5 shadow-sm">
+              <div className="absolute -left-1 top-5 bottom-5 w-1 bg-amber-400 rounded-full" />
+              <h3 className="text-[10px] font-black uppercase text-amber-600 tracking-widest mb-3">Executive Summary</h3>
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed italic">
+                "{ai.appSummary || 'Analysis processed.'}"
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Audience + Features Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {ai.targetAudience && (
-                <div className="p-6 rounded-[2rem] bg-indigo-50/50 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/10">
-                  <h4 className="text-[10px] font-black uppercase text-indigo-500 tracking-wider mb-2">Audience</h4>
-                  <p className="text-sm font-bold text-slate-600 dark:text-slate-200 leading-tight">{ai.targetAudience}</p>
+                <div className="p-5 rounded-2xl bg-indigo-50/50 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/10">
+                  <h4 className="text-[10px] font-black uppercase text-indigo-500 tracking-wider mb-2">Target Audience</h4>
+                  <p className="text-xs font-bold text-slate-600 dark:text-slate-200 leading-relaxed">{ai.targetAudience}</p>
                 </div>
               )}
               {ai.keyFeatures?.length > 0 && (
-                <div className="p-6 rounded-[2rem] bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/10">
-                  <h4 className="text-[10px] font-black uppercase text-emerald-500 tracking-wider mb-2">Key Traits</h4>
+                <div className="p-5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/10">
+                  <h4 className="text-[10px] font-black uppercase text-emerald-500 tracking-wider mb-2">Key Features</h4>
                   <ul className="space-y-1.5">
-                    {ai.keyFeatures.slice(0, 4).map((f, i) => (
-                      <li key={i} className="text-[11px] font-bold text-slate-600 dark:text-slate-200 flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full shrink-0" /> <span className="line-clamp-1">{f}</span>
+                    {ai.keyFeatures.slice(0, 6).map((f, i) => (
+                      <li key={i} className="text-[11px] font-bold text-slate-600 dark:text-slate-200 flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full shrink-0 mt-1" /> <span>{f}</span>
                       </li>
                     ))}
                   </ul>
@@ -369,22 +407,32 @@ const AiNotebookModal = ({ app, onClose }) => {
               )}
             </div>
 
+            {/* Security Audit */}
             {ai.permissionAnalysis && (
-              <div className="p-6 rounded-[2rem] bg-rose-50/50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/10">
-                <h4 className="text-[10px] font-black uppercase text-rose-500 tracking-wider mb-2">Security Audit</h4>
-                <p className="text-xs font-bold text-slate-600 dark:text-slate-200 leading-relaxed italic line-clamp-3 hover:line-clamp-none transition-all cursor-pointer">
+              <div className="p-5 rounded-2xl bg-rose-50/50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/10">
+                <h4 className="text-[10px] font-black uppercase text-rose-500 tracking-wider mb-2">🔒 Permission Audit</h4>
+                <p className="text-xs font-bold text-slate-600 dark:text-slate-200 leading-relaxed">
                   {ai.permissionAnalysis}
                 </p>
               </div>
             )}
+
+            {/* Admin Note */}
+            {ai.adminNote && (
+              <div className="p-5 rounded-2xl bg-sky-50/50 dark:bg-sky-500/5 border border-sky-100 dark:border-sky-500/10">
+                <h4 className="text-[10px] font-black uppercase text-sky-500 tracking-wider mb-2">📋 Reviewer Notes</h4>
+                <p className="text-xs font-bold text-slate-600 dark:text-slate-200 leading-relaxed">{ai.adminNote}</p>
+              </div>
+            )}
           </div>
 
-          <div className="pt-6 border-t border-amber-100 dark:border-white/5">
+          {/* Close Button */}
+          <div className="pt-4 border-t border-amber-100 dark:border-white/5">
             <button 
               onClick={onClose}
-              className="w-full py-5 bg-slate-950 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-2xl hover:scale-[1.01] active:scale-95 transition-all"
+              className="w-full py-4 bg-slate-950 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-2xl hover:scale-[1.01] active:scale-95 transition-all"
             >
-              Close Ledger
+              Close Memo
             </button>
           </div>
         </div>
