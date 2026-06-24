@@ -16,8 +16,18 @@ exports.getAllApps = async (req, res) => {
       .select('title developerName status category icon developer isFeatured banner apkMetadata aiModeration')
       .populate('developer', 'name')
       .sort({ createdAt: -1 });
+
+    // Scrub recursive/malformed banner URLs that might have been saved in previous buggy sessions
+    const scrubbedApps = apps.map(app => {
+      const appObj = app.toObject();
+      if (appObj.banner && appObj.banner.includes(`/api/admin/apps/${appObj._id}/banner`)) {
+        appObj.banner = ''; // Prevent infinite recursion
+      }
+      return appObj;
+    });
+
     console.log(`[ADMIN] Fetched ${apps.length} apps. Featured count: ${apps.filter(a => a.isFeatured).length}`);
-    res.json({ apps });
+    res.json({ apps: scrubbedApps });
   } catch (error) {
     console.error('Admin get apps error:', error);
     res.status(500).json({ message: 'Server error fetching apps.' });
@@ -844,22 +854,22 @@ exports.uploadAppBannerAdmin = async (req, res) => {
       } catch (err) { console.error('B2 Delete Error:', err); }
     };
 
-    // Helper to upload
-    const uploadAssetLocal = async (file, folder) => {
-      const fileName = `${Date.now()}_admin_${file.originalname.replace(/\s+/g, '_')}`;
-      const filePath = `${folder}/${fileName}`;
-      const result = await uploadImage(filePath, file.buffer, file.mimetype);
-      return result.success ? result.url : null;
-    };
-
-    // Cleanup old banner
-    if (app.banner) await deleteFileFromB2Local(app.banner);
-
     // Upload new banner
-    const url = await uploadAssetLocal(req.files.banner[0], 'banners');
-    if (!url) return res.status(500).json({ message: 'Cloud upload failed.' });
+    const uploadResult = await uploadImage(
+      `banners/${Date.now()}_admin_${req.files.banner[0].originalname.replace(/\s+/g, '_')}`, 
+      req.files.banner[0].buffer, 
+      req.files.banner[0].mimetype
+    );
 
-    app.banner = url;
+    if (!uploadResult.success) {
+      console.error('[ADMIN_BANNER_UPLOAD_FAIL]:', uploadResult.error);
+      return res.status(500).json({ 
+        message: 'Cloud storage rejected the banner upload.', 
+        details: uploadResult.error 
+      });
+    }
+
+    app.banner = uploadResult.url;
     await app.save();
 
     res.json({ message: 'Promotional banner updated by Admin.', app });

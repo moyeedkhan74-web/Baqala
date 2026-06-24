@@ -146,10 +146,16 @@ exports.uploadApkSecure = async (req, res, next) => {
     });
 
   } catch (error) {
-    console.error('[SECURE_UPLOAD_ERROR]:', error);
-    res.status(error.statusCode || 500).json({ 
-      message: error.message || 'An unexpected error occurred during deployment.',
-      error: error.message 
+    console.error('[SECURE_UPLOAD_CRASH]:', {
+      message: error.message,
+      stack: error.stack,
+      files: req.files ? Object.keys(req.files) : 'NONE',
+      body: req.body
+    });
+    res.status(500).json({ 
+      message: 'Secure Deployment Pipeline Exception',
+      details: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };

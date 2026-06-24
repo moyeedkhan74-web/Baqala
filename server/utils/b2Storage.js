@@ -143,8 +143,13 @@ const doUpload = async (s3, bucket, endpoint, scrubbedPath, fileBuffer, contentT
 exports.uploadImage = async (reqOrFilePath, fileBuffer, contentType) => {
   try {
     const scrubbedPath = sanitizePath(typeof reqOrFilePath === 'string' ? reqOrFilePath : '');
-    let bucket = scrubbedPath.startsWith('avatars/') ? (process.env.B2_AVATAR_BUCKET || 'baqala.avatar') : process.env.B2_PRIVATE_BUCKET;
-    return await doUpload(imageS3, bucket, process.env.B2_PRIVATE_ENDPOINT, scrubbedPath, fileBuffer, contentType, false);
+    let bucket = scrubbedPath.startsWith('avatars/') 
+      ? (process.env.B2_AVATAR_BUCKET || 'baqala.avatar') 
+      : (process.env.B2_PRIVATE_BUCKET || process.env.B2_BUCKET_NAME); // Fallback to public bucket if private is missing
+    
+    if (!bucket) throw new Error('B2 Bucket Configuration Missing (B2_PRIVATE_BUCKET / B2_BUCKET_NAME)');
+
+    return await doUpload(imageS3, bucket, process.env.B2_PRIVATE_ENDPOINT || process.env.B2_ENDPOINT, scrubbedPath, fileBuffer, contentType, false);
   } catch (error) {
     console.error(`B2 Image Upload Error:`, error.message);
     return { success: false, error: error.message };

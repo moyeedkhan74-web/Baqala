@@ -46,6 +46,15 @@ router.post('/users/:id/unban', unbanUser);
 router.patch('/users/:id/verify', toggleUserVerified);
 router.post('/apps/:id/scan', manualAppScan);
 router.post('/apps/:id/reanalyze', reanalyzeApp);
+router.get('/apps/:id/banner', (req, res, next) => {
+  // Simple redirect proxy to the actual banner URL saved in DB
+  App.findById(req.params.id)
+    .then(app => {
+      if (!app || !app.banner) return res.status(404).send('No banner');
+      res.redirect(app.banner);
+    })
+    .catch(next);
+});
 router.post('/apps/:id/banner', uploadImages, uploadAppBannerAdmin);
 router.delete('/apps/:id/banner', removeAppBannerAdmin);
 
