@@ -333,15 +333,16 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
   const flags = ai.flags || {};
   const legal = ai.legalAnalysis || {};
 
-  const RatingBar = ({ label, value, reason, color }) => {
+  const RatingBar = ({ label, value, reason, color, description }) => {
     const hasValue = typeof value === 'number';
     const safeValue = hasValue ? value : 0;
     return (
-      <div className="space-y-1.5 group relative">
+      <div className="space-y-1 group relative">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">{label}</span>
           <span className={`text-[10px] font-black ${color}`}>{hasValue ? `${safeValue}/100` : 'N/A'}</span>
         </div>
+        {description && <p className="text-[7px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] leading-none mb-1.5">{description}</p>}
         <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
           <div className={`h-full rounded-full transition-all duration-700 ${
             !hasValue ? 'bg-slate-300 dark:bg-slate-600' :
@@ -480,13 +481,13 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <RatingBar label="Security (25%)" value={ratings.security} reason={ratingReasons.security} color="text-emerald-500" />
-                <RatingBar label="Privacy (20%)" value={ratings.privacy} reason={ratingReasons.privacy} color="text-blue-500" />
-                <RatingBar label="Content (15%)" value={ratings.content} reason={ratingReasons.content} color="text-violet-500" />
-                <RatingBar label="Legal (15%)" value={ratings.legal} reason={ratingReasons.legal} color="text-rose-500" />
-                <RatingBar label="Performance (10%)" value={ratings.performance} reason={ratingReasons.performance} color="text-sky-500" />
-                <RatingBar label="Transparency (10%)" value={ratings.transparency} reason={ratingReasons.transparency} color="text-amber-500" />
-                <RatingBar label="Data Handling (5%)" value={ratings.dataHandling} reason={ratingReasons.dataHandling} color="text-indigo-500" />
+                <RatingBar label="Security (25%)" value={ratings.security} reason={ratingReasons.security} color="text-emerald-500" description="Permissions & Malware Scan" />
+                <RatingBar label="Privacy (20%)" value={ratings.privacy} reason={ratingReasons.privacy} color="text-blue-500" description="Data Access & Tracking" />
+                <RatingBar label="Content (15%)" value={ratings.content} reason={ratingReasons.content} color="text-violet-500" description="Motive vs Reality Audit" />
+                <RatingBar label="Legal (15%)" value={ratings.legal} reason={ratingReasons.legal} color="text-rose-500" description="Policy & GDPR Compliance" />
+                <RatingBar label="Performance (10%)" value={ratings.performance} reason={ratingReasons.performance} color="text-sky-500" description="Resource & Service Load" />
+                <RatingBar label="Transparency (10%)" value={ratings.transparency} reason={ratingReasons.transparency} color="text-amber-500" description="Metadata & Dev Honesty" />
+                <RatingBar label="Data Handling (5%)" value={ratings.dataHandling} reason={ratingReasons.dataHandling} color="text-indigo-500" description="Network & Exfiltration" />
               </div>
             </div>
 
