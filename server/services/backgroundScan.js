@@ -119,12 +119,18 @@ exports.runBackgroundScan = async (appId, buffer, filename) => {
         await App.findByIdAndUpdate(appId, { apkMetadata: apkMeta });
         
         const aiResult = await runGeminiApkAnalysis(app, apkMeta);
-        await App.findByIdAndUpdate(appId, {
-          aiModeration: {
-            ...aiResult,
-            analysedAt: new Date()
-          }
-        });
+        
+        const updatePayload = {
+          aiModeration: { ...aiResult, analysedAt: new Date() }
+        };
+        
+        if (aiResult.appSummary) updatePayload.description = aiResult.appSummary;
+        if (aiResult.shortDescription) {
+          updatePayload.shortDescription = aiResult.shortDescription;
+          updatePayload.tagline = aiResult.shortDescription;
+        }
+
+        await App.findByIdAndUpdate(appId, updatePayload);
         console.log(`[BG_SCAN] AI Analysis complete for ${appId}`);
       } catch (err) {
         console.error('[BG_SCAN_AI_ERR]:', err.message);

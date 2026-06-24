@@ -130,9 +130,16 @@ const AppManagement = () => {
     try {
       const { data } = await api.post(`/admin/apps/${appId}/reanalyze`);
       setApps(prev => prev.map(a => a._id === appId ? (data.app || a) : a));
-      toast.success('AI analysis complete');
+      toast.success('AI analysis complete ✅');
     } catch (err) {
-      toast.error('AI analysis failed');
+      const errMsg = err.response?.data?.message || err.response?.data?.error || 'AI analysis failed';
+      toast.error(errMsg);
+      setApps(prev => prev.map(a => {
+        if (a._id === appId) {
+          return { ...a, aiModeration: { ...(a.aiModeration || {}), analysisError: errMsg } };
+        }
+        return a;
+      }));
     } finally {
       setAnalyzingId(null);
     }
@@ -303,6 +310,11 @@ const AppManagement = () => {
                         if (score == null) {
                           return (
                             <div className="flex flex-col gap-2">
+                              {app.aiModeration?.analysisError && (
+                                <p className="text-[9px] font-bold text-rose-500 leading-tight italic break-all mb-1 border-b border-rose-500/20 pb-1">
+                                  {app.aiModeration.analysisError}
+                                </p>
+                              )}
                               <button 
                                 onClick={() => handleAiAnalyze(app._id)}
                                 disabled={isPending}

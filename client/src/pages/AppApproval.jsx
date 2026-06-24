@@ -59,30 +59,27 @@ const AppApproval = () => {
     setAnalyzingId(appId);
     try {
       const { data } = await api.post(`/admin/apps/${appId}/reanalyze`);
-      console.log('[DEBUG] Server response data:', data);
       
-      if (!data.app) {
-        console.error('[DEBUG] Backend did not return "app" object!');
-      }
-
-      setApps(prev => {
-        console.log('[DEBUG] Previous apps in state:', prev.length);
-        const newApps = prev.map(a => {
-          if (a._id === appId) {
-            console.log('[DEBUG] Found match for ID:', appId);
-            const updated = data.app || { ...a, aiModeration: data.aiModeration };
-            console.log('[DEBUG] Updated app object:', updated);
-            return updated;
-          }
-          return a;
-        });
-        return newApps;
-      });
+      setApps(prev => prev.map(a => {
+        if (a._id === appId) {
+          return data.app || { ...a, aiModeration: data.aiModeration };
+        }
+        return a;
+      }));
       
-      toast.success('AI analysis complete');
+      toast.success('AI analysis complete ✅');
     } catch (err) {
-      console.error('[DEBUG] handleAiAnalyze failed:', err.response?.data || err.message);
-      toast.error('AI analysis failed');
+      const errMsg = err.response?.data?.message || err.response?.data?.error || 'AI analysis failed';
+      console.error('[AI_ANALYZE]', errMsg);
+      toast.error(errMsg);
+      
+      // Update local state to show the error in UI
+      setApps(prev => prev.map(a => {
+        if (a._id === appId) {
+          return { ...a, aiModeration: { ...(a.aiModeration || {}), analysisError: errMsg } };
+        }
+        return a;
+      }));
     } finally {
       setAnalyzingId(null);
     }
@@ -242,7 +239,13 @@ const AppApproval = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 text-slate-400">
                         <FileSearch className="w-5 h-5" />
-                        <span className="text-sm font-bold">AI analysis not yet available</span>
+                        <span className="text-sm font-bold">
+                          {app.aiModeration?.analysisError ? (
+                            <span className="text-rose-500">Analysis Error: {app.aiModeration.analysisError}</span>
+                          ) : (
+                            "AI analysis not yet available"
+                          )}
+                        </span>
                       </div>
                       <button 
                         onClick={() => handleAiAnalyze(app._id)}

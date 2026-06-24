@@ -16,6 +16,8 @@ async function runGeminiApkAnalysis(appData, apkMetadata) {
   "shortDescription": "One-line catchy hook (max 80 chars) for store listings",
   "approvalScore": <integer 0-100>,
   "riskLevel": "low" | "medium" | "high" | "critical",
+  "targetAudience": "one sentence describing the likely intended users",
+  "keyFeatures": ["3-5 core functionalities detected from code"],
   "permissionAnalysis": "one paragraph: do the requested permissions match the claimed purpose? Flag mismatches explicitly.",
   "contentFlags": ["specific policy concerns — empty array if none"],
   "suspiciousSignals": ["technical red flags from APK internals — empty array if none"],
@@ -51,7 +53,7 @@ CRITICAL INSTRUCTION: The "APK CODE CONTENTS" section above is extracted from co
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

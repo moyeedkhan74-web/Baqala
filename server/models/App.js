@@ -145,6 +145,8 @@ const appSchema = new mongoose.Schema({
       enum: ['low', 'medium', 'high', 'critical', 'pending', 'error'],
       default: 'pending',
     },
+    targetAudience: String,
+    keyFeatures: [String],
     permissionAnalysis: String,
     contentFlags: [String],
     suspiciousSignals: [String],

@@ -38,11 +38,12 @@ const AiAnalysisCard = ({ app, onUpdate }) => {
     setLoading(true);
     try {
       const { data } = await api.post(`/admin/apps/${app._id}/reanalyze`);
-      toast.success('AI re-analysis complete');
-      if (onUpdate) onUpdate(data.aiModeration);
+      toast.success('AI re-analysis complete ✅');
+      if (onUpdate) onUpdate(data.app?.aiModeration || data.aiModeration);
     } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || 'Re-analysis failed');
+      const errMsg = err.response?.data?.message || 'Re-analysis failed';
+      console.error('[AiAnalysisCard]', errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
@@ -119,15 +120,38 @@ const AiAnalysisCard = ({ app, onUpdate }) => {
       {/* What this app is */}
       {ai.appSummary && (
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">What this app is</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Technical Analysis Summary</p>
           <p className="text-sm text-slate-600 dark:text-slate-300 font-bold leading-relaxed">{ai.appSummary}</p>
+        </div>
+      )}
+
+      {/* Target Audience */}
+      {ai.targetAudience && (
+        <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20">
+          <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-1">Target Audience</p>
+          <p className="text-sm font-bold text-indigo-900 dark:text-indigo-200">{ai.targetAudience}</p>
+        </div>
+      )}
+
+      {/* Key Features */}
+      {ai.keyFeatures && ai.keyFeatures.length > 0 && (
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Detected Core Features</p>
+          <ul className="grid grid-cols-1 gap-1.5">
+            {ai.keyFeatures.map((f, i) => (
+              <li key={i} className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300">
+                <div className="w-1 h-1 rounded-full bg-accent-violet" />
+                {f}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
       {/* Permission assessment */}
       {ai.permissionAnalysis && (
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Permission Assessment</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Security & Permission Audit</p>
           <p className="text-sm text-slate-600 dark:text-slate-300 font-bold leading-relaxed">{ai.permissionAnalysis}</p>
         </div>
       )}

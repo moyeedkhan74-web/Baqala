@@ -176,19 +176,26 @@ const server = app.listen(PORT, async () => {
   console.log(`[STARTUP] B2 temp bucket: ${process.env.B2_TEMP_BUCKET ? `✅ ${process.env.B2_TEMP_BUCKET}` : '⚠️  B2_TEMP_BUCKET not set'}`);
   console.log(`[APK_CLEANUP] Next weekly cleanup: ${nextSunday.toLocaleString()}`);
 
-  // System Diagnostics Snapshot
-  try {
-    const { getSystemInfo } = require('./controllers/adminController');
-    const diagnostics = await getSystemInfo();
-    console.log('\n🔍 [SYSTEM_DIAGNOSTICS_SNAPSHOT]');
-    console.log('-------------------------------------------');
-    Object.entries(diagnostics).forEach(([key, value]) => {
-      console.log(`${key.padEnd(20)}: ${value}`);
-    });
-    console.log('-------------------------------------------\n');
-  } catch (diagError) {
-    console.error('[DIAGNOSTICS_FAILED]:', diagError.message);
-  }
+  // System Diagnostics Snapshot - Wait for DB to be really ready
+  setTimeout(async () => {
+    try {
+      const { getSystemInfo } = require('./controllers/adminController');
+      const mongoose = require('mongoose');
+      const diagnostics = await getSystemInfo();
+      
+      console.log('\n🔍 [SYSTEM_DIAGNOSTICS_SNAPSHOT]');
+      console.log('-------------------------------------------');
+      console.log('mongoStatus         :', ['Disconnected', 'Connected', 'Connecting', 'Disconnecting'][mongoose.connection.readyState]);
+      Object.entries(diagnostics).forEach(([key, value]) => {
+        if (key !== 'mongoConnected') { // Skip redundant MongoDB info
+          console.log(`${key.padEnd(20)}: ${value}`);
+        }
+      });
+      console.log('-------------------------------------------\n');
+    } catch (diagError) {
+      console.error('[DIAGNOSTICS_FAILED]:', diagError.message);
+    }
+  }, 5000); // 5 sec buffer for DB sync
 });
 
 // Graceful shutdown

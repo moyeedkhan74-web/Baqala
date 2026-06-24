@@ -784,21 +784,43 @@ exports.reanalyzeApp = async (req, res) => {
     const result = await runGeminiApkAnalysis(app, app.apkMetadata || {});
     console.log(`[AI_SCAN] Gemini result for ${app.title}:`, JSON.stringify(result));
 
+    // Check if Gemini returned an error internally
+    if (result.analysisError) {
+      console.error(`[AI_SCAN] ❌ Gemini failed for ${app.title}: ${result.analysisError}`);
+      // Save the error state to DB
+      await App.findByIdAndUpdate(req.params.id, {
+        aiModeration: { ...result, analysedAt: new Date() }
+      });
+      return res.status(422).json({
+        message: `AI analysis failed: ${result.analysisError}`,
+        error: result.analysisError
+      });
+    }
+
+    const updatePayload = {
+      aiModeration: { ...result, analysedAt: new Date() }
+    };
+    
+    // Push AI-generated descriptions directly to app fields
+    if (result.appSummary) {
+      updatePayload.description = result.appSummary;
+    }
+    if (result.shortDescription) {
+      updatePayload.shortDescription = result.shortDescription;
+      updatePayload.tagline = result.shortDescription;
+    }
+
     const updated = await App.findByIdAndUpdate(
       req.params.id,
-      { aiModeration: { ...result, analysedAt: new Date() } },
+      updatePayload,
       { new: true }
     );
-
-    if (!updated.aiModeration?.approvalScore) {
-      console.warn(`[AI_SCAN] ⚠️ Field 'approvalScore' missing in saved document for ${app.title}`);
-    }
 
     console.log(`[REANALYZE] ✅ ${app.title} — score: ${updated.aiModeration?.approvalScore}`);
     res.json({ message: 'Re-analysis complete.', app: updated });
   } catch (err) {
-    console.error('[REANALYZE_ERROR]:', err.message);
-    res.status(500).json({ message: 'Re-analysis failed.', error: err.message });
+    console.error('[REANALYZE_ERROR]:', err);
+    res.status(500).json({ message: 'Re-analysis failed.', error: err.stack || err.message });
   }
 };
 
