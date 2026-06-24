@@ -334,17 +334,18 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
   const legal = ai.legalAnalysis || {};
 
   const RatingBar = ({ label, value, reason, color }) => {
-    const safeValue = typeof value === 'number' ? value : 0;
+    const hasValue = typeof value === 'number';
+    const safeValue = hasValue ? value : 0;
     return (
       <div className="space-y-1.5 group relative">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">{label}</span>
-          <span className={`text-[10px] font-black ${color}`}>{safeValue}/100</span>
+          <span className={`text-[10px] font-black ${color}`}>{hasValue ? `${safeValue}/100` : 'N/A'}</span>
         </div>
         <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
           <div className={`h-full rounded-full transition-all duration-700 ${
             safeValue >= 80 ? 'bg-emerald-500' : safeValue >= 50 ? 'bg-amber-500' : 'bg-rose-500'
-          }`} style={{ width: `${safeValue}%` }} />
+          }`} style={{ width: `${hasValue ? safeValue : 0}%` }} />
         </div>
         {reason && (
           <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-1.5 leading-tight flex items-start gap-1 p-2 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5">
@@ -357,7 +358,16 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
   };
 
   const AuditSection = ({ title, icon: Icon, data, itemKey, riskKey, reasonKey, colorClass }) => {
-    if (!data || data.length === 0) return null;
+    if (!data || data.length === 0) {
+      return (
+        <div className="p-5 rounded-2xl bg-slate-50/50 dark:bg-slate-800/40 border border-slate-200 dark:border-white/5">
+          <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-wider mb-2 flex items-center gap-2">
+            <Icon className="w-3.5 h-3.5" /> {title}
+          </h4>
+          <p className="text-[10px] font-bold text-slate-400">N/A</p>
+        </div>
+      );
+    }
     return (
       <div className="p-5 rounded-2xl bg-slate-50/50 dark:bg-slate-800/40 border border-slate-200 dark:border-white/5">
         <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-wider mb-4 flex items-center gap-2">
@@ -486,14 +496,24 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
                  <div className="space-y-2">
                    <div className="flex items-center justify-between">
                      <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">GDPR Ready</span>
-                     <span className={cn("text-[10px] font-black px-2 py-0.5 rounded", legal.gdprCompliant ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500")}>
-                       {legal.gdprCompliant ? 'YES' : 'NO'}
+                     <span className={cn(
+                       "text-[10px] font-black px-2 py-0.5 rounded", 
+                       legal.gdprCompliant === true ? "bg-emerald-500/10 text-emerald-500" : 
+                       legal.gdprCompliant === false ? "bg-rose-500/10 text-rose-500" :
+                       "bg-slate-500/10 text-slate-500"
+                     )}>
+                       {legal.gdprCompliant === true ? 'YES' : legal.gdprCompliant === false ? 'NO' : 'N/A'}
                      </span>
                    </div>
                    <div className="flex items-center justify-between">
                      <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">COPPA (Kids)</span>
-                     <span className={cn("text-[10px] font-black px-2 py-0.5 rounded", legal.coppaCompliant ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500")}>
-                       {legal.coppaCompliant ? 'YES' : 'NO'}
+                     <span className={cn(
+                       "text-[10px] font-black px-2 py-0.5 rounded", 
+                       legal.coppaCompliant === true ? "bg-emerald-500/10 text-emerald-500" : 
+                       legal.coppaCompliant === false ? "bg-rose-500/10 text-rose-500" :
+                       "bg-slate-500/10 text-slate-500"
+                     )}>
+                       {legal.coppaCompliant === true ? 'YES' : legal.coppaCompliant === false ? 'NO' : 'N/A'}
                      </span>
                    </div>
                  </div>
@@ -510,7 +530,7 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
                      ))}
                    </ul>
                  ) : (
-                   <p className="text-[10px] font-bold text-slate-400">No major policy flags detected.</p>
+                   <p className="text-[10px] font-bold text-slate-400">{isLegacy ? 'N/A' : 'No major policy flags detected.'}</p>
                  )}
               </div>
             </div>
