@@ -191,8 +191,9 @@ exports.deleteBinary = async (filePath) => {
 // ============================================
 
 exports.uploadTempApk = async (appId, buffer) => {
-  if (!process.env.B2_TEMP_BUCKET) {
-    return { success: false, error: 'B2_TEMP_BUCKET not set' };
+  const bucket = process.env.B2_TEMP_BUCKET || process.env.B2_PRIVATE_BUCKET;
+  if (!bucket) {
+    return { success: false, error: 'No B2 bucket configured for scans' };
   }
   try {
     const key = `temp/${appId}.apk`;
@@ -212,8 +213,9 @@ exports.uploadTempApk = async (appId, buffer) => {
 };
 
 exports.downloadTempApk = async (key) => {
+  const bucket = process.env.B2_TEMP_BUCKET || process.env.B2_PRIVATE_BUCKET;
   const response = await imageS3.send(new GetObjectCommand({
-    Bucket: process.env.B2_TEMP_BUCKET,
+    Bucket: bucket,
     Key: key,
   }));
   const chunks = [];
@@ -222,9 +224,10 @@ exports.downloadTempApk = async (key) => {
 };
 
 exports.deleteTempApk = async (key) => {
+  const bucket = process.env.B2_TEMP_BUCKET || process.env.B2_PRIVATE_BUCKET;
   try {
     await imageS3.send(new DeleteObjectCommand({
-      Bucket: process.env.B2_TEMP_BUCKET,
+      Bucket: bucket,
       Key: key,
     }));
     console.log(`[B2_TEMP] Deleted: ${key}`);
@@ -234,9 +237,10 @@ exports.deleteTempApk = async (key) => {
 };
 
 exports.listTempApks = async () => {
+  const bucket = process.env.B2_TEMP_BUCKET || process.env.B2_PRIVATE_BUCKET;
   try {
     const response = await imageS3.send(new ListObjectsV2Command({
-      Bucket: process.env.B2_TEMP_BUCKET,
+      Bucket: bucket,
       Prefix: 'temp/',
     }));
     return (response.Contents || []).map(f => ({

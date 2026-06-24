@@ -172,8 +172,11 @@ const server = app.listen(PORT, async () => {
   }, nextSunday - nowForCleanup);
 
   // Startup status logs
-  console.log(`[STARTUP] Gemini AI: ${process.env.GEMINI_API_KEY ? '✅ configured (1500 req/day free)' : '⚠️  GEMINI_API_KEY not set'}`);
-  console.log(`[STARTUP] B2 temp bucket: ${process.env.B2_TEMP_BUCKET ? `✅ ${process.env.B2_TEMP_BUCKET}` : '⚠️  B2_TEMP_BUCKET not set'}`);
+  const aiStatus = process.env.GROQ_API_KEY ? `✅ Groq (${process.env.AI_PRIORITY === 'groq' ? 'Primary' : 'Secondary'})` : 
+                  process.env.GEMINI_API_KEY ? '✅ Gemini (Standard)' : '⚠️  None';
+  
+  console.log(`[STARTUP] AI Engine: ${aiStatus}`);
+  console.log(`[STARTUP] B2 Status: ${process.env.B2_PRIVATE_BUCKET ? `✅ ${process.env.B2_PRIVATE_BUCKET}` : '⚠️  B2_PRIVATE_BUCKET not set'}`);
   console.log(`[APK_CLEANUP] Next weekly cleanup: ${nextSunday.toLocaleString()}`);
 
   // System Diagnostics Snapshot - Wait for DB to be really ready
