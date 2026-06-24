@@ -55,47 +55,97 @@ Return this exact JSON structure:
     "category": "",
     "riskLevel": "LOW | MEDIUM | HIGH | CRITICAL"
   },
+
   "ratings": {
     "security": 0,
     "privacy": 0,
     "content": 0,
-    "quality": 0,
+    "legal": 0,
+    "performance": 0,
+    "transparency": 0,
+    "dataHandling": 0,
     "overall": 0
   },
+
   "ratingReasons": {
-    "security": "",
-    "privacy": "",
-    "content": "",
-    "quality": ""
+    "security": "explain score based on permissions and suspicious strings",
+    "privacy": "explain score based on data access and background services",
+    "content": "explain score based on app description vs actual functionality",
+    "legal": "explain score based on compliance, policy violations, or red flags",
+    "performance": "explain score based on background services and resource usage",
+    "transparency": "explain score based on how honest the app metadata is",
+    "dataHandling": "explain score based on how user data may be collected or shared"
   },
+
   "permissionAudit": [
     {
       "permission": "",
-      "risk": "LOW | MEDIUM | HIGH",
+      "risk": "LOW | MEDIUM | HIGH | CRITICAL",
       "reason": ""
     }
   ],
+
+  "networkAudit": [
+    {
+      "url": "",
+      "risk": "LOW | MEDIUM | HIGH | CRITICAL",
+      "reason": ""
+    }
+  ],
+
+  "stringAudit": [
+    {
+      "string": "",
+      "risk": "LOW | MEDIUM | HIGH | CRITICAL",
+      "reason": ""
+    }
+  ],
+
+  "serviceAudit": [
+    {
+      "service": "",
+      "risk": "LOW | MEDIUM | HIGH | CRITICAL",
+      "reason": ""
+    }
+  ],
+
   "flags": {
     "emptyApp": false,
     "suspiciousUrls": false,
     "dangerousPermissions": false,
-    "hiddenServices": false
+    "hiddenServices": false,
+    "legalViolation": false,
+    "privacyRisk": false,
+    "dataExfiltration": false,
+    "malwareIndicators": false
   },
+
+  "legalAnalysis": {
+    "gdprCompliant": true,
+    "coppaCompliant": true,
+    "playPolicyViolations": [],
+    "concerns": []
+  },
+
   "verdict": "",
   "decision": "APPROVE | REJECT | REVIEW",
+
   "rejectionReasons": [],
   "approvalConditions": [],
+
   "summary": ""
 }
 
 RULES:
 1. All rating values must be integers between 0-100.
-2. overall = weighted average of security(30%) + privacy(30%) + content(20%) + quality(20%).
-3. If permissions, services, URLs, and strings are ALL empty, set emptyApp: true and quality below 30.
-4. permissionAudit must never be an empty array — if no permissions, return one entry with "NONE DETECTED".
-5. decision must be exactly: APPROVE, REJECT, or REVIEW.
-6. ratingReasons must always have a sentence for all four categories.
-7. Return ONLY the JSON. No markdown. No extra text.
+2. overall = weighted average: security(25%) + privacy(20%) + content(15%) + legal(15%) + performance(10%) + transparency(10%) + dataHandling(5%).
+3. If permissions, services, URLs, and strings are ALL empty — set emptyApp: true, quality below 30, decision as REJECT.
+4. permissionAudit must never be empty — if no permissions, return [{ "permission": "NONE DETECTED", "risk": "LOW", "reason": "No permissions requested" }].
+5. Same rule applies to networkAudit, stringAudit, and serviceAudit — never return empty arrays.
+6. legalAnalysis.playPolicyViolations must list any Google Play policy violations detected.
+7. decision must be exactly: APPROVE, REJECT, or REVIEW.
+8. ratingReasons must always have a sentence for all seven categories.
+9. Return ONLY the JSON. No markdown. No extra text.
 `;
 
   const MAX_RETRIES = 2;
@@ -121,7 +171,7 @@ RULES:
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
-            maxOutputTokens: 1000,
+            maxOutputTokens: 1500,
             temperature: 0.1,
             responseMimeType: 'application/json',
           },
@@ -154,18 +204,13 @@ RULES:
       const clean = rawText.replace(/```json|```/g, '').trim();
       const parsed = JSON.parse(clean);
 
-      // --- COMPATIBILITY SHIM (Optional but recommended for stability) ---
-      // This ensures existing UI components and background scan logic don't break immediately
+      // --- COMPATIBILITY SHIM ---
       const flattened = {
         ...parsed,
         approvalScore: parsed.ratings?.overall,
         riskLevel: parsed.appInfo?.riskLevel?.toLowerCase(),
         recommendation: parsed.decision?.toLowerCase(),
-        appSummary: parsed.summary,
-        // Map permissionAudit back to the format the UI expects for permissionAnalysis if needed
-        permissionAnalysis: Array.isArray(parsed.permissionAudit) 
-          ? parsed.permissionAudit.map(p => `${p.permission} (${p.risk}): ${p.reason}`).join('\n')
-          : ''
+        appSummary: parsed.summary
       };
 
       console.log(`[AI_MODERATION] ✅ ${useGroq ? 'Groq' : 'Gemini'} done — score: ${flattened.approvalScore}, decision: ${flattened.decision}`);
