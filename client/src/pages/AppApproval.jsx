@@ -67,7 +67,10 @@ const AppApproval = () => {
       
       setApps(prev => prev.map(a => {
         if (a._id === appId) {
-          return data.app || { ...a, aiModeration: data.aiModeration };
+          const updated = data.app || { ...a, aiModeration: data.aiModeration };
+          // If the notebook is open for this app, update it too
+          setNotebookTarget(nb => nb?._id === appId ? updated : nb);
+          return updated;
         }
         return a;
       }));
@@ -307,19 +310,22 @@ const AppApproval = () => {
         <AiNotebookModal 
           app={notebookTarget} 
           onClose={() => setNotebookTarget(null)} 
+          onReanalyze={handleAiAnalyze}
+          isAnalyzing={analyzingId === notebookTarget._id}
         />
       )}
     </AdminLayout>
   );
 };
 
-const AiNotebookModal = ({ app, onClose }) => {
+const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
   if (!app) return null;
   const ai = app.aiModeration || {};
   const ratings = ai.ratings || {};
   
   // Legacy Fallbacks for older scans
   const displayOverall = ratings.overall || ai.approvalScore || 0;
+  const isLegacy = !ratings.overall && ai.approvalScore;
   const displayDecision = ai.decision || (ai.recommendation ? ai.recommendation.toUpperCase() : null);
   const displayVerdict = ai.verdict || ai.appSummary || "Scan Complete (Legacy Format)";
 
@@ -434,8 +440,25 @@ const AiNotebookModal = ({ app, onClose }) => {
             </div>
 
             {/* Comprehensive Rating Matrix */}
-            <div className="p-6 bg-white/50 dark:bg-slate-800/40 rounded-[2rem] border border-slate-100 dark:border-white/5">
+            <div className="p-6 bg-white/50 dark:bg-slate-800/40 rounded-[2rem] border border-slate-100 dark:border-white/5 relative overflow-hidden">
               <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-4">Risk & Performance Matrix</p>
+              
+              {isLegacy && (
+                <div className="absolute inset-0 bg-[#fdfcf0]/80 dark:bg-slate-900/80 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center text-center p-6 transition-all">
+                   <Sparkles className="w-8 h-8 text-amber-500 mb-2 animate-pulse" />
+                   <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase">Deep Audit Required</h4>
+                   <p className="text-[10px] font-bold text-slate-500 max-w-[200px] mt-1 mb-4">This report uses the legacy format. Generate a 7-point matrix to fill these values.</p>
+                   <button 
+                     onClick={() => onReanalyze(app._id)}
+                     disabled={isAnalyzing}
+                     className="px-6 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-transform disabled:opacity-50"
+                   >
+                     {isAnalyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                     {isAnalyzing ? 'Recalculating...' : 'Generate Matrix Now'}
+                   </button>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <RatingBar label="Security" value={ratings.security} reason={ratingReasons.security} color="text-emerald-500" />
                 <RatingBar label="Privacy" value={ratings.privacy} reason={ratingReasons.privacy} color="text-blue-500" />
