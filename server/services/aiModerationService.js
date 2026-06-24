@@ -36,10 +36,15 @@ Title: ${appTitle}
 Description: ${appDescription}
 Category: ${appCategory}
 Package Name: ${packageName}
+Version: ${apkMetadata.versionName || 'unknown'}
+File Count: ${apkMetadata.fileCount || 0}
+Native Libraries: ${apkMetadata.nativeLibCount || 0}
 Permissions: ${permissions.length > 0 ? permissions.join(', ') : 'NONE DETECTED'}
 Background Services: ${services.length > 0 ? services.join(', ') : 'NONE DETECTED'}
+Broadcast Receivers: ${Array.isArray(apkMetadata.receivers) ? apkMetadata.receivers.join(', ') : 'NONE DETECTED'}
 Hardcoded URLs: ${urls.length > 0 ? urls.join(', ') : 'NONE DETECTED'}
 Suspicious Strings: ${suspiciousStrings.length > 0 ? suspiciousStrings.join(', ') : 'NONE DETECTED'}
+Extraction Status: ${apkMetadata.extractionError || 'SUCCESS'}
 
 Return this exact JSON structure:
 

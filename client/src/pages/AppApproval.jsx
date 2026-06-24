@@ -419,6 +419,31 @@ const AiNotebookModal = ({ app, onClose }) => {
               </p>
             </div>
 
+            {/* Technical Footprint */}
+            <div className="p-5 rounded-2xl bg-slate-50/50 dark:bg-slate-800/40 border border-slate-200 dark:border-white/5">
+              <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-wider mb-3 flex items-center gap-2">
+                <FileSearch className="w-3.5 h-3.5" /> Technical Footprint
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Package ID</p>
+                  <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate">{app.apkMetadata?.packageName || ai.appInfo?.packageName || 'Unknown'}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Version</p>
+                  <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300">{app.apkMetadata?.versionName || 'v1.0.0'}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">File Density</p>
+                  <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300">{app.apkMetadata?.fileCount || 0} Files | {app.apkMetadata?.nativeLibCount || 0} Libs</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Active Services</p>
+                  <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300">{(app.apkMetadata?.services?.length || 0)} Background Procs</p>
+                </div>
+              </div>
+            </div>
+
             {/* Permission Audit (Structured) */}
             {ai.permissionAudit?.length > 0 ? (
                <div className="p-5 rounded-2xl bg-slate-50/50 dark:bg-slate-800/40 border border-slate-200 dark:border-white/5">
