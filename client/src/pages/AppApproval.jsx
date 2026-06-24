@@ -321,24 +321,27 @@ const AiNotebookModal = ({ app, onClose }) => {
   const flags = ai.flags || {};
   const legal = ai.legalAnalysis || {};
 
-  const RatingBar = ({ label, value, reason, color }) => (
-    <div className="space-y-1.5 group relative">
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">{label}</span>
-        <span className={`text-[10px] font-black ${color}`}>{value ?? '—'}/100</span>
+  const RatingBar = ({ label, value, reason, color }) => {
+    const safeValue = typeof value === 'number' ? value : 0;
+    return (
+      <div className="space-y-1.5 group relative">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">{label}</span>
+          <span className={`text-[10px] font-black ${color}`}>{safeValue}/100</span>
+        </div>
+        <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+          <div className={`h-full rounded-full transition-all duration-700 ${
+            safeValue >= 80 ? 'bg-emerald-500' : safeValue >= 50 ? 'bg-amber-500' : 'bg-rose-500'
+          }`} style={{ width: `${safeValue}%` }} />
+        </div>
+        {reason && (
+          <p className="text-[9px] font-bold text-slate-400 mt-1 leading-tight opacity-0 group-hover:opacity-100 transition-opacity">
+            {reason}
+          </p>
+        )}
       </div>
-      <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full transition-all duration-700 ${
-          (value ?? 0) >= 80 ? 'bg-emerald-500' : (value ?? 0) >= 50 ? 'bg-amber-500' : 'bg-rose-500'
-        }`} style={{ width: `${value ?? 0}%` }} />
-      </div>
-      {reason && (
-        <p className="text-[9px] font-bold text-slate-400 mt-1 leading-tight opacity-0 group-hover:opacity-100 transition-opacity">
-          {reason}
-        </p>
-      )}
-    </div>
-  );
+    );
+  };
 
   const AuditSection = ({ title, icon: Icon, data, itemKey, riskKey, reasonKey, colorClass }) => {
     if (!data || data.length === 0) return null;

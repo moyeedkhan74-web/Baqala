@@ -155,13 +155,11 @@ Return this exact JSON structure:
 RULES:
 1. All rating values must be integers between 0-100.
 2. overall = weighted average: security(25%) + privacy(20%) + content(15%) + legal(15%) + performance(10%) + transparency(10%) + dataHandling(5%).
-3. If permissions, services, URLs, and strings are ALL empty — set emptyApp: true, quality below 30, decision as REJECT.
-4. permissionAudit must never be empty — if no permissions, return [{ "permission": "NONE DETECTED", "risk": "LOW", "reason": "No permissions requested" }].
-5. Same rule applies to networkAudit, stringAudit, and serviceAudit — never return empty arrays.
-6. legalAnalysis.playPolicyViolations must list any Google Play policy violations detected.
-7. decision must be exactly: APPROVE, REJECT, or REVIEW.
-8. ratingReasons must always have a sentence for all seven categories.
-9. Return ONLY the JSON. No markdown. No extra text.
+3. Performance Scoring: If an app has 0 background services, set performance to 100 (efficient). Penalty only if heavy/suspicious services are detected.
+4. If permissions, services, URLs, and strings are ALL empty — set emptyApp: true, quality below 30, decision as REJECT.
+5. All 7 ratingCategories (security, privacy, content, legal, performance, transparency, dataHandling) MUST be provided.
+6. permissionAudit, networkAudit, stringAudit, and serviceAudit must never be empty arrays.
+7. Return ONLY the JSON. No markdown. No extra text.
 `;
 
   const MAX_RETRIES = 2;
