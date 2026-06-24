@@ -344,6 +344,7 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
         </div>
         <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
           <div className={`h-full rounded-full transition-all duration-700 ${
+            !hasValue ? 'bg-slate-300 dark:bg-slate-600' :
             safeValue >= 80 ? 'bg-emerald-500' : safeValue >= 50 ? 'bg-amber-500' : 'bg-rose-500'
           }`} style={{ width: `${hasValue ? safeValue : 0}%` }} />
         </div>
