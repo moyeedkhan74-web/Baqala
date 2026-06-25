@@ -837,12 +837,19 @@ exports.reanalyzeApp = async (req, res) => {
 // Admin Banner Management (Bypasses requireOwner)
 exports.uploadAppBannerAdmin = async (req, res) => {
   try {
-    const app = await App.findById(req.params.id);
+    const appId = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(appId)) {
+      return res.status(400).json({ message: 'Invalid App ID format.' });
+    }
+
+    const app = await App.findById(appId);
     if (!app) return res.status(404).json({ message: 'App not found.' });
 
     if (!req.files || !req.files.banner || !req.files.banner[0]) {
       return res.status(400).json({ message: 'No banner file provided.' });
     }
+
+    const bannerFile = req.files.banner[0];
 
     // Helper to delete any file from B2
     const deleteFileFromB2Local = async (rawUrl) => {
@@ -850,15 +857,31 @@ exports.uploadAppBannerAdmin = async (req, res) => {
       try {
         const b2Path = extractB2Key(rawUrl);
         if (!b2Path) return;
+        
+        // Use the private bucket for banners (as per uploadImage logic)
         await deleteImage(b2Path);
-      } catch (err) { console.error('B2 Delete Error:', err); }
+        console.log(`[ADMIN_BANNER] Deleted old banner: ${b2Path}`);
+      } catch (err) { 
+        console.error('[ADMIN_BANNER_DELETE_ERR]:', err.message); 
+      }
     };
 
-    // Upload new banner
+    // 1. Delete old banner if it exists to prevent B2 orphaning
+    if (app.banner) {
+      await deleteFileFromB2Local(app.banner);
+    }
+
+    // 2. Upload new banner
+    const timestamp = Date.now();
+    const safeOrigName = bannerFile.originalname.replace(/\s+/g, '_');
+    const uploadPath = `banners/${timestamp}_admin_${safeOrigName}`;
+
+    console.log(`[ADMIN_BANNER] Uploading new banner to: ${uploadPath}`);
+
     const uploadResult = await uploadImage(
-      `banners/${Date.now()}_admin_${req.files.banner[0].originalname.replace(/\s+/g, '_')}`, 
-      req.files.banner[0].buffer, 
-      req.files.banner[0].mimetype
+      uploadPath, 
+      bannerFile.buffer, 
+      bannerFile.mimetype
     );
 
     if (!uploadResult.success) {
@@ -869,29 +892,51 @@ exports.uploadAppBannerAdmin = async (req, res) => {
       });
     }
 
+    // 3. Update Database
     app.banner = uploadResult.url;
     await app.save();
 
-    res.json({ message: 'Promotional banner updated by Admin.', app });
+    console.log(`[ADMIN_BANNER] Success: ${app.title} banner updated.`);
+
+    res.json({ 
+      message: 'Promotional banner updated by Admin.', 
+      app: {
+        _id: app._id,
+        banner: app.banner
+      } 
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Banner update failed.', error: err.message });
+    console.error('[ADMIN_BANNER_CRITICAL_ERR]:', err);
+    res.status(500).json({ 
+      message: 'Banner update failed due to a server error.', 
+      error: err.message 
+    });
   }
 };
 
 exports.removeAppBannerAdmin = async (req, res) => {
   try {
-    const app = await App.findById(req.params.id);
+    const appId = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(appId)) {
+      return res.status(400).json({ message: 'Invalid App ID format.' });
+    }
+
+    const app = await App.findById(appId);
     if (!app) return res.status(404).json({ message: 'App not found.' });
 
     if (app.banner) {
       const b2Path = extractB2Key(app.banner);
-      if (b2Path) await deleteImage(b2Path);
+      if (b2Path) {
+        await deleteImage(b2Path);
+        console.log(`[ADMIN_BANNER] Removed B2 file: ${b2Path}`);
+      }
       app.banner = '';
       await app.save();
     }
 
     res.json({ message: 'Banner removed by Admin.', app });
   } catch (err) {
+    console.error('[ADMIN_BANNER_REMOVE_ERR]:', err);
     res.status(500).json({ message: 'Failed to remove banner.', error: err.message });
   }
 };
