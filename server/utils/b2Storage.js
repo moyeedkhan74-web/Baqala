@@ -135,7 +135,7 @@ const doUpload = async (s3, bucket, endpoint, scrubbedPath, fileBuffer, contentT
   if (isBinary) {
     url = `https://${endpoint}/${bucket}/${scrubbedPath}`;
   } else {
-    url = `${baseUrl}/api/assets/${scrubbedPath}`;
+    url = `/api/assets/${scrubbedPath}`;
   }
   return { success: true, url, path: scrubbedPath };
 };

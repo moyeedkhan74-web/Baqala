@@ -14,16 +14,42 @@ import {
   Trash2,
   RefreshCw,
   Check,
-  Zap
+  Zap,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
-import api from '../../api/axios';
+import api, { API_BASE_URL } from '../../api/axios';
 import toast from 'react-hot-toast';
 import AiAnalysisCard from './AiAnalysisCard';
 
+const getImageUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('/')) {
+    const host = API_BASE_URL.replace(/\/api$/, '');
+    return `${host}${url}`;
+  }
+  return url;
+};
+
 const AdminAppDetailModal = ({ app, onClose, onUpdate }) => {
   const [loading, setLoading] = useState(false);
+  const [activeScreenshotIndex, setActiveScreenshotIndex] = useState(null);
   if (!app) return null;
+
+  const nextScreenshot = (e) => {
+    e.stopPropagation();
+    if (activeScreenshotIndex !== null && app.screenshots) {
+      setActiveScreenshotIndex((activeScreenshotIndex + 1) % app.screenshots.length);
+    }
+  };
+
+  const prevScreenshot = (e) => {
+    e.stopPropagation();
+    if (activeScreenshotIndex !== null && app.screenshots) {
+      setActiveScreenshotIndex((activeScreenshotIndex - 1 + app.screenshots.length) % app.screenshots.length);
+    }
+  };
 
   const handleBannerUpdate = async (e) => {
     const file = e.target.files[0];
@@ -71,7 +97,7 @@ const AdminAppDetailModal = ({ app, onClose, onUpdate }) => {
         {/* Header Section */}
         <div className="relative h-48 sm:h-64 bg-slate-100 dark:bg-white/5 overflow-hidden shrink-0">
           <img 
-            src={app.banner || 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop'} 
+            src={getImageUrl(app.banner) || 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop'} 
             className="w-full h-full object-cover opacity-50 dark:opacity-20"
             alt="App Banner"
           />
@@ -86,7 +112,7 @@ const AdminAppDetailModal = ({ app, onClose, onUpdate }) => {
 
           <div className="absolute bottom-0 left-0 right-0 p-8 flex items-end gap-6">
             <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-3xl bg-white dark:bg-slate-800 p-4 shadow-2xl border border-slate-200 dark:border-white/10 shrink-0">
-              <img src={app.icon} alt={app.title} className="w-full h-full object-contain" />
+              <img src={getImageUrl(app.icon)} alt={app.title} className="w-full h-full object-contain" />
             </div>
             <div className="flex-1 mb-2">
               <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">{app.title}</h2>
@@ -199,8 +225,15 @@ const AdminAppDetailModal = ({ app, onClose, onUpdate }) => {
                   </h3>
                   <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
                     {app.screenshots.map((ss, idx) => (
-                      <div key={idx} className="w-64 h-40 rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden shrink-0 shadow-sm hover:shadow-md transition-shadow">
-                        <img src={ss} className="w-full h-full object-cover" alt={`Screenshot ${idx + 1}`} />
+                      <div 
+                        key={idx} 
+                        className="w-64 h-40 rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden shrink-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer group/ss relative"
+                        onClick={() => setActiveScreenshotIndex(idx)}
+                      >
+                        <img src={getImageUrl(ss)} className="w-full h-full object-cover" alt={`Screenshot ${idx + 1}`} />
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/ss:opacity-100 transition-opacity flex items-center justify-center">
+                           <span className="text-white text-[10px] font-black uppercase tracking-tighter bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-sm">Enlarge View</span>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -306,7 +339,7 @@ const AdminAppDetailModal = ({ app, onClose, onUpdate }) => {
                 {app.banner ? (
                   <div className="space-y-4 relative z-10">
                     <div className="aspect-[21/9] rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm relative group">
-                      <img src={app.banner} className="w-full h-full object-cover" alt="Banner Preview" />
+                      <img src={getImageUrl(app.banner)} className="w-full h-full object-cover" alt="Banner Preview" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <button onClick={removeBanner} className="p-3 bg-white/20 text-white rounded-full hover:bg-rose-500 transition-all transform hover:scale-110">
                           <Trash2 className="w-5 h-5" />
@@ -340,6 +373,74 @@ const AdminAppDetailModal = ({ app, onClose, onUpdate }) => {
           </div>
         </div>
       </div>
+
+      {/* Full-Screen Screenshots Lightbox */}
+      {activeScreenshotIndex !== null && app.screenshots && (
+        <div 
+          className="fixed inset-0 z-[200] bg-slate-950/95 backdrop-blur-xl flex flex-col animate-in fade-in duration-300"
+          onClick={() => setActiveScreenshotIndex(null)}
+        >
+          {/* Top Bar */}
+          <div className="flex items-center justify-between p-6 sm:p-10 relative z-10">
+             <div>
+                <h4 className="text-white font-black text-xl tracking-tight leading-none">{app.title}</h4>
+                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2 flex items-center gap-2">
+                   <Package className="w-3 h-3" />
+                   Screenshot {activeScreenshotIndex + 1} of {app.screenshots.length}
+                </p>
+             </div>
+             <button 
+                onClick={() => setActiveScreenshotIndex(null)}
+                className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition-all border border-white/10"
+             >
+                <X className="w-6 h-6" />
+             </button>
+          </div>
+
+          {/* Main Viewer */}
+          <div className="flex-1 relative flex items-center justify-center p-4 sm:p-12 overflow-hidden">
+             {/* Left Arrow */}
+             <button 
+                onClick={prevScreenshot}
+                className="absolute left-4 sm:left-10 w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-white/5 hover:bg-accent-violet hover:text-white text-white flex items-center justify-center transition-all border border-white/5 backdrop-blur-xl group z-20"
+             >
+                <ChevronLeft className="w-8 h-8 group-hover:-translate-x-1 transition-transform" />
+             </button>
+
+             <div className="relative w-full h-full flex items-center justify-center">
+                <img 
+                  key={activeScreenshotIndex}
+                  src={getImageUrl(app.screenshots[activeScreenshotIndex])} 
+                  className="max-w-full max-h-full object-contain shadow-2xl rounded-2xl sm:rounded-[2rem] animate-in zoom-in-95 duration-500"
+                  alt={`Screenshot ${activeScreenshotIndex + 1}`} 
+                  onClick={(e) => e.stopPropagation()}
+                />
+             </div>
+
+             {/* Right Arrow */}
+             <button 
+                onClick={nextScreenshot}
+                className="absolute right-4 sm:right-10 w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-white/5 hover:bg-accent-violet hover:text-white text-white flex items-center justify-center transition-all border border-white/5 backdrop-blur-xl group z-20"
+             >
+                <ChevronRight className="w-8 h-8 group-hover:translate-x-1 transition-transform" />
+             </button>
+          </div>
+
+          {/* Thumbnail Progress Bar */}
+          <div className="p-10 flex justify-center gap-3 relative z-10 overflow-x-auto no-scrollbar">
+             {app.screenshots.map((_, idx) => (
+                <button 
+                  key={idx}
+                  onClick={(e) => { e.stopPropagation(); setActiveScreenshotIndex(idx); }}
+                  className={cn(
+                    "h-1.5 transition-all duration-500 rounded-full",
+                    activeScreenshotIndex === idx ? "w-12 bg-accent-violet" : "w-3 bg-white/10 hover:bg-white/20"
+                  )}
+                />
+             ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

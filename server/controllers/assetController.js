@@ -35,13 +35,14 @@ const log = (msg) => {
  * The browser then fetches the image directly from B2.
  */
 exports.proxyAsset = async (req, res) => {
-  const { folder, filename } = req.params;
-  // Use the raw key directly — no scrubbing needed since the URL path IS the key
-  const key = `${folder}/${filename}`;
+  // Catch-all route params are in req.params[0]
+  const key = req.params[0];
   
+  if (!key) return res.status(400).json({ message: 'Asset key missing' });
+
   try {
-    const isBinary = folder === 'apps';
-    const isAvatar = folder === 'avatars';
+    const isBinary = key.startsWith('apps/');
+    const isAvatar = key.startsWith('avatars/');
     const s3 = isBinary ? publicS3 : privateS3;
 
     let bucket;
@@ -55,6 +56,7 @@ exports.proxyAsset = async (req, res) => {
 
     log(`Generating signed URL for: ${key} from bucket: ${bucket}`);
 
+    const filename = key.split('/').pop();
     const command = new GetObjectCommand({
       Bucket: bucket,
       Key: key,
