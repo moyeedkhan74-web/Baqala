@@ -41,26 +41,30 @@ exports.proxyAsset = async (req, res) => {
   if (!key) return res.status(400).json({ message: 'Asset key missing' });
 
   try {
-    const isBinary = key.startsWith('apps/');
     const isAvatar = key.startsWith('avatars/');
-    const s3 = isBinary ? publicS3 : privateS3;
+    // Real app binaries are in apps/ but NOT in apps/screenshots/
+    const isAppBinary = key.startsWith('apps/') && !key.startsWith('apps/screenshots/');
+    
+    // Binaries use publicS3, everything else (images) uses privateS3 by default
+    const s3 = isAppBinary ? publicS3 : privateS3;
 
     let bucket;
-    if (isBinary) {
+    if (isAppBinary) {
         bucket = process.env.B2_BUCKET_NAME;
     } else if (isAvatar) {
         bucket = process.env.B2_AVATAR_BUCKET || 'baqala.avatar';
     } else {
+        // Covers icons/, banners/, screenshots/, and legacy apps/screenshots/
         bucket = process.env.B2_PRIVATE_BUCKET;
     }
 
-    log(`Generating signed URL for: ${key} from bucket: ${bucket}`);
+    log(`Generating signed URL for: ${key} | Bucket: ${bucket} | Type: ${isAppBinary ? 'Binary' : 'Image'}`);
 
     const filename = key.split('/').pop();
     const command = new GetObjectCommand({
       Bucket: bucket,
       Key: key,
-      ResponseContentDisposition: isBinary ? `attachment; filename="${filename}"` : 'inline',
+      ResponseContentDisposition: isAppBinary ? `attachment; filename="${filename}"` : 'inline',
     });
 
     // Generate a signed URL valid for 1 hour

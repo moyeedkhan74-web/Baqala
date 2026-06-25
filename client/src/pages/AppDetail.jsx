@@ -509,10 +509,66 @@ const AppDetail = () => {
             onClick={() => { setLightboxIndex(-1); setZoomScale(1); }}
             id="lightbox-modal"
           >
-            <button className="absolute top-6 right-6 text-white bg-white/10 p-3 rounded-full hover:bg-white/20"><HiX className="w-8 h-8" /></button>
-            <div className="relative p-4" onClick={e => e.stopPropagation()}>
-              <img src={lightboxSrc} alt="" className="max-w-[95vw] max-h-[85vh] object-contain rounded-2xl" />
+            <button 
+              className="absolute top-6 right-6 text-white bg-white/10 p-4 rounded-full hover:bg-white/20 transition-all z-10 border border-white/10 backdrop-blur-md"
+              onClick={() => setLightboxIndex(-1)}
+              aria-label="Close Lightbox"
+            >
+              <HiX className="w-8 h-8" />
+            </button>
+
+            <div className="relative w-full h-full flex items-center justify-center p-4 sm:p-20" onClick={e => e.stopPropagation()}>
+              {/* Left Arrow */}
+              {isScreenshot && lightboxIndex > 0 && (
+                <button 
+                  className="absolute left-4 sm:left-12 w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition-all border border-white/10 backdrop-blur-xl z-20 group"
+                  onClick={() => { setLightboxIndex(prev => prev - 1); setZoomScale(1); }}
+                  aria-label="Previous Screenshot"
+                >
+                  <HiArrowLeft className="w-8 h-8 group-hover:-translate-x-1 transition-transform" />
+                </button>
+              )}
+
+              {/* Main Image */}
+              <motion.img 
+                key={lightboxIndex}
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: zoomScale, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+                src={lightboxSrc} 
+                alt="App visual preview" 
+                className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl border border-white/10 cursor-zoom-in"
+                onClick={() => setZoomScale(prev => (prev === 1 ? 1.5 : 1))}
+              />
+
+              {/* Right Arrow */}
+              {isScreenshot && lightboxIndex < (app?.screenshots?.length || 0) - 1 && (
+                <button 
+                  className="absolute right-4 sm:right-12 w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition-all border border-white/10 backdrop-blur-xl z-20 group"
+                  onClick={() => { setLightboxIndex(prev => prev + 1); setZoomScale(1); }}
+                  aria-label="Next Screenshot"
+                >
+                  <HiArrowRight className="w-8 h-8 group-hover:translate-x-1 transition-transform" />
+                </button>
+              )}
             </div>
+
+            {/* Progress Indicators */}
+            {isScreenshot && app?.screenshots?.length > 1 && (
+              <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-3 px-6 py-3 bg-white/5 backdrop-blur-xl rounded-full border border-white/10 overflow-x-auto no-scrollbar max-w-[80vw]">
+                {app.screenshots.map((_, idx) => (
+                  <button 
+                    key={idx}
+                    onClick={() => { setLightboxIndex(idx); setZoomScale(1); }}
+                    className={cn(
+                      "h-1.5 transition-all duration-300 rounded-full",
+                      lightboxIndex === idx ? "w-8 bg-accent-violet shadow-[0_0_10px_rgba(139,92,246,0.5)]" : "w-1.5 bg-white/20 hover:bg-white/40"
+                    )}
+                  />
+                ))}
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { HiStar, HiDownload, HiArrowRight } from 'react-icons/hi';
+import { API_BASE_URL } from '../api/axios';
 
 const HeroCarousel = ({ apps }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -28,9 +29,9 @@ const HeroCarousel = ({ apps }) => {
     if (!url) return '';
     // Already absolute URL
     if (url.startsWith('http')) return url;
-    // Relative path (e.g. /api/assets/banners/...)
+    // Relative path (e.g. /api/assets/banners/...) — must point to backend host
     if (url.startsWith('/')) {
-      const host = window.location.origin;
+      const host = API_BASE_URL.replace(/\/api$/, '');
       return `${host}${url}`;
     }
     return url;

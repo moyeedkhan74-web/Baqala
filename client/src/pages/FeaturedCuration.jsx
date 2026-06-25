@@ -184,55 +184,60 @@ const FeaturedCuration = () => {
                           {typeof app.developer === 'object' ? app.developer?.name : (app.developerName || 'Developer')}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {/* Upload Banner — Opens file picker directly */}
-                        <button 
-                          onClick={() => triggerBannerUpload(app._id)}
-                          disabled={uploadingBannerId === app._id}
-                          className={cn(
-                            "flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all",
-                            uploadingBannerId === app._id
-                              ? "bg-slate-100 text-slate-400 border-slate-200"
-                              : "text-accent-violet bg-accent-violet/10 hover:bg-accent-violet hover:text-white border-accent-violet/20"
-                          )}
-                          title="Upload promotional banner"
-                        >
-                          {uploadingBannerId === app._id ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <Upload className="w-3.5 h-3.5" />
-                          )}
-                          {app.banner ? 'Edit Banner' : 'Set Banner'}
-                        </button>
-                        {app.banner && (
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-2">
+                          {/* Upload Banner — Opens file picker directly */}
                           <button 
-                            onClick={() => handleRemoveBanner(app._id)}
-                            className="p-2.5 text-slate-400 hover:bg-rose-500/10 hover:text-rose-500 rounded-xl transition-all"
-                            title="Remove banner"
+                            onClick={() => triggerBannerUpload(app._id)}
+                            disabled={uploadingBannerId === app._id}
+                            className={cn(
+                              "flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all",
+                              uploadingBannerId === app._id
+                                ? "bg-slate-100 text-slate-400 border-slate-200"
+                                : "text-accent-violet bg-accent-violet/10 hover:bg-accent-violet hover:text-white border-accent-violet/20"
+                            )}
+                            title="Upload promotional banner"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            {uploadingBannerId === app._id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Upload className="w-3.5 h-3.5" />
+                            )}
+                            {app.banner ? 'Edit Banner' : 'Set Banner'}
                           </button>
+                          {app.banner && (
+                            <button 
+                              onClick={() => handleRemoveBanner(app._id)}
+                              className="p-2.5 text-slate-400 hover:bg-rose-500/10 hover:text-rose-500 rounded-xl transition-all"
+                              title="Remove banner"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                          {/* View Details */}
+                          <button 
+                            onClick={() => setDetailTarget(app)}
+                            className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                            title="View full details"
+                          >
+                            <Eye className="w-5 h-5" />
+                          </button>
+                          {/* Remove from Featured */}
+                          <button 
+                            onClick={() => toggleFeatured(app._id)} 
+                            disabled={togglingId === app._id}
+                            className="p-2.5 text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all"
+                            title="Remove from featured"
+                          >
+                            {togglingId === app._id 
+                              ? <Loader2 className="w-5 h-5 animate-spin" />
+                              : <Trash2 className="w-5 h-5" />
+                            }
+                          </button>
+                        </div>
+                        {!app.banner && (
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter mr-2">1200x500 Rec.</span>
                         )}
-                        {/* View Details */}
-                        <button 
-                          onClick={() => setDetailTarget(app)}
-                          className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-                          title="View full details"
-                        >
-                          <Eye className="w-5 h-5" />
-                        </button>
-                        {/* Remove from Featured */}
-                        <button 
-                          onClick={() => toggleFeatured(app._id)} 
-                          disabled={togglingId === app._id}
-                          className="p-2.5 text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all"
-                          title="Remove from featured"
-                        >
-                          {togglingId === app._id 
-                            ? <Loader2 className="w-5 h-5 animate-spin" />
-                            : <Trash2 className="w-5 h-5" />
-                          }
-                        </button>
                       </div>
                     </div>
                   </div>
