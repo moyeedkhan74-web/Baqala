@@ -13,10 +13,6 @@ const AppDetail = () => {
   const getImageUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
-    if (url.startsWith('/api/assets/')) {
-      const path = url.replace('/api/assets/', '');
-      return `https://cdn.baqala.com/file/baqalaaa/${path}`;
-    }
     if (url.startsWith('/')) {
       const host = API_BASE_URL.replace(/\/api$/, '');
       return `${host}${url}`;

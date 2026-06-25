@@ -9,17 +9,9 @@ const AppCard = memo(({ app, featured = false }) => {
   const navigate = useNavigate();
   const getImageUrl = (url) => {
     if (!url) return '';
-    // If it's already a full CDN or B2 URL, return it
     if (url.startsWith('http')) return url;
     
-    // If it's a proxy path, redirect to CDN
-    if (url.startsWith('/api/assets/')) {
-      const path = url.replace('/api/assets/', '');
-      return `https://cdn.baqala.com/file/baqalaaa/${path}`;
-    }
-
     if (url.startsWith('/')) {
-      // Remove /api from the end of API_BASE_URL if it exists to match the proxy path
       const host = API_BASE_URL.replace(/\/api$/, '');
       return `${host}${url}`;
     }
