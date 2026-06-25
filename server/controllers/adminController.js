@@ -6,7 +6,7 @@ const Download = require('../models/Download');
 const Report = require('../models/Report');
 const Notification = require('../models/Notification');
 const EmailLog = require('../models/EmailLog');
-const { deleteBinary, deleteImage, extractB2Key } = require('../utils/b2Storage');
+const { uploadImage, deleteBinary, deleteImage, extractB2Key } = require('../utils/b2Storage');
 const { queueNotification } = require('../utils/notificationQueue');
 
 // GET /api/admin/apps

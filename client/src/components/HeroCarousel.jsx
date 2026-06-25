@@ -26,12 +26,13 @@ const HeroCarousel = ({ apps }) => {
 
   const getImageUrl = (url) => {
     if (!url) return '';
+    // Already absolute URL
     if (url.startsWith('http')) return url;
+    // Relative path (e.g. /api/assets/banners/...)
     if (url.startsWith('/')) {
       const host = window.location.origin;
       return `${host}${url}`;
     }
-    // Fallback for relative paths if needed, though they should be URLs
     return url;
   };
 
@@ -56,7 +57,9 @@ const HeroCarousel = ({ apps }) => {
                 className="w-full h-full object-cover" 
                 alt={`${currentApp.title} promotional banner`}
                 onError={(e) => {
+                  // Hide broken image gracefully — gradient background will show through
                   e.target.style.display = 'none';
+                  console.warn(`[HeroCarousel] Banner failed to load for "${currentApp.title}":`, currentApp.banner);
                 }}
               />
             ) : null}

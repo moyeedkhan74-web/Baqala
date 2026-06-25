@@ -1,4 +1,5 @@
 const express = require('express');
+const App = require('../models/App');
 const { 
   getAllApps, 
   getAllUsers, 
