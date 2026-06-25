@@ -286,7 +286,7 @@ const FeaturedCuration = () => {
               <h2 className="text-lg font-black tracking-tight">Curation Tip</h2>
             </div>
             <p className="text-sm text-slate-400 font-bold leading-relaxed">
-              Featured apps see up to <span className="text-white">400% more downloads</span>. Upload promotional banners for maximum impact on the Hero Slider. Try to rotate featured apps every 3-4 days to keep the store fresh.
+              Featured apps see up to <span className="text-white">400% more downloads</span>. Upload promotional banners for maximum impact on the Hero Slider <span className="text-accent-violet">(Recommended: 1200x500px)</span>. Try to rotate featured apps every 3-4 days to keep the store fresh.
             </p>
           </div>
         </div>
