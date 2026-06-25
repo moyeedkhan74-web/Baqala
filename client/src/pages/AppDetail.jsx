@@ -8,6 +8,7 @@ import SEOHead from '../components/SEOHead';
 import { SkeletonDetail } from '../components/Skeleton';
 import toast from 'react-hot-toast';
 import { HiDownload, HiStar, HiFolder, HiClock, HiDeviceMobile, HiArrowLeft, HiArrowRight, HiX, HiFlag, HiCheckCircle } from 'react-icons/hi';
+import { cn } from '../utils/cn';
 
 const AppDetail = () => {
   const getImageUrl = (url) => {
