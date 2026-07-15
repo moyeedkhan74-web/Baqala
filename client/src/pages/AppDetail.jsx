@@ -221,7 +221,8 @@ const AppDetail = () => {
       toast.success('Download started!', { id: 'download-progress' });
       setApp(prev => ({ ...prev, totalDownloads: (prev.totalDownloads || 0) + 1 }));
     } catch (err) {
-      toast.error('Download failed', { id: 'download-progress' });
+      const errMsg = err.response?.data?.message || 'Download failed';
+      toast.error(errMsg, { id: 'download-progress' });
     } finally {
       setDownloading(false);
       setDownloadProgress(0);
