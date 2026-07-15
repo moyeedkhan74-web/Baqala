@@ -307,10 +307,22 @@ const AppManagement = () => {
                         <span className="text-[10px] font-black text-slate-400 italic">Scanned</span>
                       )}
                     </td>
-                    {/* AI Score - compact inline badge */}
+                    {/* AI Score - compact inline badge with precise calculation */}
                     <td className="px-6 py-4">
                       {(() => {
-                        const score = app.aiModeration?.approvalScore;
+                        const ratings = app.aiModeration?.ratings || {};
+                        let score = app.aiModeration?.approvalScore;
+                        if (ratings && typeof ratings.security === 'number') {
+                          const sec = ratings.security ?? 0;
+                          const pri = ratings.privacy ?? 0;
+                          const con = ratings.content ?? 0;
+                          const leg = ratings.legal ?? 0;
+                          const per = ratings.performance ?? 0;
+                          const tra = ratings.transparency ?? 0;
+                          const dat = ratings.dataHandling ?? 0;
+                          const computed = (sec * 0.25) + (pri * 0.2) + (con * 0.15) + (leg * 0.15) + (per * 0.1) + (tra * 0.1) + (dat * 0.05);
+                          score = Math.round(computed * 10) / 10;
+                        }
                         if (score == null) return <span className="text-[10px] font-bold text-slate-400 italic">—</span>;
                         const dotColor = score >= 85 ? 'text-emerald-500' : score >= 60 ? 'text-amber-500' : score >= 40 ? 'text-orange-500' : 'text-rose-500';
                         return <span className={cn("text-xs font-black", dotColor)}>{score}</span>;
@@ -467,6 +479,27 @@ const AppManagement = () => {
                             );
                           }
 
+                          const SubRatingBar = ({ label, val, color, weight }) => {
+                            const hasVal = typeof val === 'number';
+                            return (
+                              <div className="space-y-1.5 p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-white/5 text-left">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">{label} <span className="text-[8px] opacity-40">({weight}%)</span></span>
+                                  <span className={cn("text-xs font-black", hasVal ? color : "text-slate-400")}>{hasVal ? `${val}/100` : 'N/A'}</span>
+                                </div>
+                                <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700/50 rounded-full overflow-hidden">
+                                  <div className={cn(
+                                    "h-full rounded-full transition-all duration-500",
+                                    !hasVal ? 'bg-slate-350 dark:bg-slate-650' :
+                                    val >= 80 ? 'bg-emerald-500' :
+                                    val >= 60 ? 'bg-amber-500' :
+                                    val >= 40 ? 'bg-orange-500' : 'bg-rose-500'
+                                  )} style={{ width: `${hasVal ? val : 0}%` }} />
+                                </div>
+                              </div>
+                            );
+                          };
+
                           return (
                             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/5 overflow-hidden">
                               {/* Header */}
@@ -480,7 +513,7 @@ const AppManagement = () => {
                                     onClick={() => setNotebookTarget(app)}
                                     className="flex items-center gap-1.5 px-4 py-2 bg-accent-violet text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-accent-violet/20"
                                   >
-                                    <BookOpen className="w-3.5 h-3.5" /> Full Report
+                                    <BookOpen className="w-3.5 h-3.5" /> Full Report Memo
                                   </button>
                                   <button
                                     onClick={() => handleAiAnalyze(app._id)}
@@ -497,7 +530,7 @@ const AppManagement = () => {
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
                                 {/* Score */}
                                 <div className="p-4 bg-slate-50 dark:bg-white/[0.02] rounded-2xl border border-slate-100 dark:border-white/5 text-center">
-                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Score</p>
+                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Calculated Average</p>
                                   <p className={cn("text-2xl font-black", dotColor)}>{score}<span className="text-xs text-slate-400">/100</span></p>
                                 </div>
                                 {/* Risk */}
@@ -523,12 +556,45 @@ const AppManagement = () => {
                                 </div>
                               </div>
 
+                              {/* 7-Point Ratings Grid */}
+                              <div className="px-6 pb-6">
+                                <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 text-left">Audit Ratings Matrix</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                  <SubRatingBar label="Security" val={ratings.security} color="text-emerald-500" weight={25} />
+                                  <SubRatingBar label="Privacy" val={ratings.privacy} color="text-blue-500" weight={20} />
+                                  <SubRatingBar label="Content Audit" val={ratings.content} color="text-violet-500" weight={15} />
+                                  <SubRatingBar label="Legal Compliance" val={ratings.legal} color="text-rose-500" weight={15} />
+                                  <SubRatingBar label="Performance" val={ratings.performance} color="text-sky-500" weight={10} />
+                                  <SubRatingBar label="Transparency" val={ratings.transparency} color="text-amber-500" weight={10} />
+                                  <SubRatingBar label="Data Handling" val={ratings.dataHandling} color="text-indigo-500" weight={5} />
+                                  
+                                  {/* Compliance Summary Card */}
+                                  <div className="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-white/5 flex flex-col justify-between text-left">
+                                    <div className="flex items-center justify-between text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                                      <span>Compliance Status</span>
+                                    </div>
+                                    <div className="flex gap-2 mt-2">
+                                      <span className={cn(
+                                        "text-[8px] font-black px-1.5 py-0.5 rounded",
+                                        app.aiModeration?.legalAnalysis?.gdprCompliant === true ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/15" :
+                                        app.aiModeration?.legalAnalysis?.gdprCompliant === false ? "bg-rose-500/10 text-rose-500 border border-rose-500/15" : "bg-slate-100 text-slate-400 dark:bg-white/5"
+                                      )}>GDPR</span>
+                                      <span className={cn(
+                                        "text-[8px] font-black px-1.5 py-0.5 rounded",
+                                        app.aiModeration?.legalAnalysis?.coppaCompliant === true ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/15" :
+                                        app.aiModeration?.legalAnalysis?.coppaCompliant === false ? "bg-rose-500/10 text-rose-500 border border-rose-500/15" : "bg-slate-100 text-slate-400 dark:bg-white/5"
+                                      )}>COPPA</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
                               {/* Summary */}
                               {summary && (
-                                <div className="px-6 pb-5">
-                                  <div className="p-4 bg-amber-50/50 dark:bg-amber-500/5 rounded-2xl border border-amber-200/30 dark:border-amber-500/10">
-                                    <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-1">AI Summary</p>
-                                    <p className="text-xs font-bold text-slate-600 dark:text-slate-300 leading-relaxed italic">"{summary}"</p>
+                                <div className="px-6 pb-6">
+                                  <div className="p-4 bg-amber-50/50 dark:bg-amber-500/5 rounded-2xl border border-amber-200/30 dark:border-amber-500/10 text-left">
+                                    <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-1">AI Executive Summary</p>
+                                    <p className="text-xs font-bold text-slate-600 dark:text-slate-350 leading-relaxed italic">"{summary}"</p>
                                   </div>
                                 </div>
                               )}
