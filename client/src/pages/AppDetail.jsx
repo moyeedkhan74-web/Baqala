@@ -133,7 +133,8 @@ const AppDetail = () => {
 
   const submitFeedback = async (e) => {
     e.preventDefault();
-    if (!newRating || !newComment.trim()) return toast.error('Rating and comment required');
+    if (!newRating) return toast.error('Please select a star rating (1–5 stars)');
+    if (!newComment.trim()) return toast.error('Please write a comment before submitting');
     setSubmittingFeedback(true);
     try {
       await api.post(`/feedback/${app._id}`, { rating: newRating, comment: newComment });

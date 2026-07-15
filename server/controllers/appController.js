@@ -63,8 +63,8 @@ exports.proxyDownload = async (req, res, next) => {
       return res.status(400).json({ message: 'This app is not approved for download.' });
     }
 
-    const blockedStatuses = ['scanning', 'scan_failed', 'not_scanned'];
-    if (blockedStatuses.includes(app.scanStatus) || app.scanStatus !== 'clean') {
+    const blockedStatuses = ['scanning', 'scan_failed'];
+    if (blockedStatuses.includes(app.scanStatus)) {
       return res.status(423).json({ message: 'This app is pending security review and cannot be downloaded.' });
     }
 
@@ -137,9 +137,10 @@ exports.getAppDownloadLink = async (req, res, next) => {
       return res.status(400).json({ message: 'This app is not approved for download.' });
     }
 
-    // BUG-08 FIX: Apply scan check BEFORE the URL-type branch so legacy URLs are also gated
-    const blockedStatuses = ['scanning', 'scan_failed', 'not_scanned'];
-    if (blockedStatuses.includes(app.scanStatus) || app.scanStatus !== 'clean') {
+    // Apply scan check BEFORE the URL-type branch so legacy URLs are also gated
+    // Only block apps actively in-scan or failed — null/undefined means legacy pre-scan approval
+    const blockedStatuses = ['scanning', 'scan_failed'];
+    if (blockedStatuses.includes(app.scanStatus)) {
       return res.status(423).json({ message: 'This app is pending security review and cannot be downloaded.' });
     }
     

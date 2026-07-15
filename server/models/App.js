@@ -160,6 +160,13 @@ const appSchema = new mongoose.Schema({
   },
   banner: { type: String, default: '' },
   fileHash: { type: String, default: null },
+  // Security Scanning
+  scanStatus: {
+    type: String,
+    enum: ['clean', 'scanning', 'scan_failed', 'not_scanned', null],
+    default: null
+  },
+  scanCompletedAt: { type: Date, default: null },
   tier: {
     type: String,
     enum: ['low', 'mid', 'high', 'advance'],
