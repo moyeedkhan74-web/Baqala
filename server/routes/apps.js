@@ -49,7 +49,7 @@ router.post('/:id/remove-screenshot', auth, removeScreenshot);
 router.post('/:id/images', auth, requireOwner, uploadImages, uploadAppImages);
 
 // --- Resource Routes (Individual) ---
-router.get('/:id', generalLimiter, getApp);
+router.get('/:id', generalLimiter, softAuth, getApp);
 router.get('/:id/download', downloadLimiter, getAppDownloadLink);
 router.get('/:id/proxy-download', downloadLimiter, softAuth, proxyDownload);
 router.put('/:id', auth, requireOwner, updateApp);

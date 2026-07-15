@@ -646,6 +646,17 @@ exports.getApp = async (req, res) => {
     const app = await App.findById(req.params.id)
       .populate('developer', 'name email avatar tagline specialization bio isVerified');
     if (!app) return res.status(404).json({ message: 'App not found.' });
+
+    // Enforce approval gate: If status is not approved, only the developer and admins can view it
+    if (app.status !== 'approved') {
+      const isDeveloper = req.user && req.user._id.toString() === app.developer?._id?.toString();
+      const isAdmin = req.user && req.user.role === 'admin';
+      
+      if (!isDeveloper && !isAdmin) {
+        return res.status(404).json({ message: 'App not found.' });
+      }
+    }
+
     res.json({ app });
   } catch (error) {
     res.status(500).json({ message: 'Server error.' });
