@@ -341,8 +341,12 @@ const AppManagement = () => {
                         const stars = Math.round(score / 20);
                         
                         return (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-1.5">
+                          <div 
+                            onClick={() => setNotebookTarget(app)}
+                            className="space-y-2 cursor-pointer p-2 -m-2 rounded-xl transition-all duration-200 hover:bg-amber-500/[0.05] border border-transparent hover:border-amber-500/20 group/ai"
+                            title="Click to view full AI Memo details"
+                          >
+                            <div className="flex items-center justify-between gap-1">
                               <div className="flex items-center text-amber-500">
                                 {[...Array(5)].map((_, i) => (
                                   <Star key={i} className={cn("w-3.5 h-3.5", i < stars ? "fill-current" : "opacity-20")} />
@@ -355,6 +359,9 @@ const AppManagement = () => {
                             <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 line-clamp-2 leading-tight italic">
                               "{summary || 'No description generated'}"
                             </p>
+                            <div className="flex items-center gap-1 text-[9px] font-black text-amber-600 dark:text-amber-400 mt-1 uppercase tracking-wider opacity-60 group-hover/ai:opacity-100 transition-opacity">
+                              <StickyNote className="w-3.5 h-3.5" /> View AI Memo
+                            </div>
                           </div>
                         );
                       })()}
