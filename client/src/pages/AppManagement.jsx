@@ -43,6 +43,7 @@ const AppManagement = () => {
   const [isScanningId, setIsScanningId] = useState(null);
   const [sortByAiScore, setSortByAiScore] = useState(false);
   const [detailTarget, setDetailTarget] = useState(null);
+  const [notebookTarget, setNotebookTarget] = useState(null);
 
   const fetchApps = async () => {
     try {

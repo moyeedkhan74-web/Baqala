@@ -300,7 +300,7 @@ exports.createApp = async (req, res, next) => {
       await app.save();
     } else if (req.vtNeedsFullScan) {
       app.scanStatus = 'scanning';
-      app.status = 'pending';
+      app.status = 'pending_scan';
       await app.save();
 
       // Fire background scan appropriately detached
@@ -358,7 +358,7 @@ exports.createApp = async (req, res, next) => {
     } else {
       // BUG-05 FIX: VT was unreachable — keep as pending for admin review; do NOT approve unscanned apps
       app.scanStatus = 'scan_failed';
-      app.status = 'pending';
+      app.status = 'pending_scan';
       await app.save();
     }
 
@@ -714,7 +714,7 @@ exports.updateApp = async (req, res) => {
     const { reSubmit } = req.body;
     if (reSubmit || binaryChanged) {
       console.log(`[RE-DEPLOY] Triggered for App: ${app._id} (${app.title}) | Type: ${binaryChanged ? 'FORCED (Binary Change)' : 'MANUAL'}`);
-      app.status = 'pending';
+      app.status = 'pending_scan';
       app.scanStatus = 'scanning';
       
       // Detached Background Scan

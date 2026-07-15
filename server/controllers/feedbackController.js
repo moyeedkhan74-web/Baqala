@@ -41,13 +41,18 @@ exports.createFeedback = async (req, res, next) => {
 
     // 1. If top-level, check for existing review in Supabase
     if (!parentId) {
-      const { data: existing } = await supabase
+      const { data: existing, error: existErr } = await supabase
         .from('feedbacks')
         .select('id')
         .eq('app_id', appId)
         .eq('user_id', userId)
         .is('parent_id', null)
-        .single();
+        .maybeSingle();
+
+      if (existErr) {
+        console.error('[SUPABASE_ERROR] Failed checking existing feedback:', existErr.message);
+        return res.status(503).json({ message: 'Review service is currently unavailable.' });
+      }
 
       if (existing) {
         return res.status(400).json({ message: 'You have already reviewed this app.' });
@@ -65,33 +70,39 @@ exports.createFeedback = async (req, res, next) => {
         parent_id: parentId || null
       }])
       .select()
-      .single();
+      .maybeSingle();
 
-    if (error) throw error;
+    if (error || !feedback) {
+      console.error('[SUPABASE_ERROR] Failed inserting feedback:', error?.message || 'Empty response');
+      return res.status(503).json({ message: 'Review service is currently unavailable.' });
+    }
 
     // 3. Update MongoDB App rating aggregate ONLY if top-level feedback
     if (!parentId) {
-      const { data: allTopLevel } = await supabase
+      const { data: allTopLevel, error: allTopLevelErr } = await supabase
         .from('feedbacks')
         .select('rating')
         .eq('app_id', appId)
         .is('parent_id', null);
 
-      const totalRatings = allTopLevel.length;
-      const sumRatings = allTopLevel.reduce((acc, f) => acc + (f.rating || 0), 0);
-      const averageRating = totalRatings > 0 ? (sumRatings / totalRatings) : 0;
+      if (!allTopLevelErr && allTopLevel) {
+        const totalRatings = allTopLevel.length;
+        const sumRatings = allTopLevel.reduce((acc, f) => acc + (f.rating || 0), 0);
+        const averageRating = totalRatings > 0 ? (sumRatings / totalRatings) : 0;
 
-      await App.findByIdAndUpdate(appId, {
-        averageRating: Math.round(averageRating * 10) / 10,
-        reviewCount: totalRatings
-      });
+        await App.findByIdAndUpdate(appId, {
+          averageRating: Math.round(averageRating * 10) / 10,
+          reviewCount: totalRatings
+        });
+      }
     }
 
     // 4. Return populated result
     const populated = await populateUsers([feedback]);
     res.status(201).json({ feedback: populated[0] });
   } catch (err) {
-    next(err);
+    console.error('[CREATE_FEEDBACK_ERROR] Exception:', err.message);
+    res.status(503).json({ message: 'Review service is currently unavailable.' });
   }
 };
 
@@ -105,12 +116,16 @@ exports.getFeedback = async (req, res, next) => {
       .eq('app_id', appId)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error('[SUPABASE_ERROR] Error fetching feedbacks:', error.message);
+      return res.json({ feedback: [], warning: 'Feedbacks are temporarily unavailable.' });
+    }
 
-    const populated = await populateUsers(data);
+    const populated = await populateUsers(data || []);
     res.json({ feedback: populated });
   } catch (err) {
-    next(err);
+    console.error('[GET_FEEDBACK_ERROR] Exception:', err.message);
+    res.json({ feedback: [], warning: 'Feedbacks are temporarily unavailable.' });
   }
 };
 
