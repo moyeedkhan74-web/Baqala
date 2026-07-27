@@ -20,6 +20,26 @@ import { cn } from '../utils/cn.js';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 
+// Default config shape to prevent null-access crashes
+const DEFAULT_CONFIG = {
+  maxApkSize: 500,
+  maxImageSize: 5,
+  isMaintenanceMode: false,
+  maintenanceMessage: 'Baqala is currently under maintenance. We will be back shortly!',
+  maintenanceActivatedBy: '',
+  maintenanceActivatedAt: null,
+  announcement: { enabled: false, text: '', level: 'info' },
+  sections: { trending: true, newReleases: true, categoryBrowsing: true, featuredCarousel: true }
+};
+
+/** Merge raw API config with defaults so nested objects are always present */
+const mergeWithDefaults = (raw) => ({
+  ...DEFAULT_CONFIG,
+  ...raw,
+  announcement: { ...DEFAULT_CONFIG.announcement, ...(raw?.announcement || {}) },
+  sections: { ...DEFAULT_CONFIG.sections, ...(raw?.sections || {}) },
+});
+
 const PlatformSettings = () => {
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -30,10 +50,12 @@ const PlatformSettings = () => {
   const fetchConfig = async () => {
     try {
       const { data } = await api.get('/config');
-      setConfig(data.config);
+      setConfig(mergeWithDefaults(data.config));
     } catch (error) {
       console.error('Failed to fetch platform config:', error);
       toast.error('Failed to load settings');
+      // Even on error, set a usable default so the page doesn't stay stuck on the spinner
+      setConfig(prev => prev || { ...DEFAULT_CONFIG });
     } finally {
       setLoading(false);
     }
@@ -47,12 +69,12 @@ const PlatformSettings = () => {
       api.get('/config').then(({ data }) => {
         setConfig(prev => {
           // Only update maintenance-related fields from server to avoid overwriting local edits
-          if (!prev) return data.config;
+          if (!prev) return mergeWithDefaults(data.config);
           return {
             ...prev,
-            isMaintenanceMode: data.config.isMaintenanceMode,
-            maintenanceActivatedBy: data.config.maintenanceActivatedBy,
-            maintenanceActivatedAt: data.config.maintenanceActivatedAt,
+            isMaintenanceMode: data.config?.isMaintenanceMode ?? prev.isMaintenanceMode,
+            maintenanceActivatedBy: data.config?.maintenanceActivatedBy ?? prev.maintenanceActivatedBy,
+            maintenanceActivatedAt: data.config?.maintenanceActivatedAt ?? prev.maintenanceActivatedAt,
           };
         });
       }).catch(() => {});
@@ -63,14 +85,17 @@ const PlatformSettings = () => {
 
   const handleUpdate = async (updates) => {
     // Optimistic update
-    setConfig(prev => ({ ...prev, ...updates }));
+    setConfig(prev => prev ? { ...prev, ...updates } : { ...DEFAULT_CONFIG, ...updates });
   };
 
   const handleNestedUpdate = (parent, updates) => {
-    setConfig(prev => ({
-      ...prev,
-      [parent]: { ...prev[parent], ...updates }
-    }));
+    setConfig(prev => {
+      if (!prev) return { ...DEFAULT_CONFIG, [parent]: { ...(DEFAULT_CONFIG[parent] || {}), ...updates } };
+      return {
+        ...prev,
+        [parent]: { ...(prev[parent] || {}), ...updates }
+      };
+    });
   };
 
   const saveConfig = async () => {
@@ -90,11 +115,11 @@ const PlatformSettings = () => {
     setTogglingMaintenance(true);
     try {
       const { data } = await api.post('/config/maintenance', {
-        maintenanceMessage: config.maintenanceMessage
+        maintenanceMessage: config?.maintenanceMessage || ''
       });
-      setConfig(data.config);
+      setConfig(mergeWithDefaults(data.config));
       toast.success(
-        data.config.isMaintenanceMode
+        data.config?.isMaintenanceMode
           ? '🔒 Lockdown activated — platform is now in maintenance mode'
           : '🔓 Lockdown disabled — platform is back online',
         { duration: 4000 }
@@ -117,7 +142,7 @@ const PlatformSettings = () => {
     });
   };
 
-  if (loading) {
+  if (loading || !config) {
     return (
       <AdminLayout title="Platform Config">
         <div className="flex items-center justify-center min-h-[400px]">
@@ -148,8 +173,8 @@ const PlatformSettings = () => {
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Max APK Size (MB)</label>
               <input 
                 type="number" 
-                value={config.maxApkSize} 
-                onChange={(e) => handleUpdate({ maxApkSize: parseInt(e.target.value) })}
+                value={config?.maxApkSize ?? ''} 
+                onChange={(e) => handleUpdate({ maxApkSize: parseInt(e.target.value) || 0 })}
                 className="w-full bg-slate-50 dark:bg-white/5 border border-transparent focus:border-accent-violet/30 rounded-2xl p-4 text-sm font-bold outline-none" 
               />
             </div>
@@ -157,8 +182,8 @@ const PlatformSettings = () => {
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Max Image Size (MB)</label>
               <input 
                 type="number" 
-                value={config.maxImageSize} 
-                onChange={(e) => handleUpdate({ maxImageSize: parseInt(e.target.value) })}
+                value={config?.maxImageSize ?? ''} 
+                onChange={(e) => handleUpdate({ maxImageSize: parseInt(e.target.value) || 0 })}
                 className="w-full bg-slate-50 dark:bg-white/5 border border-transparent focus:border-accent-violet/30 rounded-2xl p-4 text-sm font-bold outline-none" 
               />
             </div>
@@ -184,20 +209,20 @@ const PlatformSettings = () => {
                 <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">Show on every page</p>
               </div>
               <div 
-                onClick={() => handleNestedUpdate('announcement', { enabled: !config.announcement.enabled })}
+                onClick={() => handleNestedUpdate('announcement', { enabled: !config?.announcement?.enabled })}
                 className={cn(
                   "w-12 h-6 rounded-full relative cursor-pointer transition-colors",
-                  config.announcement.enabled ? "bg-accent-violet" : "bg-slate-300 dark:bg-slate-700"
+                  config?.announcement?.enabled ? "bg-accent-violet" : "bg-slate-300 dark:bg-slate-700"
                 )}
               >
                 <div className={cn(
                   "absolute top-1 w-4 h-4 bg-white rounded-full transition-all",
-                  config.announcement.enabled ? "left-7" : "left-1"
+                  config?.announcement?.enabled ? "left-7" : "left-1"
                 )} />
               </div>
             </div>
             <textarea 
-              value={config.announcement.text}
+              value={config?.announcement?.text ?? ''}
               onChange={(e) => handleNestedUpdate('announcement', { text: e.target.value })}
               placeholder="e.g. Baqala 2.0 is coming soon! Stay tuned."
               className="w-full bg-slate-50 dark:bg-white/5 border border-transparent focus:border-accent-violet/30 rounded-2xl p-4 text-sm font-bold outline-none min-h-[100px] resize-none"
@@ -209,7 +234,7 @@ const PlatformSettings = () => {
                   onClick={() => handleNestedUpdate('announcement', { level })}
                   className={cn(
                     "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all flex items-center gap-2",
-                    config.announcement.level === level
+                    config?.announcement?.level === level
                       ? (level === 'celebratory' ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white border-transparent shadow-lg shadow-pink-500/20" : "bg-slate-900 text-white border-slate-900")
                       : "bg-transparent text-slate-500 border-slate-200 dark:border-white/10"
                   )}
@@ -247,15 +272,15 @@ const PlatformSettings = () => {
                   <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">{section.desc}</p>
                 </div>
                 <div 
-                  onClick={() => handleNestedUpdate('sections', { [section.id]: !config.sections[section.id] })}
+                  onClick={() => handleNestedUpdate('sections', { [section.id]: !config?.sections?.[section.id] })}
                   className={cn(
                     "w-10 h-5 rounded-full relative cursor-pointer transition-colors",
-                    config.sections[section.id] ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+                    config?.sections?.[section.id] ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
                   )}
                 >
                   <div className={cn(
                     "absolute top-1 w-3 h-3 bg-white rounded-full transition-all",
-                    config.sections[section.id] ? "left-6" : "left-1"
+                    config?.sections?.[section.id] ? "left-6" : "left-1"
                   )} />
                 </div>
               </div>
@@ -266,7 +291,7 @@ const PlatformSettings = () => {
         {/* Dangerous Zone — Maintenance Mode */}
         <div className={cn(
           "rounded-[2.5rem] border-2 border-dashed p-8 transition-all duration-500",
-          config.isMaintenanceMode
+          config?.isMaintenanceMode
             ? "bg-rose-500/10 border-rose-500/40 shadow-lg shadow-rose-500/5"
             : "bg-rose-500/5 border-rose-500/20"
         )}>
@@ -284,7 +309,7 @@ const PlatformSettings = () => {
           </div>
 
           {/* Active maintenance banner */}
-          {config.isMaintenanceMode && (
+          {config?.isMaintenanceMode && (
             <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center gap-4">
               <div className="w-10 h-10 bg-rose-500 rounded-xl flex items-center justify-center text-white shrink-0">
                 <Zap className="w-5 h-5" />
@@ -292,13 +317,13 @@ const PlatformSettings = () => {
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest">Lockdown Active</p>
                 <div className="flex items-center gap-3 mt-1 text-[10px] text-rose-500/70 font-bold">
-                  {config.maintenanceActivatedBy && (
+                  {config?.maintenanceActivatedBy && (
                     <span className="flex items-center gap-1">
                       <User className="w-3 h-3" />
                       {config.maintenanceActivatedBy}
                     </span>
                   )}
-                  {config.maintenanceActivatedAt && (
+                  {config?.maintenanceActivatedAt && (
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {formatTime(config.maintenanceActivatedAt)}
@@ -315,7 +340,7 @@ const PlatformSettings = () => {
                 Warning: Enabling maintenance mode will block all users and developers from accessing Baqala until disabled. Admin portal remains active. All admins are synced in real-time.
               </p>
               <textarea 
-                value={config.maintenanceMessage}
+                value={config?.maintenanceMessage ?? ''}
                 onChange={(e) => handleUpdate({ maintenanceMessage: e.target.value })}
                 placeholder="Maintenance message shown to users..."
                 className="w-full bg-rose-500/5 border border-rose-500/20 rounded-xl p-3 text-xs font-bold text-rose-700 dark:text-rose-400 outline-none focus:border-rose-500/50 min-h-[60px]"
@@ -326,13 +351,13 @@ const PlatformSettings = () => {
               disabled={togglingMaintenance}
               className={cn(
                 "px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:hover:scale-100",
-                config.isMaintenanceMode 
+                config?.isMaintenanceMode 
                   ? "bg-emerald-500 text-white shadow-emerald-500/20" 
                   : "bg-rose-500 text-white shadow-rose-500/20"
               )}
             >
               {togglingMaintenance && <Loader2 className="w-4 h-4 animate-spin" />}
-              {config.isMaintenanceMode ? 'Disable Lockdown' : 'Initialize Lockdown'}
+              {config?.isMaintenanceMode ? 'Disable Lockdown' : 'Initialize Lockdown'}
             </button>
           </div>
         </div>
