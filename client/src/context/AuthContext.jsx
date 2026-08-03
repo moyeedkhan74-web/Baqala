@@ -23,34 +23,43 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
-    if (token && savedUser) {
+    (async () => {
       try {
-        setUser(JSON.parse(savedUser));
-        // Re-fetch the latest profile from backend to pick up role changes
-        api.get('/auth/profile', { headers: { Authorization: `Bearer ${token}` } })
-          .then(({ data }) => {
-            if (data.user) {
-              const freshUser = {
-                id: data.user._id || data.user.id,
-                name: data.user.name,
-                email: data.user.email,
-                role: data.user.role,
-                avatar: data.user.avatar,
-                createdAt: data.user.createdAt
-              };
-              setUser(freshUser);
-              localStorage.setItem('user', JSON.stringify(freshUser));
+        const token = localStorage.getItem('token');
+        const savedUser = localStorage.getItem('user');
+
+        if (token && savedUser) {
+          try {
+            setUser(JSON.parse(savedUser));
+            // Re-fetch the latest profile from backend to pick up role changes
+            await api.get('/auth/profile');
+          } catch (e) {
+            // silently use cached user if backend is down or token expired
+          }
+        } else {
+          // If there's no backend token but the user is still signed into Firebase,
+          // try to exchange the Firebase ID token for a backend JWT so requests won't 401.
+          try {
+            const idToken = await getFirebaseIdToken();
+            if (idToken) {
+              const { data } = await api.post('/auth/firebase-login', { idToken });
+              if (data?.token && data?.user) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                setUser(data.user);
+              }
             }
-          })
-          .catch(() => { /* silently use cached user if backend is down */ });
-      } catch {
+          } catch (e) {
+            // ignore; user will be treated as unauthenticated
+          }
+        }
+      } catch (err) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    })();
   }, []);
 
   // Email/Password login via Firebase, then verify with backend
