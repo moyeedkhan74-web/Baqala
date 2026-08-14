@@ -440,6 +440,12 @@ exports.sendOtp = async (req, res) => {
     // Generate 6-digit numeric OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
+    // Log generated OTP to console for easy developer visibility
+    console.log(`\n==========================================`);
+    console.log(`[OTP_GENERATED] Email: ${cleanEmail}`);
+    console.log(`[OTP_GENERATED] Code: ${otpCode}`);
+    console.log(`==========================================\n`);
+
     // Remove any previous OTP for this email
     await Otp.deleteMany({ email: cleanEmail });
 
@@ -461,7 +467,7 @@ exports.sendOtp = async (req, res) => {
     res.json({ success: true, message: 'Verification code sent to your email.' });
   } catch (error) {
     console.error('Send OTP Error:', error);
-    res.status(500).json({ message: 'Server error while sending OTP.' });
+    res.status(500).json({ message: error.message || 'Server error while sending OTP.' });
   }
 };
 
