@@ -440,33 +440,28 @@ exports.sendOtp = async (req, res) => {
     // Generate 6-digit numeric OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Log generated OTP to console for easy developer visibility
     console.log(`\n==========================================`);
     console.log(`[OTP_GENERATED] Email: ${cleanEmail}`);
-    console.log(`[OTP_GENERATED] Code: ${otpCode}`);
+    console.log(`[OTP_GENERATED] Code:  ${otpCode}`);
     console.log(`==========================================\n`);
 
-    // Remove any previous OTP for this email
+    // Remove any previous OTP for this email and save new one
     await Otp.deleteMany({ email: cleanEmail });
-
-    // Save OTP to DB (valid 10 minutes)
     await Otp.create({
       email: cleanEmail,
       otp: otpCode,
       expiresAt: new Date(Date.now() + 10 * 60 * 1000)
     });
 
-    // Send email via Brevo / email service (non-blocking fallback)
-    const emailResult = await sendOtpEmail(cleanEmail, otpCode).catch(err => {
-      console.error('[OTP_SEND_WARN]:', err.message);
-      return { success: true, provider: 'simulated' };
+    // ✅ Respond IMMEDIATELY — do NOT await email sending
+    // This prevents the UI from freezing while waiting for the mail provider
+    res.json({ success: true, message: 'Verification code sent to your email.' });
+
+    // 🔥 Fire email in the background (non-blocking)
+    sendOtpEmail(cleanEmail, otpCode).catch(err => {
+      console.error('[OTP_EMAIL_BG_ERROR]:', err.message);
     });
 
-    res.json({
-      success: true,
-      message: 'Verification code sent to your email.',
-      provider: emailResult?.provider || 'default'
-    });
   } catch (error) {
     console.error('Send OTP Error:', error);
     res.status(500).json({ message: error.message || 'Server error while sending OTP.' });
