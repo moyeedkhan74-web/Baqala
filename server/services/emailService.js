@@ -23,12 +23,10 @@ const resend = resendKey ? new Resend(resendKey) : null;
 
 // Configure Nodemailer for Gmail SMTP
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: process.env.SMTP_PORT || 587,
-  secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+  service: 'gmail',
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    user: process.env.SMTP_USER || 'officialbaqala@gmail.com',
+    pass: (process.env.SMTP_PASS || '').replace(/[\s"']/g, ''),
   },
 });
 
