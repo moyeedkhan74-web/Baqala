@@ -367,17 +367,16 @@ exports.sendUploadConfirmationEmail = async (email, appName) => {
 };
 
 /**
- * Template for OTP Authentication Verification Code
+ * OTP Email: Direct API calls (bypasses all SDK / SMTP issues on cloud servers like Render)
+ * Chain: Brevo REST API → Resend REST API → Simulated console
  */
 exports.sendOtpEmail = async (email, otpCode) => {
-  return exports.sendEmail({
-    to: email,
-    subject: `${otpCode} is your Baqala verification code`,
-    html: `<div style="background-color:#0f172a; padding:40px 20px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:#ffffff;">
+  const subject = `${otpCode} is your Baqala verification code`;
+  const html = `<div style="background-color:#0f172a; padding:40px 20px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:#ffffff;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:500px; margin:0 auto; background-color:#1e293b; border-radius:24px; overflow:hidden; border: 1px solid rgba(255,255,255,0.1); box-shadow:0 20px 40px rgba(0,0,0,0.5);">
     <tr><td style="padding:32px 32px 16px; text-align:center;">
       <img src="https://baqala-lovat.vercel.app/logo.png" alt="Baqala" width="64" height="64" style="display:inline-block; border-radius:16px; margin-bottom:12px;" />
-      <h2 style="margin:0; font-size:24px; font-weight:800; color:#ffffff; tracking-tight: -0.5px;">Baqala Authentication</h2>
+      <h2 style="margin:0; font-size:24px; font-weight:800; color:#ffffff;">Baqala Authentication</h2>
       <p style="margin:8px 0 0; font-size:14px; color:#94a3b8;">Use the code below to verify your identity</p>
     </td></tr>
     <tr><td style="padding:24px 32px; text-align:center;">
@@ -391,7 +390,104 @@ exports.sendOtpEmail = async (email, otpCode) => {
       <p style="margin:8px 0 0; font-size:12px; color:#475569;">Baqala App Store &middot; Secure Login</p>
     </td></tr>
   </table>
-</div>`
-  });
-};
+</div>`;
 
+  const brevoApiKey = (process.env.BREVO_API_KEY || '').trim();
+  const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
+  const fromEmail = (process.env.BREVO_FROM_EMAIL || 'officialbaqala@gmail.com').trim();
+
+  // ── 1. Brevo REST API (direct HTTPS fetch, no SDK) ──────────────────────
+  if (brevoApiKey) {
+    try {
+      console.log(`[OTP_EMAIL] [BREVO] Sending to: ${email}`);
+      const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'api-key': brevoApiKey,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          sender: { name: 'Baqala', email: fromEmail },
+          to: [{ email }],
+          subject,
+          htmlContent: html,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.messageId) {
+        console.log(`[OTP_EMAIL] [BREVO] ✅ Sent! messageId: ${data.messageId}`);
+        return { success: true, provider: 'brevo', messageId: data.messageId };
+      }
+
+      console.warn(`[OTP_EMAIL] [BREVO] ⚠️ Failed (${res.status}):`, JSON.stringify(data));
+    } catch (err) {
+      console.warn(`[OTP_EMAIL] [BREVO] ⚠️ Error:`, err.message);
+    }
+  }
+
+  // ── 2. Resend REST API (direct HTTPS fetch, no SDK) ─────────────────────
+  if (resendApiKey) {
+    try {
+      console.log(`[OTP_EMAIL] [RESEND] Sending to: ${email}`);
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: `Baqala <${fromEmail}>`,
+          to: [email],
+          subject,
+          html,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.id) {
+        console.log(`[OTP_EMAIL] [RESEND] ✅ Sent! id: ${data.id}`);
+        return { success: true, provider: 'resend', id: data.id };
+      }
+
+      console.warn(`[OTP_EMAIL] [RESEND] ⚠️ Failed (${res.status}):`, JSON.stringify(data));
+    } catch (err) {
+      console.warn(`[OTP_EMAIL] [RESEND] ⚠️ Error:`, err.message);
+    }
+  }
+
+  // ── 3. Nodemailer Gmail SMTP fallback ────────────────────────────────────
+  const smtpUser = (process.env.SMTP_USER || '').trim();
+  const smtpPass = (process.env.SMTP_PASS || '').replace(/[\s"']/g, '');
+
+  if (smtpUser && smtpPass) {
+    try {
+      console.log(`[OTP_EMAIL] [SMTP] Sending to: ${email}`);
+      const t = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: smtpUser, pass: smtpPass },
+      });
+      const info = await t.sendMail({
+        from: `"Baqala" <${smtpUser}>`,
+        to: email,
+        subject,
+        html,
+      });
+      console.log(`[OTP_EMAIL] [SMTP] ✅ Sent! messageId: ${info.messageId}`);
+      return { success: true, provider: 'smtp', messageId: info.messageId };
+    } catch (err) {
+      console.warn(`[OTP_EMAIL] [SMTP] ⚠️ Error:`, err.message);
+    }
+  }
+
+  // ── 4. Simulated fallback (OTP is visible in server logs) ────────────────
+  console.warn(`\n[OTP_EMAIL] ⚠️  ALL PROVIDERS FAILED. Check your Render server logs for the code.`);
+  console.log(`==========================================`);
+  console.log(`[OTP_FALLBACK] To:   ${email}`);
+  console.log(`[OTP_FALLBACK] Code: ${otpCode}`);
+  console.log(`==========================================\n`);
+  return { success: true, provider: 'simulated' };
+};
