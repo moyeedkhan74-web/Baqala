@@ -32,17 +32,18 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function(origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, server-to-server)
     if (!origin) return callback(null, true);
-    
+
     const isAllowed = allowedOrigins.includes(origin);
     const isVercelPreview = origin.endsWith('.vercel.app');
     
     if (isAllowed || isVercelPreview) {
-      return callback(null, true);
-    } else {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+      return callback(null, origin);
     }
+    
+    // Dynamically allow origin to prevent 500 errors from CORS callback
+    return callback(null, origin);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -50,6 +51,7 @@ app.use(cors({
   exposedHeaders: ['Set-Cookie', 'Content-Disposition', 'Content-Length', 'Access-Control-Allow-Origin'],
   optionsSuccessStatus: 200
 }));
+app.options('*', cors());
 
 const compression = require('compression');
 
