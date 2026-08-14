@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
+const Otp = require('../models/Otp');
+const { sendOtpEmail } = require('../services/emailService');
 const admin = require('../config/firebase');
 
 const generateToken = (user) => {
@@ -403,3 +405,158 @@ exports.firebaseRegister = async (req, res) => {
     res.status(500).json({ message: 'Server error during Firebase registration.' });
   }
 };
+
+// ========================================
+// OTP Authentication Endpoints (Brevo Email)
+// ========================================
+
+// Send OTP to user email
+exports.sendOtp = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ message: errors.array()[0].msg });
+    }
+
+    const { email } = req.body;
+    const cleanEmail = email.toLowerCase().trim();
+
+    // Check if user exists and is banned before sending OTP
+    const existingUser = await User.findOne({ email: cleanEmail });
+    if (existingUser && existingUser.isBanned) {
+      const now = new Date();
+      const banUntil = existingUser.banUntil ? new Date(existingUser.banUntil) : null;
+      if (banUntil && now < banUntil) {
+        return res.status(403).json({ 
+          message: `Your account has been banned until ${banUntil.toLocaleString()}. Reason: ${existingUser.banReason || 'No reason provided'}` 
+        });
+      } else if (!banUntil) {
+        return res.status(403).json({ 
+          message: `Your account has been permanently banned. Reason: ${existingUser.banReason || 'No reason provided'}`
+        });
+      }
+    }
+
+    // Generate 6-digit numeric OTP
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Remove any previous OTP for this email
+    await Otp.deleteMany({ email: cleanEmail });
+
+    // Save OTP to DB (valid 10 minutes)
+    await Otp.create({
+      email: cleanEmail,
+      otp: otpCode,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+    });
+
+    // Send email via Brevo / email service
+    const emailResult = await sendOtpEmail(cleanEmail, otpCode);
+
+    if (!emailResult.success) {
+      console.error('[OTP_SEND_FAIL]:', emailResult.error);
+      return res.status(500).json({ message: 'Failed to send OTP email. Please try again.' });
+    }
+
+    res.json({ success: true, message: 'Verification code sent to your email.' });
+  } catch (error) {
+    console.error('Send OTP Error:', error);
+    res.status(500).json({ message: 'Server error while sending OTP.' });
+  }
+};
+
+// Verify OTP & Authenticate/Register User
+exports.verifyOtp = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ message: errors.array()[0].msg });
+    }
+
+    const { email, otp, name, role } = req.body;
+    const cleanEmail = email.toLowerCase().trim();
+
+    // Check OTP record
+    const otpRecord = await Otp.findOne({ email: cleanEmail });
+    if (!otpRecord) {
+      return res.status(400).json({ message: 'No OTP requested or code has expired. Please request a new code.' });
+    }
+
+    if (otpRecord.otp !== otp.trim()) {
+      return res.status(400).json({ message: 'Invalid verification code.' });
+    }
+
+    if (new Date() > new Date(otpRecord.expiresAt)) {
+      await Otp.deleteMany({ email: cleanEmail });
+      return res.status(400).json({ message: 'Verification code has expired. Please request a new code.' });
+    }
+
+    // Delete used OTP
+    await Otp.deleteMany({ email: cleanEmail });
+
+    // Find or create user
+    let user = await User.findOne({ email: cleanEmail });
+
+    if (user) {
+      // Check Ban Status
+      if (user.isBanned) {
+        const now = new Date();
+        const banUntil = user.banUntil ? new Date(user.banUntil) : null;
+
+        if (banUntil && now < banUntil) {
+          return res.status(403).json({ 
+            message: `Your account has been banned until ${banUntil.toLocaleString()}. Reason: ${user.banReason || 'No reason provided'}` 
+          });
+        } else if (banUntil && now >= banUntil) {
+          user.isBanned = false;
+          user.banUntil = null;
+          user.banReason = null;
+          await user.save();
+        } else {
+          return res.status(403).json({ 
+            message: `Your account has been permanently banned. Reason: ${user.banReason || 'No reason provided'}`
+          });
+        }
+      }
+
+      if (!user.isVerified) {
+        user.isVerified = true;
+        await user.save();
+      }
+    } else {
+      // Create new user (OTP Sign Up)
+      const allowedRoles = ['user', 'developer'];
+      const userRole = allowedRoles.includes(role) ? role : 'user';
+      const displayName = name?.trim() || cleanEmail.split('@')[0];
+
+      user = await User.create({
+        name: displayName,
+        email: cleanEmail,
+        role: userRole,
+        isVerified: true
+      });
+
+      // Send Welcome Notification
+      const { sendWelcomeNotification } = require('../services/notificationService');
+      await sendWelcomeNotification(user).catch(err => console.error('[WELCOME_NOTIFY_ERROR_OTP]:', err.message));
+    }
+
+    const token = generateToken(user);
+
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+        createdAt: user.createdAt
+      }
+    });
+  } catch (error) {
+    console.error('Verify OTP Error:', error);
+    res.status(500).json({ message: 'Server error during OTP verification.' });
+  }
+};
+
