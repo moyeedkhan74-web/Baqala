@@ -42,6 +42,26 @@ const withTimeout = (promise, ms, providerName) => {
   return Promise.race([promise, timeout]);
 };
 
+// Safe non-blocking log helpers (prevents DB connection/buffer delays from blocking email delivery)
+const safeCreateLog = async (data) => {
+  try {
+    return await EmailLog.create(data);
+  } catch (err) {
+    console.warn('[EMAIL_LOG_WARN]:', err.message);
+    return null;
+  }
+};
+
+const safeUpdateLog = async (logEntry, updates) => {
+  if (!logEntry) return;
+  try {
+    Object.assign(logEntry, updates);
+    await logEntry.save();
+  } catch (err) {
+    console.warn('[EMAIL_LOG_WARN]:', err.message);
+  }
+};
+
 /**
  * Send an email using Brevo (Primary), Resend (Secondary), or SMTP (Last Resort)
  */
@@ -60,11 +80,11 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
 
   // 1. Try Brevo First (New Primary)
   if (brevoClient) {
-    let logEntry;
+    let logEntry = null;
     try {
       console.log(`[EMAIL_SERVICE] [BREVO] Attempting delivery to: ${to}`);
       
-      logEntry = await EmailLog.create({
+      logEntry = await safeCreateLog({
         recipient: to,
         subject,
         provider: 'brevo',
@@ -82,9 +102,7 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
       }), 8000, 'BREVO');
 
       console.log(`[EMAIL_SERVICE] [BREVO] Success: ${result.messageId || 'SENT'}`);
-      logEntry.status = 'sent';
-      logEntry.completedAt = new Date();
-      await logEntry.save();
+      await safeUpdateLog(logEntry, { status: 'sent', completedAt: new Date() });
       
       return { success: true, provider: 'brevo', messageId: result.messageId };
     } catch (brevoError) {
@@ -92,24 +110,23 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
       const isTimeout = brevoError.message.includes('TIMEOUT');
       console.error(`[EMAIL_SERVICE] [BREVO] ${isTimeout ? 'Timeout' : 'Failed'}:`, brevoError.message);
       
-      if (logEntry) {
-        logEntry.status = isTimeout ? 'timeout' : 'failed';
-        logEntry.error = brevoError.message;
-        logEntry.completedAt = new Date();
-        await logEntry.save();
-      }
+      await safeUpdateLog(logEntry, {
+        status: isTimeout ? 'timeout' : 'failed',
+        error: brevoError.message,
+        completedAt: new Date()
+      });
       lastError = brevoError;
     }
   }
 
   // 2. Try Resend Second (Sandbox Fallback)
   if (resendKey && (!brevoClient || brevoFailed)) {
-    let logEntry;
+    let logEntry = null;
     try {
       const isFallback = brevoClient && brevoFailed;
       console.log(`[EMAIL_SERVICE] [RESEND] Attempting delivery to: ${to}${isFallback ? ' (FALLBACK)' : ''}`);
       
-      logEntry = await EmailLog.create({
+      logEntry = await safeCreateLog({
         recipient: to,
         subject,
         provider: 'resend',
@@ -128,9 +145,7 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
       if (error) throw error;
 
       console.log(`[EMAIL_SERVICE] [RESEND] Success: ${data?.id}`);
-      logEntry.status = 'sent';
-      logEntry.completedAt = new Date();
-      await logEntry.save();
+      await safeUpdateLog(logEntry, { status: 'sent', completedAt: new Date() });
       
       return { success: true, provider: 'resend', data };
     } catch (resendError) {
@@ -138,24 +153,23 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
       const isTimeout = resendError.message.includes('TIMEOUT');
       console.error(`[EMAIL_SERVICE] [RESEND] ${isTimeout ? 'Timeout' : 'Failed'}:`, resendError.message);
       
-      if (logEntry) {
-        logEntry.status = isTimeout ? 'timeout' : 'failed';
-        logEntry.error = resendError.message;
-        logEntry.completedAt = new Date();
-        await logEntry.save();
-      }
+      await safeUpdateLog(logEntry, {
+        status: isTimeout ? 'timeout' : 'failed',
+        error: resendError.message,
+        completedAt: new Date()
+      });
       lastError = resendError;
     }
   }
 
   // 3. Try Nodemailer/SMTP (Last Resort)
-  if (process.env.SMTP_USER && process.env.SMTP_PASS && (!brevoApi || brevoFailed) && (!resendKey || resendFailed)) {
-    let logEntry;
+  if (process.env.SMTP_USER && process.env.SMTP_PASS && (!brevoClient || brevoFailed) && (!resendKey || resendFailed)) {
+    let logEntry = null;
     try {
-      const isFallback = (brevoApi && brevoFailed) || (resendKey && resendFailed);
+      const isFallback = (brevoClient && brevoFailed) || (resendKey && resendFailed);
       console.log(`[EMAIL_SERVICE] [SMTP] Attempting delivery to: ${to}${isFallback ? ' (FALLBACK)' : ''}`);
       
-      logEntry = await EmailLog.create({
+      logEntry = await safeCreateLog({
         recipient: to,
         subject,
         provider: 'smtp',
@@ -172,21 +186,18 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
       }), 8000, 'SMTP');
 
       console.log(`[EMAIL_SERVICE] [SMTP] Success: ${info.messageId}`);
-      logEntry.status = 'sent';
-      logEntry.completedAt = new Date();
-      await logEntry.save();
+      await safeUpdateLog(logEntry, { status: 'sent', completedAt: new Date() });
 
       return { success: true, provider: 'smtp', messageId: info.messageId };
     } catch (smtpError) {
       const isTimeout = smtpError.message.includes('TIMEOUT');
       console.error(`[EMAIL_SERVICE] [SMTP] ${isTimeout ? 'Timeout' : 'Failed'}:`, smtpError.message);
       
-      if (logEntry) {
-        logEntry.status = isTimeout ? 'timeout' : 'failed';
-        logEntry.error = smtpError.message;
-        logEntry.completedAt = new Date();
-        await logEntry.save();
-      }
+      await safeUpdateLog(logEntry, {
+        status: isTimeout ? 'timeout' : 'failed',
+        error: smtpError.message,
+        completedAt: new Date()
+      });
       lastError = smtpError;
     }
   }
@@ -196,7 +207,7 @@ exports.sendEmail = async ({ to, subject, html, appId = null }) => {
     console.warn('[EMAIL_SERVICE] [WARNING] No email provider configured. Falling back to console log.');
     console.log(`[EMAIL_SERVICE] [SIMULATED] To: ${to}, Subject: ${subject}`);
     
-    await EmailLog.create({
+    await safeCreateLog({
       recipient: to,
       subject,
       provider: 'simulated',
