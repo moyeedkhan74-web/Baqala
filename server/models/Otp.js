@@ -16,10 +16,20 @@ const otpSchema = new mongoose.Schema({
     type: Date,
     required: true
   },
+  // Track failed attempts — lock OTP after 3 wrong tries
+  attempts: {
+    type: Number,
+    default: 0
+  },
+  // Cooldown: prevent resend within 60 seconds
+  lastSentAt: {
+    type: Date,
+    default: Date.now
+  },
   createdAt: {
     type: Date,
     default: Date.now,
-    expires: 600 // Automatically delete document after 10 minutes
+    expires: 300 // MongoDB auto-deletes document after 5 minutes
   }
 });
 

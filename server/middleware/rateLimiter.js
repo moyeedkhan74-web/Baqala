@@ -16,6 +16,15 @@ const authLimiter = rateLimit({
   legacyHeaders: false
 });
 
+// Strict limiter for OTP send — prevents email bombing
+const otpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,                   // max 5 OTP requests per IP per window
+  message: { message: 'Too many OTP requests. Please wait 15 minutes before trying again.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
 const downloadLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 50,
@@ -24,4 +33,4 @@ const downloadLimiter = rateLimit({
   legacyHeaders: false
 });
 
-module.exports = { generalLimiter, authLimiter, downloadLimiter };
+module.exports = { generalLimiter, authLimiter, otpLimiter, downloadLimiter };

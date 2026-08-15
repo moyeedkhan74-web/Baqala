@@ -437,6 +437,18 @@ exports.sendOtp = async (req, res) => {
       }
     }
 
+    // ── 60-second resend cooldown ──────────────────────────────────────────
+    const existingOtp = await Otp.findOne({ email: cleanEmail });
+    if (existingOtp) {
+      const secondsSinceLastSend = (Date.now() - new Date(existingOtp.lastSentAt).getTime()) / 1000;
+      if (secondsSinceLastSend < 60) {
+        const waitSecs = Math.ceil(60 - secondsSinceLastSend);
+        return res.status(429).json({
+          message: `Please wait ${waitSecs} second${waitSecs !== 1 ? 's' : ''} before requesting a new code.`
+        });
+      }
+    }
+
     // Generate 6-digit numeric OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -450,11 +462,11 @@ exports.sendOtp = async (req, res) => {
     await Otp.create({
       email: cleanEmail,
       otp: otpCode,
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000), // ✅ 5 minutes
+      lastSentAt: new Date()
     });
 
     // ✅ Respond IMMEDIATELY — do NOT await email sending
-    // This prevents the UI from freezing while waiting for the mail provider
     res.json({ success: true, message: 'Verification code sent to your email.' });
 
     // 🔥 Fire email in the background (non-blocking)
@@ -486,7 +498,19 @@ exports.verifyOtp = async (req, res) => {
     }
 
     if (otpRecord.otp !== otp.trim()) {
-      return res.status(400).json({ message: 'Invalid verification code.' });
+      // ── Increment failed attempts ────────────────────────────────────────
+      otpRecord.attempts = (otpRecord.attempts || 0) + 1;
+      if (otpRecord.attempts >= 3) {
+        await Otp.deleteMany({ email: cleanEmail });
+        return res.status(400).json({
+          message: 'Too many incorrect attempts. Please request a new verification code.'
+        });
+      }
+      await otpRecord.save();
+      const attemptsLeft = 3 - otpRecord.attempts;
+      return res.status(400).json({
+        message: `Invalid verification code. ${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} remaining.`
+      });
     }
 
     if (new Date() > new Date(otpRecord.expiresAt)) {

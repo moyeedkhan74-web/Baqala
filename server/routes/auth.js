@@ -2,13 +2,13 @@ const express = require('express');
 const { body } = require('express-validator');
 const { register, login, getProfile, updateProfile, googleLogin, firebaseLogin, firebaseRegister, sendOtp, verifyOtp } = require('../controllers/authController');
 const { auth } = require('../middleware/auth');
-const { authLimiter } = require('../middleware/rateLimiter');
+const { authLimiter, otpLimiter } = require('../middleware/rateLimiter');
 const { sendOtpEmail } = require('../services/emailService');
 
 const router = express.Router();
 
 // OTP Authentication routes (Brevo Email)
-router.post('/send-otp', authLimiter, [
+router.post('/send-otp', otpLimiter, [
   body('email').isEmail().withMessage('Valid email is required')
 ], sendOtp);
 
