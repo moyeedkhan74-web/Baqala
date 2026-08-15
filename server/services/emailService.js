@@ -367,8 +367,10 @@ exports.sendUploadConfirmationEmail = async (email, appName) => {
 };
 
 /**
- * OTP Email: Direct API calls (bypasses all SDK / SMTP issues on cloud servers like Render)
- * Chain: Brevo REST API → Resend REST API → Simulated console
+ * OTP Email — sends to the ACTUAL user email, not the developer's.
+ * Chain: Brevo REST API → Gmail SMTP → Simulated console
+ * NOTE: Resend is intentionally excluded — sandbox mode redirects all emails
+ *       to the account owner's address, breaking the user OTP flow.
  */
 exports.sendOtpEmail = async (email, otpCode) => {
   const subject = `${otpCode} is your Baqala verification code`;
@@ -393,10 +395,9 @@ exports.sendOtpEmail = async (email, otpCode) => {
 </div>`;
 
   const brevoApiKey = (process.env.BREVO_API_KEY || '').trim();
-  const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
   const fromEmail = (process.env.BREVO_FROM_EMAIL || 'officialbaqala@gmail.com').trim();
 
-  // ── 1. Brevo REST API (direct HTTPS fetch, no SDK) ──────────────────────
+  // ── 1. Brevo REST API (primary — sends to the ACTUAL user email) ─────────
   if (brevoApiKey) {
     try {
       console.log(`[OTP_EMAIL] [BREVO] Sending to: ${email}`);
@@ -417,49 +418,27 @@ exports.sendOtpEmail = async (email, otpCode) => {
 
       const data = await res.json();
 
-      if (res.ok && data.messageId) {
-        console.log(`[OTP_EMAIL] [BREVO] ✅ Sent! messageId: ${data.messageId}`);
-        return { success: true, provider: 'brevo', messageId: data.messageId };
+      if (res.ok) {
+        // Brevo returns messageId on success; log whatever we get back
+        console.log(`[OTP_EMAIL] [BREVO] ✅ Sent! Response:`, JSON.stringify(data));
+        return { success: true, provider: 'brevo', messageId: data.messageId || data.id };
       }
 
       console.warn(`[OTP_EMAIL] [BREVO] ⚠️ Failed (${res.status}):`, JSON.stringify(data));
     } catch (err) {
-      console.warn(`[OTP_EMAIL] [BREVO] ⚠️ Error:`, err.message);
+      console.warn(`[OTP_EMAIL] [BREVO] ⚠️ Network Error:`, err.message);
     }
+  } else {
+    console.warn('[OTP_EMAIL] [BREVO] ⚠️ BREVO_API_KEY is not set — skipping Brevo.');
   }
 
-  // ── 2. Resend REST API (direct HTTPS fetch, no SDK) ─────────────────────
-  if (resendApiKey) {
-    try {
-      console.log(`[OTP_EMAIL] [RESEND] Sending to: ${email}`);
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${resendApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: `Baqala <${fromEmail}>`,
-          to: [email],
-          subject,
-          html,
-        }),
-      });
+  // ── NOTE: Resend is intentionally skipped for OTP ───────────────────────
+  // Resend free/sandbox mode redirects ALL emails to the account owner's
+  // email address, regardless of the "to" field. This causes OTPs to land
+  // in the developer's inbox instead of the actual user's inbox.
+  // Resend only sends to arbitrary emails after domain verification.
 
-      const data = await res.json();
-
-      if (res.ok && data.id) {
-        console.log(`[OTP_EMAIL] [RESEND] ✅ Sent! id: ${data.id}`);
-        return { success: true, provider: 'resend', id: data.id };
-      }
-
-      console.warn(`[OTP_EMAIL] [RESEND] ⚠️ Failed (${res.status}):`, JSON.stringify(data));
-    } catch (err) {
-      console.warn(`[OTP_EMAIL] [RESEND] ⚠️ Error:`, err.message);
-    }
-  }
-
-  // ── 3. Nodemailer Gmail SMTP fallback ────────────────────────────────────
+  // ── 2. Gmail SMTP (second provider — always delivers to correct address) ─
   const smtpUser = (process.env.SMTP_USER || '').trim();
   const smtpPass = (process.env.SMTP_PASS || '').replace(/[\s"']/g, '');
 
@@ -481,10 +460,12 @@ exports.sendOtpEmail = async (email, otpCode) => {
     } catch (err) {
       console.warn(`[OTP_EMAIL] [SMTP] ⚠️ Error:`, err.message);
     }
+  } else {
+    console.warn('[OTP_EMAIL] [SMTP] ⚠️ SMTP_USER or SMTP_PASS not set — skipping SMTP.');
   }
 
-  // ── 4. Simulated fallback (OTP is visible in server logs) ────────────────
-  console.warn(`\n[OTP_EMAIL] ⚠️  ALL PROVIDERS FAILED. Check your Render server logs for the code.`);
+  // ── 3. Simulated fallback (OTP visible in server/Render logs only) ───────
+  console.warn(`\n[OTP_EMAIL] ⚠️  ALL PROVIDERS FAILED. OTP is in server logs only.`);
   console.log(`==========================================`);
   console.log(`[OTP_FALLBACK] To:   ${email}`);
   console.log(`[OTP_FALLBACK] Code: ${otpCode}`);
