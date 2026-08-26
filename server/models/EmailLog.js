@@ -37,6 +37,12 @@ const emailLogSchema = new mongoose.Schema({
   completedAt: {
     type: Date,
     default: null
+  },
+  // Native MongoDB TTL: Auto-deletes email delivery logs after 14 days
+  createdAt: {
+    type: Date,
+    default: Date.now,
+    expires: 14 * 24 * 60 * 60 // 14 Days (1,209,600 seconds)
   }
 });
 

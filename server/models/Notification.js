@@ -26,6 +26,12 @@ const notificationSchema = new mongoose.Schema({
   },
   link: {
     type: String, // Optional URL to navigate when clicked
+  },
+  // Native MongoDB TTL: Auto-deletes notifications after 30 days
+  createdAt: {
+    type: Date,
+    default: Date.now,
+    expires: 30 * 24 * 60 * 60 // 30 Days (2,592,000 seconds)
   }
 }, {
   timestamps: true
