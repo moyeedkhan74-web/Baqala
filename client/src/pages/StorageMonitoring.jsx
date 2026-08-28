@@ -236,6 +236,7 @@ export default function StorageMonitoring() {
   const usedPct = disk ? disk.usedPercentage : null;
 
   const footprint = (b?.database?.sizeBytes || 0) + (b?.binaries?.sizeBytes || 0) + (b?.tempCache?.totalBytes || 0);
+
   const pieData = [
     { name: 'MongoDB', value: b?.database?.sizeBytes || 0, color: COLORS.database },
     { name: 'B2 Binaries', value: b?.binaries?.sizeBytes || 0, color: COLORS.binaries },
@@ -244,11 +245,10 @@ export default function StorageMonitoring() {
   ].filter(d => d.value > 0);
 
   const allocationData = [
-    { name: 'MongoDB', value: (b?.database?.sizeBytes || 0) },
-    { name: 'B2 Binaries', value: (b?.binaries?.sizeBytes || 0) },
-    { name: 'Media', value: 0 },
-    { name: 'Temp Cache', value: (b?.tempCache?.totalBytes || 0) },
-    { name: 'Logs', value: ((b?.logs?.emailLogsCount || 0) + (b?.logs?.notificationsCount || 0)) * 600 }
+    { name: 'MongoDB', value: (b?.database?.sizeBytes || 0), color: COLORS.database },
+    { name: 'B2 Binaries', value: (b?.binaries?.sizeBytes || 0), color: COLORS.binaries },
+    { name: 'Media', value: (b?.media?.iconsCount + b?.media?.screenshotsCount + b?.media?.avatarsCount) * 50000, color: COLORS.media },
+    { name: 'Temp Cache', value: (b?.tempCache?.totalBytes || 0), color: COLORS.tempCache }
   ];
 
   return (
@@ -345,7 +345,10 @@ export default function StorageMonitoring() {
             <BreakdownCard icon={Cloud} title="Backblaze B2 Binaries" accent="binaries"
               progress={
                 <ProgressBar
-                  segments={[{ name: 'Binaries', value: b?.binaries?.sizeBytes || 0, color: COLORS.binaries }]}
+                  segments={[
+                    { name: 'B2 Binaries', value: b?.binaries?.sizeBytes || 0, color: COLORS.binaries },
+                    { name: 'Other / Free', value: Math.max(0, (footprint || 1) - (b?.binaries?.sizeBytes || 0)), color: 'rgba(255,255,255,0.08)' }
+                  ]}
                   color={COLORS.binaries}
                 />
               }
@@ -359,7 +362,14 @@ export default function StorageMonitoring() {
             </BreakdownCard>
 
             <BreakdownCard icon={Image} title="Public Media" accent="media"
-              progress={undefined}
+              progress={
+                <ProgressBar
+                  segments={[
+                    { name: 'Media Assets', value: (b?.media?.iconsCount + b?.media?.screenshotsCount + b?.media?.avatarsCount) * 50000, color: COLORS.media }
+                  ]}
+                  color={COLORS.media}
+                />
+              }
               footer="Icons · screenshots · avatars"
             >
               <div className="text-2xl font-black text-white mb-3">
@@ -375,7 +385,10 @@ export default function StorageMonitoring() {
             <BreakdownCard icon={Zap} title="Temporary Cache" accent="tempCache"
               progress={
                 <ProgressBar
-                  segments={[{ name: 'Cache', value: b?.tempCache?.totalBytes || 0, color: COLORS.tempCache }]}
+                  segments={[
+                    { name: 'Cache', value: b?.tempCache?.totalBytes || 0, color: COLORS.tempCache },
+                    { name: 'Other / Free', value: Math.max(0, (footprint || 1) - (b?.tempCache?.totalBytes || 0)), color: 'rgba(255,255,255,0.08)' }
+                  ]}
                   color={COLORS.tempCache}
                 />
               }
@@ -401,7 +414,7 @@ export default function StorageMonitoring() {
             </BreakdownCard>
 
             <div className="md:col-span-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
-              <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">Storage Allocation</h2>
+              <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">Storage Allocation Breakdown (%)</h2>
               <div className="flex flex-col md:flex-row items-center gap-6">
                 <div className="w-full md:w-64 h-64">
                   <ResponsiveContainer width="100%" height="100%">
@@ -413,19 +426,27 @@ export default function StorageMonitoring() {
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="flex-1 w-full">
-                  <ResponsiveContainer width="100%" height={allocationData.length * 28}>
-                    <BarChart layout="vertical" data={allocationData} margin={{ left: 0 }}>
-                      <XAxis type="number" hide />
-                      <YAxis type="category" dataKey="name" width={90} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                      <Bar dataKey="value" radius={[0, 6, 6, 0]}>
-                        {allocationData.map((entry, i) => (
-                          <Cell key={entry.name} fill={entry.color} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                <div className="flex-1 w-full space-y-3">
+                  {allocationData.map((item) => {
+                    const pct = footprint > 0 ? ((item.value / footprint) * 100).toFixed(1) : '0.0';
+                    return (
+                      <div key={item.name} className="space-y-1">
+                        <div className="flex justify-between text-xs font-bold text-slate-300">
+                          <span className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                            {item.name}
+                          </span>
+                          <span>{formatBytes(item.value)} ({pct}%)</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(100, Math.max(0, pct))}%`, backgroundColor: item.color }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
