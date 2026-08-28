@@ -1,22 +1,45 @@
 async function runGeminiApkAnalysis(appData, apkMetadata, tier = 'low') {
-  const geminiKey = process.env.GEMINI_API_KEY?.trim();
+  const deepseekKey = process.env.DEEPSEEK_API_KEY?.trim();
   const groqKey = process.env.GROQ_API_KEY?.trim();
-  
-  if (!geminiKey && !groqKey) {
-    console.warn('[AI_MODERATION] No AI API Key (Gemini/Groq) set — skipping AI analysis');
+  const geminiKey = process.env.GEMINI_API_KEY?.trim();
+
+  // Build ordered list of available AI engines (DeepSeek > Groq > Gemini)
+  const engines = [];
+  if (deepseekKey) {
+    engines.push({
+      name: 'DeepSeek',
+      type: 'openai',
+      endpoint: 'https://api.deepseek.com/chat/completions',
+      key: deepseekKey,
+      model: 'deepseek-chat'
+    });
+  }
+  if (groqKey) {
+    engines.push({
+      name: 'Groq',
+      type: 'openai',
+      endpoint: 'https://api.groq.com/openai/v1/chat/completions',
+      key: groqKey,
+      model: 'llama-3.3-70b-versatile'
+    });
+  }
+  if (geminiKey) {
+    engines.push({
+      name: 'Gemini',
+      type: 'gemini',
+      endpoint: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+      key: geminiKey
+    });
+  }
+
+  if (engines.length === 0) {
+    console.warn('[AI_MODERATION] No AI API Key (DeepSeek/Groq/Gemini) set — skipping AI analysis');
     return {
       riskLevel: 'pending',
       analysisError: 'AI integration not configured',
       approvalScore: null,
     };
   }
-
-  // Prioritize Groq if key exists, otherwise fallback to Gemini
-  const useGroq = !!groqKey;
-  const apiKey = useGroq ? groqKey : geminiKey;
-  const endpoint = useGroq 
-    ? 'https://api.groq.com/openai/v1/chat/completions'
-    : `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
   // Mapping variables for the prompt
   const appTitle = appData.title || 'Unknown';
@@ -162,89 +185,93 @@ RULES:
 7. Return ONLY the JSON. No markdown. No extra text.
 `;
 
-  const MAX_RETRIES = 2;
-  let attempt = 0;
+  // Try each engine in sequence
+  let lastError = null;
 
-  while (attempt <= MAX_RETRIES) {
-    try {
-      const fetchOptions = useGroq ? {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          messages: [{ role: 'user', content: prompt }],
-          temperature: 0.1,
-          response_format: { type: 'json_object' }
-        })
-      } : {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            maxOutputTokens: 1500,
-            temperature: 0.1,
-            responseMimeType: 'application/json',
+  for (const engine of engines) {
+    const MAX_RETRIES = 1;
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const fetchOptions = engine.type === 'openai' ? {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${engine.key}`
           },
-        }),
-      };
-
-      const response = await fetch(endpoint, fetchOptions);
-
-      if (!response.ok) {
-        const errBody = await response.text();
-        if (response.status === 429 && attempt < MAX_RETRIES) {
-          const waitTime = (attempt + 1) * 3000;
-          console.warn(`[AI_MODERATION] ⚠️ Quota hit (429). Retrying in ${waitTime}ms... (Attempt ${attempt + 1}/${MAX_RETRIES})`);
-          await new Promise(resolve => setTimeout(resolve, waitTime));
-          attempt++;
-          continue;
-        }
-        throw new Error(`AI API error ${response.status}: ${errBody.slice(0, 200)}`);
-      }
-
-      const data = await response.json();
-      let rawText = '';
-      
-      if (useGroq) {
-        rawText = data.choices?.[0]?.message?.content || '';
-      } else {
-        rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      }
-
-      const clean = rawText.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(clean);
-
-      // --- COMPATIBILITY SHIM ---
-      const flattened = {
-        ...parsed,
-        approvalScore: parsed.ratings?.overall,
-        riskLevel: parsed.appInfo?.riskLevel?.toLowerCase(),
-        recommendation: parsed.decision?.toLowerCase(),
-        appSummary: parsed.summary
-      };
-
-      console.log(`[AI_MODERATION] ✅ ${useGroq ? 'Groq' : 'Gemini'} done — score: ${flattened.approvalScore}, decision: ${flattened.decision}`);
-      return flattened;
-
-    } catch (err) {
-      if (attempt >= MAX_RETRIES) {
-        const timestampedError = `[${new Date().toLocaleTimeString()}] ${err.message}`;
-        console.error(`[AI_MODERATION] ${useGroq ? 'Groq' : 'Gemini'} failed after retries:`, timestampedError);
-        return {
-          analysisError: timestampedError,
-          riskLevel: 'error',
-          approvalScore: null,
-          recommendation: null,
+          body: JSON.stringify({
+            model: engine.model,
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.1,
+            response_format: { type: 'json_object' }
+          })
+        } : {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              maxOutputTokens: 1500,
+              temperature: 0.1,
+              responseMimeType: 'application/json',
+            },
+          }),
         };
+
+        const response = await fetch(engine.endpoint, fetchOptions);
+
+        if (!response.ok) {
+          const errBody = await response.text();
+          if (response.status === 429 && attempt < MAX_RETRIES) {
+            console.warn(`[AI_MODERATION] ⚠️ ${engine.name} 429 rate limit hit. Retrying in 2s...`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            continue;
+          }
+          throw new Error(`${engine.name} API error ${response.status}: ${errBody.slice(0, 150)}`);
+        }
+
+        const data = await response.json();
+        let rawText = '';
+
+        if (engine.type === 'openai') {
+          rawText = data.choices?.[0]?.message?.content || '';
+        } else {
+          rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        }
+
+        const clean = rawText.replace(/```json|```/g, '').trim();
+        const parsed = JSON.parse(clean);
+
+        const flattened = {
+          ...parsed,
+          approvalScore: parsed.ratings?.overall,
+          riskLevel: parsed.appInfo?.riskLevel?.toLowerCase(),
+          recommendation: parsed.decision?.toLowerCase(),
+          appSummary: parsed.summary,
+          engineUsed: engine.name
+        };
+
+        console.log(`[AI_MODERATION] ✅ ${engine.name} completed audit — score: ${flattened.approvalScore}, decision: ${flattened.decision}`);
+        return flattened;
+
+      } catch (err) {
+        lastError = err;
+        console.warn(`[AI_MODERATION] ⚠️ ${engine.name} attempt ${attempt + 1} failed: ${err.message}`);
+        if (attempt < MAX_RETRIES) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
-      attempt++;
-      await new Promise(resolve => setTimeout(resolve, 1000));
     }
+    console.warn(`[AI_MODERATION] Switching to fallback engine after ${engine.name} failed.`);
   }
+
+  const timestampedError = `[${new Date().toLocaleTimeString()}] ${lastError?.message || 'All AI engines failed'}`;
+  console.error(`[AI_MODERATION] ❌ All AI engines failed:`, timestampedError);
+  return {
+    analysisError: timestampedError,
+    riskLevel: 'error',
+    approvalScore: null,
+    recommendation: null,
+  };
 }
 
 module.exports = { runGeminiApkAnalysis };

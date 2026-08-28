@@ -175,11 +175,12 @@ const server = app.listen(PORT, async () => {
   }, nextSunday - nowForCleanup);
 
   // Startup status logs
+  const hasDeepSeek = !!process.env.DEEPSEEK_API_KEY;
   const hasGroq = !!process.env.GROQ_API_KEY;
   const hasGemini = !!process.env.GEMINI_API_KEY;
   
-  console.log(`[STARTUP] AI Status: Groq=${hasGroq ? 'YES' : 'NO'}, Gemini=${hasGemini ? 'YES' : 'NO'}`);
-  console.log(`[STARTUP] Active Engine: ${hasGroq ? '🟢 GROQ (Preferred)' : hasGemini ? '🔵 GEMINI' : '🔴 NONE'}`);
+  console.log(`[STARTUP] AI Status: DeepSeek=${hasDeepSeek ? 'YES' : 'NO'}, Groq=${hasGroq ? 'YES' : 'NO'}, Gemini=${hasGemini ? 'YES' : 'NO'}`);
+  console.log(`[STARTUP] Active AI Engine: ${hasDeepSeek ? '🟣 DEEPSEEK (Primary)' : hasGroq ? '🟢 GROQ (Secondary)' : hasGemini ? '🔵 GEMINI (Tertiary)' : '🔴 NONE'}`);
   console.log(`[STARTUP] B2 Status: ${process.env.B2_PRIVATE_BUCKET ? `✅ ${process.env.B2_PRIVATE_BUCKET}` : '⚠️  B2_PRIVATE_BUCKET not set'}`);
   console.log(`[APK_CLEANUP] Next weekly cleanup: ${nextSunday.toLocaleString()}`);
 
