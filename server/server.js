@@ -104,6 +104,7 @@ app.use('/api/config', configRoutes);
 app.use('/api/contact', require('./routes/contact'));
 app.use('/api/feedback', require('./routes/feedback'));
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin/monitoring', require('./routes/monitoring'));
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -14,7 +14,8 @@ import {
   X,
   ChevronRight,
   Bell,
-  ClipboardCheck
+  ClipboardCheck,
+  HardDrive
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
@@ -32,6 +33,7 @@ const AdminSidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) =>
     { name: 'Analytics', path: '/admin/analytics', icon: BarChart3 },
     { name: 'Featured', path: '/admin/featured', icon: Star },
     { name: 'Settings', path: '/admin/settings', icon: Settings },
+    { name: 'Monitoring', path: '/admin/monitoring', icon: HardDrive },
   ];
 
   const handleLogout = () => {

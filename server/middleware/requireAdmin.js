@@ -4,11 +4,14 @@ const User = require('../models/User');
 const requireAdmin = async (req, res, next) => {
   try {
     const authHeader = req.header('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // EventSource (SSE) cannot set headers, so it passes the token as a query param.
+    const token = authHeader && authHeader.startsWith('Bearer ')
+      ? authHeader.replace('Bearer ', '')
+      : (req.query.token || '');
+
+    if (!token) {
       return res.status(401).json({ message: 'Access denied. No token provided.' });
     }
-
-    const token = authHeader.replace('Bearer ', '');
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
 

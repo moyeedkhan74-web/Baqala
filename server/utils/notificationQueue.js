@@ -36,4 +36,16 @@ setInterval(async () => {
   }
 }, 500);
 
-module.exports = { queueNotification };
+/**
+ * Number of tasks currently waiting in the in-memory queue.
+ */
+const getQueueSize = () => queue.length;
+
+/**
+ * Drop all pending tasks. Used by the admin cache-purge endpoint.
+ */
+const clearQueue = () => {
+  queue.length = 0;
+};
+
+module.exports = { queueNotification, getQueueSize, clearQueue };

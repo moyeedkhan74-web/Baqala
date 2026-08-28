@@ -39,6 +39,7 @@ const Analytics = lazy(() => import('./pages/Analytics'));
 const FeaturedCuration = lazy(() => import('./pages/FeaturedCuration'));
 const PlatformSettings = lazy(() => import('./pages/PlatformSettings'));
 const AppApproval = lazy(() => import('./pages/AppApproval'));
+const StorageMonitoring = lazy(() => import('./pages/StorageMonitoring'));
 
 function App() {
   const location = useLocation();
@@ -302,6 +303,11 @@ function App() {
                       <Route path="/admin/settings" element={
                         <ProtectedRoute roles={['admin']}>
                           <AnimatedLayout><PlatformSettings /></AnimatedLayout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/admin/monitoring" element={
+                        <ProtectedRoute roles={['admin']}>
+                          <AnimatedLayout><StorageMonitoring /></AnimatedLayout>
                         </ProtectedRoute>
                       } />
                     </Routes>
