@@ -7,7 +7,8 @@ const mongoose = require('mongoose');
 const App = require('../models/App');
 const EmailLog = require('../models/EmailLog');
 const Notification = require('../models/Notification');
-const { listTempApks, cleanupTempBucket } = require('../services/apkAnalyzer');
+const { listTempApks } = require('../utils/b2Storage');
+const { cleanupTempBucket } = require('../services/apkAnalyzer');
 const { getQueueSize, clearQueue } = require('../utils/notificationQueue');
 
 const execPromise = util.promisify(exec);
