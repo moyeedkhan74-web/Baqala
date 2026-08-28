@@ -166,6 +166,7 @@ export default function StorageMonitoring() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
+    let errorCount = 0;
 
     const startPolling = () => {
       if (usingPollingRef.current) return;
@@ -176,10 +177,16 @@ export default function StorageMonitoring() {
           const { data } = await api.get('/admin/monitoring/storage');
           setMetrics(data);
           setConnected(true);
+          errorCount = 0;
         } catch (_) {
+          errorCount++;
           setConnected(false);
+          if (errorCount >= 5 && pollRef.current) {
+            clearInterval(pollRef.current);
+            setMode('error');
+          }
         }
-      }, 4000);
+      }, 10000);
       api.get('/admin/monitoring/storage')
         .then(({ data }) => { setMetrics(data); setConnected(true); })
         .catch(() => setConnected(false));

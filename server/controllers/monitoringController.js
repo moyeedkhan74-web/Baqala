@@ -83,35 +83,69 @@ const getDiskUsage = async () => {
 };
 
 // Computes the full storage breakdown. Shared by GET /storage and the SSE stream.
+// Every data source is individually wrapped so a single failure never crashes the endpoint.
 const buildMetrics = async () => {
-  const [
-    dbStats,
-    binaryAgg,
-    tempFiles,
-    emailLogsCount,
-    notificationsCount,
-    avatarCount
-  ] = await Promise.all([
-    mongoose.connection.db.command({ dbStats: 1 }),
-    App.aggregate([
+  // 1. Database stats
+  let dbStats = {};
+  try {
+    dbStats = await mongoose.connection.db.command({ dbStats: 1 });
+  } catch (e) {
+    console.error('[MONITORING] dbStats failed:', e.message);
+  }
+
+  // 2. App binary aggregation (guard $screenshots that might be null)
+  let binaryAgg = { apksSizeBytes: 0, totalInstallers: 0, iconsCount: 0, screenshotsCount: 0 };
+  try {
+    const result = await App.aggregate([
       {
         $group: {
           _id: null,
-          apksSizeBytes: { $sum: '$fileSize' },
+          apksSizeBytes: { $sum: { $ifNull: ['$fileSize', 0] } },
           totalInstallers: { $sum: 1 },
-          iconsCount: { $sum: { $cond: [{ $ne: ['$icon', ''] }, 1, 0] } },
-          screenshotsCount: { $sum: { $size: '$screenshots' } }
+          iconsCount: { $sum: { $cond: [{ $and: [{ $ne: ['$icon', ''] }, { $ne: ['$icon', null] }] }, 1, 0] } },
+          screenshotsCount: { $sum: { $size: { $ifNull: ['$screenshots', []] } } }
         }
       }
-    ]).then(r => r[0] || { apksSizeBytes: 0, totalInstallers: 0, iconsCount: 0, screenshotsCount: 0 }),
-    listTempApks().catch(() => []),
-    EmailLog.estimatedDocumentCount().catch(() => 0),
-    Notification.estimatedDocumentCount().catch(() => 0),
-    User.countDocuments({ avatar: { $ne: '' } }).catch(() => 0)
-  ]);
+    ]);
+    binaryAgg = result[0] || binaryAgg;
+  } catch (e) {
+    console.error('[MONITORING] App aggregate failed:', e.message);
+  }
 
-  const tempDirSizeBytes = fs.existsSync(TEMP_DIR) ? await getDirSize(TEMP_DIR).catch(() => 0) : 0;
+  // 3. Temp files from B2
+  let tempFiles = [];
+  try {
+    tempFiles = await listTempApks();
+  } catch (e) {
+    console.error('[MONITORING] listTempApks failed:', e.message);
+  }
+
+  // 4. Counts
+  const emailLogsCount = await EmailLog.estimatedDocumentCount().catch(() => 0);
+  const notificationsCount = await Notification.estimatedDocumentCount().catch(() => 0);
+  const avatarCount = await User.countDocuments({ avatar: { $nin: ['', null] } }).catch(() => 0);
+
+  // 5. Local temp directory size
+  let tempDirSizeBytes = 0;
+  try {
+    if (fs.existsSync(TEMP_DIR)) {
+      tempDirSizeBytes = await getDirSize(TEMP_DIR);
+    }
+  } catch (_) { /* dir may not exist on Render */ }
+
   const orphanChunksSizeBytes = tempFiles.reduce((sum, f) => sum + (f.sizeBytes || 0), 0);
+
+  // 6. Host disk usage
+  const systemDisk = await getDiskUsage();
+
+  // Build response objects
+  const database = {
+    sizeBytes: (dbStats.storageSize || ((dbStats.dataSize || 0) + (dbStats.indexSize || 0))) || 0,
+    dataSizeBytes: dbStats.dataSize || 0,
+    indexSizeBytes: dbStats.indexSize || 0,
+    collectionsCount: dbStats.collections || 0,
+    documentsCount: dbStats.objects || 0
+  };
 
   const binaries = {
     sizeBytes: binaryAgg.apksSizeBytes || 0,
@@ -138,15 +172,7 @@ const buildMetrics = async () => {
   const logs = {
     emailLogsCount,
     notificationsCount,
-    logFilesSizeBytes: 0 // Server logs are emitted to stdout/stderr (no on-disk log files)
-  };
-
-  const database = {
-    sizeBytes: (dbStats?.storageSize || ((dbStats?.dataSize || 0) + (dbStats?.indexSize || 0))) || 0,
-    dataSizeBytes: dbStats?.dataSize || 0,
-    indexSizeBytes: dbStats?.indexSize || 0,
-    collectionsCount: dbStats?.collections || 0,
-    documentsCount: dbStats?.objects || 0
+    logFilesSizeBytes: 0
   };
 
   return {
