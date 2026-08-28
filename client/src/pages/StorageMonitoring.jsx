@@ -153,6 +153,7 @@ export default function StorageMonitoring() {
   const [connected, setConnected] = useState(false);
   const [mode, setMode] = useState('connecting');
   const [purging, setPurging] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [toast, setToast] = useState(null);
   const esRef = useRef(null);
   const pollRef = useRef(null);
@@ -162,6 +163,20 @@ export default function StorageMonitoring() {
     setToast({ message, type, id: Date.now() });
     setTimeout(() => setToast(null), 5000);
   }, []);
+
+  const handleManualRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const { data } = await api.get('/admin/monitoring/storage');
+      setMetrics(data);
+      setConnected(true);
+      showToast('Storage telemetry refreshed!', 'success');
+    } catch (_) {
+      showToast('Failed to refresh metrics.', 'error');
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -301,6 +316,15 @@ export default function StorageMonitoring() {
           {metrics && (
             <span className="text-xs text-slate-500">Updated {new Date(metrics.timestamp).toLocaleTimeString()}</span>
           )}
+          <button
+            onClick={handleManualRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 border border-white/10 text-slate-200 hover:text-white transition-all disabled:opacity-50"
+            title="Refresh storage metrics now"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Refreshing…' : 'Refresh'}
+          </button>
         </div>
       </div>
 
