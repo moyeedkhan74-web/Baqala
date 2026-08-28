@@ -5,6 +5,7 @@ const util = require('util');
 const mongoose = require('mongoose');
 
 const App = require('../models/App');
+const User = require('../models/User');
 const EmailLog = require('../models/EmailLog');
 const Notification = require('../models/Notification');
 const { listTempApks } = require('../utils/b2Storage');
@@ -85,10 +86,11 @@ const getDiskUsage = async () => {
 const buildMetrics = async () => {
   const [
     dbStats,
-    appMedia,
+    binaryAgg,
     tempFiles,
     emailLogsCount,
-    notificationsCount
+    notificationsCount,
+    avatarCount
   ] = await Promise.all([
     mongoose.connection.db.command({ dbStats: 1 }),
     App.aggregate([
@@ -96,32 +98,34 @@ const buildMetrics = async () => {
         $group: {
           _id: null,
           apksSizeBytes: { $sum: '$fileSize' },
-          totalApps: { $sum: 1 },
+          totalInstallers: { $sum: 1 },
           iconsCount: { $sum: { $cond: [{ $ne: ['$icon', ''] }, 1, 0] } },
           screenshotsCount: { $sum: { $size: '$screenshots' } }
         }
       }
-    ]).then(r => r[0] || { apksSizeBytes: 0, totalApps: 0, iconsCount: 0, screenshotsCount: 0 }),
+    ]).then(r => r[0] || { apksSizeBytes: 0, totalInstallers: 0, iconsCount: 0, screenshotsCount: 0 }),
     listTempApks().catch(() => []),
     EmailLog.estimatedDocumentCount().catch(() => 0),
-    Notification.estimatedDocumentCount().catch(() => 0)
+    Notification.estimatedDocumentCount().catch(() => 0),
+    User.countDocuments({ avatar: { $ne: '' } }).catch(() => 0)
   ]);
 
   const tempDirSizeBytes = fs.existsSync(TEMP_DIR) ? await getDirSize(TEMP_DIR).catch(() => 0) : 0;
   const orphanChunksSizeBytes = tempFiles.reduce((sum, f) => sum + (f.sizeBytes || 0), 0);
 
-  const database = {
-    sizeBytes: dbStats.storageSize || (dbStats.dataSize + (dbStats.indexSize || 0)),
-    dataSizeBytes: dbStats.dataSize,
-    indexSizeBytes: dbStats.indexSize,
-    collectionsCount: dbStats.collections,
-    documentsCount: dbStats.objects
+  const binaries = {
+    sizeBytes: binaryAgg.apksSizeBytes || 0,
+    totalInstallers: binaryAgg.totalInstallers || 0,
+    avgFileSizeBytes:
+      (binaryAgg.totalInstallers || 0) > 0
+        ? Math.round((binaryAgg.apksSizeBytes || 0) / binaryAgg.totalInstallers)
+        : 0
   };
 
-  const appMediaBreakdown = {
-    apksSizeBytes: appMedia.apksSizeBytes || 0,
-    imagesCount: (appMedia.iconsCount || 0) + (appMedia.screenshotsCount || 0),
-    totalApps: appMedia.totalApps || 0
+  const media = {
+    iconsCount: binaryAgg.iconsCount || 0,
+    screenshotsCount: binaryAgg.screenshotsCount || 0,
+    avatarsCount: avatarCount || 0
   };
 
   const tempCache = {
@@ -139,17 +143,18 @@ const buildMetrics = async () => {
 
   const systemDisk = await getDiskUsage();
 
-  return {
-    success: true,
-    timestamp: new Date().toISOString(),
-    systemDisk,
-    breakdown: {
-      database,
-      appMedia: appMediaBreakdown,
-      tempCache,
-      logs
-    }
-  };
+return {
+      success: true,
+      timestamp: new Date().toISOString(),
+      systemDisk,
+      breakdown: {
+        database,
+        binaries,
+        media,
+        tempCache,
+        logs
+      }
+    };
 };
 
 // GET /api/admin/monitoring/storage
