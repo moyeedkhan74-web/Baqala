@@ -141,20 +141,26 @@ const buildMetrics = async () => {
     logFilesSizeBytes: 0 // Server logs are emitted to stdout/stderr (no on-disk log files)
   };
 
-  const systemDisk = await getDiskUsage();
+  const database = {
+    sizeBytes: (dbStats?.storageSize || ((dbStats?.dataSize || 0) + (dbStats?.indexSize || 0))) || 0,
+    dataSizeBytes: dbStats?.dataSize || 0,
+    indexSizeBytes: dbStats?.indexSize || 0,
+    collectionsCount: dbStats?.collections || 0,
+    documentsCount: dbStats?.objects || 0
+  };
 
-return {
-      success: true,
-      timestamp: new Date().toISOString(),
-      systemDisk,
-      breakdown: {
-        database,
-        binaries,
-        media,
-        tempCache,
-        logs
-      }
-    };
+  return {
+    success: true,
+    timestamp: new Date().toISOString(),
+    systemDisk,
+    breakdown: {
+      database,
+      binaries,
+      media,
+      tempCache,
+      logs
+    }
+  };
 };
 
 // GET /api/admin/monitoring/storage
