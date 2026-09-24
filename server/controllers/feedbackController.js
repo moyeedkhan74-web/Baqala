@@ -1,157 +1,123 @@
-const supabase = require('../config/supabase');
+const Feedback = require('../models/Feedback');
 const App = require('../models/App');
 const User = require('../models/User');
 
-// Helper to manual populate user data from MongoDB
-const populateUsers = async (feedbacks) => {
-  if (!feedbacks || feedbacks.length === 0) return [];
-  
-  const userIds = [...new Set(feedbacks.map(f => f.user_id))];
-  let userMap = {};
+// 2-minute in-memory cache for getFeedback
+const feedbackCache = new Map();
 
-  try {
-    // Attempt to pull names/avatars from MongoDB
-    const users = await User.find({ _id: { $in: userIds } }).select('name avatar');
-    users.forEach(u => {
-      userMap[u._id.toString()] = u;
-    });
-  } catch (mongoErr) {
-    // Resilience: Log the error but don't crash. Feedback text is still in Supabase.
-    console.error('[DATABASE RESILIENCE] MongoDB unreachable for feedback avatars:', mongoErr.message);
-  }
+const getCacheKey = (appId) => `feedback:${appId}`;
 
-  return feedbacks.map(f => ({
-    ...f,
-    _id: f.id,
-    app: f.app_id,
-    user: userMap[f.user_id] || { name: 'Baqala User', avatar: null },
-    parent: f.parent_id,
-    likedBy: f.liked_by || [],
-    dislikedBy: f.disliked_by || [],
-    createdAt: f.created_at
-  }));
+const cacheSet = (key, value) => {
+  feedbackCache.set(key, { value, expiry: Date.now() + 120000 }); // 2 minutes TTL
 };
 
-// Create feedback or reply (Supabase version)
+const cacheGet = (key) => {
+  const entry = feedbackCache.get(key);
+  if (entry && Date.now() < entry.expiry) return entry.value;
+  if (entry && Date.now() >= entry.expiry) {
+    feedbackCache.delete(key);
+  }
+  return null;
+};
+
+// Create feedback or reply (MongoDB version)
 exports.createFeedback = async (req, res, next) => {
   try {
     const { appId } = req.params;
     const { rating, comment, parentId } = req.body;
     const userId = req.user._id.toString();
 
-    // 1. If top-level, check for existing review in Supabase
+    // 500-character limit on comment
+    if (comment && comment.length > 500) {
+      return res.status(400).json({ message: 'Comment must be at most 500 characters.' });
+    }
+
+    // If top-level, check for existing review
     if (!parentId) {
-      const { data: existing, error: existErr } = await supabase
-        .from('feedbacks')
-        .select('id')
-        .eq('app_id', appId)
-        .eq('user_id', userId)
-        .is('parent_id', null)
-        .maybeSingle();
-
-      if (existErr) {
-        console.error('[SUPABASE_ERROR] Failed checking existing feedback:', existErr.message);
-        return res.status(503).json({ message: 'Review service is currently unavailable.' });
-      }
-
+      const existing = await Feedback.findOne({ app: appId, user: userId, parent: null });
       if (existing) {
         return res.status(400).json({ message: 'You have already reviewed this app.' });
       }
     }
 
-    // 2. Insert into Supabase
-    const { data: feedback, error } = await supabase
-      .from('feedbacks')
-      .insert([{
-        app_id: appId,
-        user_id: userId,
-        rating: parentId ? 0 : Number(rating) || 1,
-        comment,
-        parent_id: parentId || null
-      }])
-      .select()
-      .maybeSingle();
+    // Create new feedback document
+    const newFeedback = new Feedback({
+      app: appId,
+      user: userId,
+      rating: parentId ? 0 : Number(rating) || 1,
+      comment,
+      parent: parentId || null
+    });
 
-    if (error || !feedback) {
-      console.error('[SUPABASE_ERROR] Failed inserting feedback:', error?.message || 'Empty response');
-      return res.status(503).json({ message: 'Review service is currently unavailable.' });
-    }
+    await newFeedback.save();
 
-    // 3. Update MongoDB App rating aggregate ONLY if top-level feedback
+    // Populate user details
+    const populated = await newFeedback.populate('user', 'name avatar');
+
+    // If top-level feedback, recalculate App averageRating and reviewCount
     if (!parentId) {
-      const { data: allTopLevel, error: allTopLevelErr } = await supabase
-        .from('feedbacks')
-        .select('rating')
-        .eq('app_id', appId)
-        .is('parent_id', null);
+      const allTopLevel = await Feedback.find({ app: appId, parent: null }).select('rating');
+      const totalRatings = allTopLevel.length;
+      const sumRatings = allTopLevel.reduce((acc, f) => acc + (f.rating || 0), 0);
+      const averageRating = totalRatings > 0 ? Math.round((sumRatings / totalRatings) * 10) / 10 : 0;
 
-      if (!allTopLevelErr && allTopLevel) {
-        const totalRatings = allTopLevel.length;
-        const sumRatings = allTopLevel.reduce((acc, f) => acc + (f.rating || 0), 0);
-        const averageRating = totalRatings > 0 ? (sumRatings / totalRatings) : 0;
-
-        await App.findByIdAndUpdate(appId, {
-          averageRating: Math.round(averageRating * 10) / 10,
-          reviewCount: totalRatings
-        });
-      }
+      await App.findByIdAndUpdate(appId, {
+        averageRating,
+        reviewCount: totalRatings
+      });
     }
 
-    // 4. Return populated result
-    const populated = await populateUsers([feedback]);
-    res.status(201).json({ feedback: populated[0] });
+    res.status(201).json({ feedback: populated });
   } catch (err) {
     console.error('[CREATE_FEEDBACK_ERROR] Exception:', err.message);
-    res.status(503).json({ message: 'Review service is currently unavailable.' });
+    res.status(500).json({ message: 'Server error during feedback creation.' });
   }
 };
 
-// Get feedback for an app (Supabase version)
+// Get feedback for an app (with 2-minute in-memory cache)
 exports.getFeedback = async (req, res, next) => {
   try {
     const { appId } = req.params;
-    const { data, error } = await supabase
-      .from('feedbacks')
-      .select('*')
-      .eq('app_id', appId)
-      .order('created_at', { ascending: false });
+    const cacheKey = getCacheKey(appId);
+    const cached = cacheGet(cacheKey);
 
-    if (error) {
-      console.error('[SUPABASE_ERROR] Error fetching feedbacks:', error.message);
-      return res.json({ feedback: [], warning: 'Feedbacks are temporarily unavailable.' });
+    if (cached) {
+      return res.json({ feedback: cached });
     }
 
-    const populated = await populateUsers(data || []);
-    res.json({ feedback: populated });
+    const feedbacks = await Feedback.find({ app: appId })
+      .populate('user', 'name avatar')
+      .sort({ createdAt: -1 });
+
+    // Store in cache
+    cacheSet(cacheKey, feedbacks);
+
+    res.json({ feedback: feedbacks });
   } catch (err) {
     console.error('[GET_FEEDBACK_ERROR] Exception:', err.message);
     res.json({ feedback: [], warning: 'Feedbacks are temporarily unavailable.' });
   }
 };
 
-// Like / dislike a feedback (Supabase version)
+// Like / dislike a feedback (MongoDB version)
 exports.reactFeedback = async (req, res, next) => {
   try {
     const { feedbackId } = req.params;
     const { type } = req.body;
     const userId = req.user._id.toString();
 
-    const { data: feedback, error: fetchErr } = await supabase
-      .from('feedbacks')
-      .select('*')
-      .eq('id', feedbackId)
-      .single();
+    const feedback = await Feedback.findById(feedbackId);
+    if (!feedback) return res.status(404).json({ message: 'Feedback not found.' });
 
-    if (fetchErr || !feedback) return res.status(404).json({ message: 'Feedback not found.' });
-
-    let likedBy = feedback.liked_by || [];
-    let dislikedBy = feedback.disliked_by || [];
+    let likedBy = feedback.likedBy || [];
+    let dislikedBy = feedback.dislikedBy || [];
 
     if (type === 'like') {
       if (likedBy.includes(userId)) {
         likedBy = likedBy.filter(id => id !== userId);
       } else {
         likedBy.push(userId);
+        // Remove from disliked if present
         dislikedBy = dislikedBy.filter(id => id !== userId);
       }
     } else if (type === 'dislike') {
@@ -159,27 +125,24 @@ exports.reactFeedback = async (req, res, next) => {
         dislikedBy = dislikedBy.filter(id => id !== userId);
       } else {
         dislikedBy.push(userId);
+        // Remove from liked if present
         likedBy = likedBy.filter(id => id !== userId);
       }
     }
 
-    const { data: updated, error: updateErr } = await supabase
-      .from('feedbacks')
-      .update({
-        liked_by: likedBy,
-        disliked_by: dislikedBy,
-        likes: likedBy.length,
-        dislikes: dislikedBy.length
-      })
-      .eq('id', feedbackId)
-      .select()
-      .single();
+    // Update the feedback document
+    feedback.likedBy = likedBy;
+    feedback.dislikedBy = dislikedBy;
+    feedback.likes = likedBy.length;
+    feedback.dislikes = dislikedBy.length;
 
-    if (updateErr) throw updateErr;
+    await feedback.save();
 
-    const populated = await populateUsers([updated]);
-    res.json({ feedback: populated[0] });
+    // Populate user details for response
+    const populated = await feedback.populate('user', 'name avatar');
+    res.json({ feedback: populated });
   } catch (err) {
+    console.error('[REACT_FEEDBACK_ERROR] Exception:', err.message);
     next(err);
   }
 };

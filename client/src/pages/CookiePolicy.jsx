@@ -60,7 +60,7 @@ const CookiePolicy = () => {
 
           <section>
             <p className="text-xs italic text-slate-500 mt-10">
-              Questions? Contact us at <a href="mailto:legal@baqala.com" className="text-accent-violet hover:underline">legal@baqala.com</a>
+              Questions? Contact us at <a href="mailto:legalbaqala@gmail.com" className="text-accent-violet hover:underline">legalbaqala@gmail.com</a>
             </p>
           </section>
         </div>

@@ -61,8 +61,18 @@ const Contact = () => {
                 <HiMail className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Email Us</p>
-                <p className="text-slate-900 dark:text-white font-semibold">support@baqala.com</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Official & General Support (Primary)</p>
+                <a href="mailto:officialbaqala@gmail.com" className="text-slate-900 dark:text-white font-semibold hover:text-accent-violet transition-colors">officialbaqala@gmail.com</a>
+              </div>
+            </div>
+
+            <div className="glass-panel p-6 rounded-2xl flex items-center gap-4 border-accent-magenta/10">
+              <div className="w-12 h-12 bg-accent-magenta/10 rounded-xl flex items-center justify-center text-accent-magenta">
+                <HiMail className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Legal, DMCA & Copyright</p>
+                <a href="mailto:legalbaqala@gmail.com" className="text-slate-900 dark:text-white font-semibold hover:text-accent-magenta transition-colors">legalbaqala@gmail.com</a>
               </div>
             </div>
           </div>

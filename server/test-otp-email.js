@@ -31,7 +31,7 @@ console.log('========================================\n');
 
 async function testBrevo() {
   const brevoApiKey = (process.env.BREVO_API_KEY || '').trim();
-  const fromEmail   = (process.env.BREVO_FROM_EMAIL || 'officialbaqala@gmail.com').trim();
+  const fromEmail   = (process.env.BREVO_FROM_EMAIL || 'legalbaqala@gmail.com').trim();
 
   if (!brevoApiKey) {
     console.log('[BREVO] ⏭️  Skipped — BREVO_API_KEY not set.\n');

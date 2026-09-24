@@ -5,8 +5,9 @@ const EmailLog = require('../models/EmailLog');
 
 // Configuration
 const brevoKey = process.env.BREVO_API_KEY?.trim() || null;
-const brevoFrom = process.env.BREVO_FROM_EMAIL || 'legalbaqala@gmail.com';
+const brevoFrom = process.env.BREVO_FROM_EMAIL || 'officialbaqala@gmail.com';
 const supportEmail = process.env.SUPPORT_EMAIL || 'officialbaqala@gmail.com';
+const legalEmail = process.env.LEGAL_EMAIL || 'legalbaqala@gmail.com';
 const resendKey = process.env.RESEND_API_KEY;
 
 // Initialize Brevo (v5.x SDK)

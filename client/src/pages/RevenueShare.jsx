@@ -108,7 +108,7 @@ const RevenueShare = () => {
           <Link to="/upload" className="btn-primary px-10 py-4 text-lg flex items-center gap-2 group">
             Publish My First App <HiArrowRight className="group-hover:translate-x-1 transition-transform" />
           </Link>
-          <a href="mailto:devs@baqala.com" className="btn-secondary px-10 py-4 text-lg">
+          <a href="mailto:officialbaqala@gmail.com" className="btn-secondary px-10 py-4 text-lg">
             Contact Partnerships
           </a>
         </div>

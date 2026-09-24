@@ -185,7 +185,9 @@ const TermsOfService = () => {
             <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-3">16. Contact</h2>
             <p>
               <strong>Baqala</strong><br />
-              Email:{' '}
+              Official Support:{' '}
+              <a href="mailto:officialbaqala@gmail.com" className="text-accent-violet hover:underline font-semibold">officialbaqala@gmail.com</a><br />
+              Legal & DMCA:{' '}
               <a href="mailto:legalbaqala@gmail.com" className="text-accent-violet hover:underline font-semibold">legalbaqala@gmail.com</a><br />
               Website:{' '}
               <a href="https://baqala-lovat.vercel.app" className="text-accent-violet hover:underline font-semibold" target="_blank" rel="noopener noreferrer">baqala-lovat.vercel.app</a>

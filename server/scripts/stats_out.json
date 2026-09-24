@@ -1,0 +1,17 @@
+{
+  "mongo": {
+    "dataSizeMB": "0.04",
+    "storageSizeMB": "0.39",
+    "indexSizeMB": "1.14",
+    "collections": 11,
+    "documents": 106,
+    "limitMB": 512
+  },
+  "b2": {
+    "totalApps": 4,
+    "apksSizeMB": "27.91",
+    "freeStorageGB": 10,
+    "freeBandwidthGBPerDay": 1
+  },
+  "users": 15
+}

@@ -11,6 +11,12 @@ const feedbackSchema = new mongoose.Schema({
   likedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   dislikedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   createdAt: { type: Date, default: Date.now }
+}, {
+  timestamps: true
 });
+
+// Indexes for efficient queries
+feedbackSchema.index({ app: 1, createdAt: -1 });
+feedbackSchema.index({ app: 1, user: 1, parent: 1 });
 
 module.exports = mongoose.model('Feedback', feedbackSchema);
