@@ -250,8 +250,20 @@ const Navbar = () => {
                             {user.name?.charAt(0).toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-black dark:text-white truncate">{user.name}</p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-sm font-black dark:text-white truncate">{user.name}</p>
+                              {(user.isPlatformOwner || user.tier === 'enterprise') && (
+                                <span className="text-[9px] bg-gradient-to-r from-yellow-400 to-amber-500 text-black font-black px-1.5 py-0.5 rounded-md shadow-sm uppercase tracking-wider shrink-0">
+                                  👑 OWNER
+                                </span>
+                              )}
+                            </div>
                             <p className="text-[10px] font-bold text-slate-500 truncate">{user.email}</p>
+                            {user.tier && (
+                              <span className="inline-block text-[9px] font-black uppercase tracking-widest text-accent-neon mt-0.5">
+                                ✨ {user.tier} Membership
+                              </span>
+                            )}
                           </div>
                         </div>
                         <div className="space-y-1">

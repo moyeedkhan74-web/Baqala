@@ -72,6 +72,15 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  tier: {
+    type: String,
+    enum: ['free', 'pro', 'enterprise'],
+    default: 'free'
+  },
+  isPlatformOwner: {
+    type: Boolean,
+    default: false
+  },
   tokenVersion: {
     type: Number,
     default: 0

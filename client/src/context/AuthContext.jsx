@@ -33,8 +33,11 @@ export const AuthProvider = ({ children }) => {
         if (token && savedUser) {
           try {
             setUser(JSON.parse(savedUser));
-            // Re-fetch the latest profile from backend to pick up role changes
-            await api.get('/auth/profile');
+            const profileRes = await api.get('/auth/profile');
+            if (profileRes.data?.user) {
+              setUser(profileRes.data.user);
+              localStorage.setItem('user', JSON.stringify(profileRes.data.user));
+            }
           } catch (e) {
             // silently use cached user if backend is down or token expired
           }
