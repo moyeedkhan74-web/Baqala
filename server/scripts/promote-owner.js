@@ -7,7 +7,11 @@ require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }
 const mongoose = require('mongoose');
 const User = require('../models/User');
 
-const OWNER_EMAIL = 'moyeedkhan74@gmail.com';
+const OWNER_EMAIL = process.env.OWNER_EMAIL;
+if (!OWNER_EMAIL) {
+  console.error('❌ Please set OWNER_EMAIL in your .env file or environment variables.');
+  process.exit(1);
+}
 
 async function promote() {
   await mongoose.connect(process.env.MONGO_URI);

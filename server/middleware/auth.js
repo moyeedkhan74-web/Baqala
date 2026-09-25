@@ -36,7 +36,8 @@ const auth = async (req, res, next) => {
       }
     }
 
-    if (user.email === 'moyeedkhan74@gmail.com') {
+    const ownerEmail = process.env.OWNER_EMAIL;
+    if (ownerEmail && user.email === ownerEmail.toLowerCase().trim()) {
       if (user.role !== 'admin' || user.tier !== 'enterprise' || !user.isVerified || !user.isPlatformOwner) {
         user.role = 'admin';
         user.tier = 'enterprise';

@@ -8,7 +8,11 @@ const verifyCreator = async () => {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('Connected to MongoDB.');
 
-    const creatorEmail = 'moyeedkhan74@gmail.com';
+    const creatorEmail = process.env.OWNER_EMAIL || process.env.ADMIN_EMAIL;
+    if (!creatorEmail) {
+      console.error('❌ Please set OWNER_EMAIL in environment.');
+      process.exit(1);
+    }
     const user = await User.findOne({ email: creatorEmail });
 
     if (!user) {

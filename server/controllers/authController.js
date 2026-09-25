@@ -101,7 +101,8 @@ exports.login = async (req, res) => {
 exports.getProfile = async (req, res) => {
   try {
     let user = await User.findById(req.user._id);
-    if (user && user.email === 'moyeedkhan74@gmail.com') {
+    const ownerEmail = process.env.OWNER_EMAIL;
+    if (user && ownerEmail && user.email === ownerEmail.toLowerCase().trim()) {
       if (user.role !== 'admin' || user.tier !== 'enterprise' || !user.isVerified || !user.isPlatformOwner) {
         user.role = 'admin';
         user.tier = 'enterprise';

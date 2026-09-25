@@ -182,7 +182,7 @@ const DeveloperProfile = () => {
               {developer?.name || 'Unknown'}
             </h1>
             <div className="flex gap-2">
-              {developer.email === 'moyeedkhan74@gmail.com' && (
+              {developer.role === 'developer' && (
                 <span className="badge-neon !bg-accent-sun/10 !text-accent-sun !border-accent-sun/20 uppercase tracking-widest text-[10px] px-3 py-1">Developer</span>
               )}
               {developer.isVerified && (
