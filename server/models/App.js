@@ -171,7 +171,26 @@ const appSchema = new mongoose.Schema({
     type: String,
     enum: ['low', 'mid', 'high', 'advance'],
     default: 'low'
-  }
+  },
+  // Release Management & Channels
+  releaseChannel: {
+    type: String,
+    enum: ['production', 'beta', 'alpha'],
+    default: 'production'
+  },
+  changelog: {
+    type: String,
+    default: ''
+  },
+  versionHistory: [{
+    version: { type: String, required: true },
+    releaseChannel: { type: String, enum: ['production', 'beta', 'alpha'], default: 'production' },
+    fileUrl: { type: String, required: true },
+    fileName: { type: String, default: 'app_file' },
+    fileSize: { type: Number, default: 0 },
+    changelog: { type: String, default: '' },
+    releasedAt: { type: Date, default: Date.now }
+  }]
 }, {
   timestamps: true
 });

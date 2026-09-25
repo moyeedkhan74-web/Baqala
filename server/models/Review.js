@@ -21,6 +21,10 @@ const reviewSchema = new mongoose.Schema({
     type: String,
     maxlength: [1000, 'Comment cannot exceed 1000 characters'],
     default: ''
+  },
+  developerReply: {
+    comment: { type: String, maxlength: [1000, 'Reply cannot exceed 1000 characters'], default: '' },
+    repliedAt: { type: Date, default: null }
   }
 }, {
   timestamps: true

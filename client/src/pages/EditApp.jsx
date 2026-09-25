@@ -5,7 +5,8 @@ import api, { API_BASE_URL } from '../api/axios';
 import toast from 'react-hot-toast';
 import { 
   HiCog, HiPhotograph, HiUpload, HiTrash, HiCheckCircle, 
-  HiArrowLeft, HiDeviceMobile, HiPencil, HiCloudUpload as HiArrowUpTray 
+  HiArrowLeft, HiDeviceMobile, HiPencil, HiCloudUpload as HiArrowUpTray,
+  HiArchive, HiExclamationCircle
 } from 'react-icons/hi';
 
 const EditApp = () => {
@@ -48,6 +49,7 @@ const EditApp = () => {
   
   const [files, setFiles] = useState({ newIcon: null, newScreenshots: [], newAppFile: null });
   const [hasNewBinary, setHasNewBinary] = useState(false);
+  const [releaseData, setReleaseData] = useState({ releaseChannel: 'production', changelog: '' });
 
   useEffect(() => {
     loadApp();
@@ -70,6 +72,10 @@ const EditApp = () => {
         tags: Array.isArray(appData.tags) ? appData.tags.join(', ') : '',
         banner: appData.banner || '',
         icon: appData.icon || ''
+      });
+      setReleaseData({
+        releaseChannel: appData.releaseChannel || 'production',
+        changelog: appData.changelog || ''
       });
       setHasNewBinary(false); // Reset on load
       setLoading(false);
@@ -321,6 +327,7 @@ const EditApp = () => {
           {[
             { id: 'general', label: 'Metadata', icon: HiCog },
             { id: 'assets', label: 'Visual Assets', icon: HiPhotograph },
+            { id: 'release', label: 'Release', icon: HiArchive },
             { id: 'payload', label: 'Binary Payload', icon: HiUpload }
           ].map(tab => (
             <button
@@ -511,6 +518,95 @@ const EditApp = () => {
                   </button>
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'release' && (
+            <div className="space-y-8">
+              <div>
+                <h3 className="text-xl font-bold text-white mb-2">Release Channel</h3>
+                <p className="text-sm text-gray-500 mb-5">Controls which audience sees this version on Baqala.</p>
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    { id: 'production', label: '🚀 Production', desc: 'Stable release for all users', color: 'accent-emerald' },
+                    { id: 'beta', label: '🧪 Beta', desc: 'Early access for testers', color: 'accent-neon' },
+                    { id: 'alpha', label: '🔬 Alpha', desc: 'Internal / developer only', color: 'accent-violet' },
+                  ].map(ch => (
+                    <button
+                      key={ch.id}
+                      type="button"
+                      onClick={() => setReleaseData({ ...releaseData, releaseChannel: ch.id })}
+                      className={`px-5 py-4 rounded-2xl border-2 transition-all flex flex-col items-center text-center gap-1.5 ${
+                        releaseData.releaseChannel === ch.id
+                          ? 'bg-accent-violet/20 border-accent-violet text-white shadow-glow-violet'
+                          : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/20'
+                      }`}
+                    >
+                      <span className="text-[13px] font-black">{ch.label}</span>
+                      <span className="text-[9px] opacity-60 leading-tight">{ch.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Release Notes / Changelog</label>
+                <textarea
+                  rows="5"
+                  value={releaseData.changelog}
+                  onChange={e => setReleaseData({ ...releaseData, changelog: e.target.value })}
+                  className="input-field shadow-none min-h-[120px]"
+                  placeholder="Describe what changed in this version: new features, bug fixes, improvements..."
+                />
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={async () => {
+                    setSaving(true);
+                    try {
+                      await api.put(`/apps/${id}`, releaseData);
+                      toast.success('Release info updated!');
+                    } catch { toast.error('Failed to update release info'); }
+                    finally { setSaving(false); }
+                  }}
+                  className="btn-primary px-10 flex items-center gap-2"
+                >
+                  <HiCheckCircle className="w-5 h-5" />{saving ? 'Saving...' : 'Save Release Info'}
+                </button>
+              </div>
+
+              {/* Version History */}
+              {app.versionHistory && app.versionHistory.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <HiArchive className="text-accent-violet" /> Version History Archive
+                  </h3>
+                  <div className="space-y-3">
+                    {[...app.versionHistory].reverse().map((v, i) => (
+                      <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-white font-bold font-mono">v{v.version}</span>
+                            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+                              v.releaseChannel === 'production' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                              v.releaseChannel === 'beta' ? 'bg-sky-500/10 text-sky-400 border-sky-500/20' :
+                              'bg-violet-500/10 text-violet-400 border-violet-500/20'
+                            }`}>{v.releaseChannel || 'production'}</span>
+                          </div>
+                          {v.changelog && <p className="text-xs text-gray-400 leading-relaxed">{v.changelog}</p>}
+                          <p className="text-[10px] text-gray-600 mt-1">{v.uploadedAt ? new Date(v.uploadedAt).toLocaleDateString() : 'N/A'}</p>
+                        </div>
+                        {v.fileUrl && (
+                          <a href={v.fileUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-accent-neon hover:underline shrink-0">Download</a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

@@ -95,3 +95,50 @@ exports.deleteReview = async (req, res) => {
     res.status(500).json({ message: 'Server error.' });
   }
 };
+
+exports.replyToReview = async (req, res) => {
+  try {
+    const { comment } = req.body;
+    const reviewId = req.params.id;
+
+    const review = await Review.findById(reviewId).populate('app');
+    if (!review) {
+      return res.status(404).json({ message: 'Review not found.' });
+    }
+
+    const app = review.app;
+    if (!app) {
+      return res.status(404).json({ message: 'Associated app not found.' });
+    }
+
+    if (app.developer.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Only the app developer can reply to this review.' });
+    }
+
+    review.developerReply = {
+      comment: comment || '',
+      repliedAt: new Date()
+    };
+    await review.save();
+
+    // Trigger Notification for the user
+    try {
+      const Notification = require('../models/Notification');
+      await Notification.create({
+        recipient: review.user,
+        title: `Developer Replied to your review on ${app.title}`,
+        message: `Developer response: "${comment.substring(0, 100)}${comment.length > 100 ? '...' : ''}"`,
+        type: 'info',
+        link: `/app/${app._id}`
+      });
+    } catch (notifErr) {
+      console.warn('Failed to send notification:', notifErr);
+    }
+
+    res.json({ message: 'Reply saved successfully.', review });
+  } catch (error) {
+    console.error('Reply to review error:', error);
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
+

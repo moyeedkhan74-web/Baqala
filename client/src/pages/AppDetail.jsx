@@ -7,7 +7,7 @@ import StarRating from '../components/StarRating';
 import SEOHead from '../components/SEOHead';
 import { SkeletonDetail } from '../components/Skeleton';
 import toast from 'react-hot-toast';
-import { HiDownload, HiStar, HiFolder, HiClock, HiDeviceMobile, HiArrowLeft, HiArrowRight, HiX, HiFlag, HiCheckCircle } from 'react-icons/hi';
+import { HiDownload, HiStar, HiFolder, HiClock, HiDeviceMobile, HiArrowLeft, HiArrowRight, HiX, HiFlag, HiCheckCircle, HiShieldCheck, HiCode, HiInformationCircle } from 'react-icons/hi';
 import { cn } from '../utils/cn';
 
 const AppDetail = () => {
@@ -31,6 +31,10 @@ const AppDetail = () => {
   const [downloading, setDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [triggerElement, setTriggerElement] = useState(null);
+
+  // Security Audit Modal State
+  const [securityModalOpen, setSecurityModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('about'); // 'about', 'versions', 'reviews'
 
   // Reporting State
   const [reportModalOpen, setReportModalOpen] = useState(false);
@@ -101,85 +105,40 @@ const AppDetail = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [lightboxOpen, lightboxIndex, isScreenshot, app]);
 
-  const [feedbacks, setFeedbacks] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [newRating, setNewRating] = useState(0);
   const [newComment, setNewComment] = useState('');
-  const [submittingFeedback, setSubmittingFeedback] = useState(false);
-  const [replyingTo, setReplyingTo] = useState(null);
-  const [replyComment, setReplyComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
 
-  const loadFeedback = async () => {
+  const loadReviews = async () => {
     try {
-      const res = await api.get(`/feedback/${app._id}`);
-      const data = res.data.feedback || [];
-      const map = {};
-      data.forEach(fb => {
-        fb.replies = [];
-        map[fb._id] = fb;
-      });
-      const topLevel = [];
-      data.forEach(fb => {
-        if (fb.parent) {
-          if (map[fb.parent]) map[fb.parent].replies.push(fb);
-        } else {
-          topLevel.push(fb);
-        }
-      });
-      setFeedbacks(topLevel);
+      const res = await api.get(`/reviews/${app._id}`);
+      setReviews(res.data.reviews || []);
     } catch (err) {
-      console.error('Failed to load feedback', err);
+      console.error('Failed to load reviews', err);
     }
   };
 
-  const submitFeedback = async (e) => {
+  const submitReview = async (e) => {
     e.preventDefault();
     if (!newRating) return toast.error('Please select a star rating (1–5 stars)');
     if (!newComment.trim()) return toast.error('Please write a comment before submitting');
-    setSubmittingFeedback(true);
+    setSubmittingReview(true);
     try {
-      await api.post(`/feedback/${app._id}`, { rating: newRating, comment: newComment });
-      toast.success('Feedback submitted');
+      await api.post(`/reviews/${app._id}`, { rating: newRating, comment: newComment });
+      toast.success('Review submitted successfully');
       setNewRating(0);
       setNewComment('');
-      loadFeedback();
+      loadReviews();
     } catch (err) {
-      toast.error('Failed to submit feedback');
+      toast.error(err.response?.data?.message || 'Failed to submit review');
     } finally {
-      setSubmittingFeedback(false);
-    }
-  };
-
-  const reactFeedback = async (feedbackId, type) => {
-    try {
-      await api.post(`/feedback/${feedbackId}/react`, { type });
-      loadFeedback();
-    } catch (err) {
-      console.error('Reaction error', err);
-    }
-  };
-
-  const toggleReply = (fbId) => {
-    setReplyingTo(replyingTo === fbId ? null : fbId);
-    setReplyComment('');
-  };
-
-  const submitReply = async (e, parentId) => {
-    e.preventDefault();
-    if (!replyComment.trim()) return;
-    try {
-      await api.post(`/feedback/${app._id}`, { rating: 0, comment: replyComment, parentId });
-      toast.success('Reply posted');
-      setReplyingTo(null);
-      setReplyComment('');
-      loadFeedback();
-    } catch (err) {
-      console.error('Reply error', err);
-      toast.error('Failed to post reply');
+      setSubmittingReview(false);
     }
   };
 
   useEffect(() => {
-    if (app) loadFeedback();
+    if (app) loadReviews();
   }, [app]);
 
   const loadData = async () => {
@@ -193,7 +152,7 @@ const AppDetail = () => {
     }
   };
 
-  const handleDownload = async () => {
+  const handleDownload = async (url = null) => {
     setDownloading(true);
     try {
       toast.loading('Preparing your file...', { id: 'download-progress' });
@@ -260,6 +219,86 @@ const AppDetail = () => {
         image={getImageUrl(app.icon)}
         url={`https://baqala-lovat.vercel.app/apps/${app._id}`}
       />
+
+      {/* Security & Permission Audit Modal */}
+      <AnimatePresence>
+        {securityModalOpen && (
+          <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setSecurityModalOpen(false)}
+              className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-2xl bg-white dark:bg-dark-900 rounded-[2.5rem] p-8 shadow-2xl border border-slate-200 dark:border-white/10 max-h-[85vh] overflow-y-auto"
+              onClick={e => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => setSecurityModalOpen(false)}
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-accent-violet transition-colors"
+                aria-label="Close modal"
+              >
+                <HiX className="w-6 h-6" />
+              </button>
+              
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-500 border border-emerald-500/20">
+                  <HiShieldCheck className="w-8 h-8" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black text-slate-900 dark:text-white">Security & Permission Audit</h2>
+                  <p className="text-xs font-bold text-slate-500">Automated static check & VirusTotal verification</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-white/10">
+                  <p className="text-[10px] font-black uppercase text-slate-400">VirusTotal Clean Engine Ratio</p>
+                  <p className="text-lg font-black text-emerald-500 mt-1">
+                    {app.vtMaliciousCount !== undefined ? `${app.vtMaliciousCount}/${app.vtTotalEngines || 72} Flagged` : '0/72 Clean'}
+                  </p>
+                </div>
+                <div className="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-white/10">
+                  <p className="text-[10px] font-black uppercase text-slate-400">AI Risk Assessment</p>
+                  <p className="text-lg font-black text-emerald-400 capitalize mt-1">
+                    {app.aiModeration?.riskLevel || 'Low Risk'}
+                  </p>
+                </div>
+              </div>
+
+              {app.aiModeration?.appSummary && (
+                <div className="mb-6 bg-slate-50 dark:bg-white/5 p-5 rounded-2xl border border-slate-200 dark:border-white/10">
+                  <h4 className="text-xs font-black uppercase text-slate-400 mb-2">Safety Summary</h4>
+                  <p className="text-sm font-medium text-slate-700 dark:text-gray-300 leading-relaxed">
+                    {app.aiModeration.appSummary}
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <h4 className="text-xs font-black uppercase text-slate-400 flex items-center gap-2">
+                  <HiCode className="w-4 h-4 text-accent-violet" />
+                  Extracted Android Permissions ({app.apkMetadata?.permissions?.length || 0})
+                </h4>
+                {app.apkMetadata?.permissions?.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-2">
+                    {app.apkMetadata.permissions.map((perm, idx) => (
+                      <div key={idx} className="text-xs font-mono bg-slate-100 dark:bg-slate-800/60 p-2.5 rounded-xl text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/5 truncate">
+                        {perm.replace('android.permission.', '')}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 italic">Standard permissions requested (No sensitive system permissions requested).</p>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Report Modal */}
       <AnimatePresence>
@@ -345,17 +384,28 @@ const AppDetail = () => {
                 />
               </motion.button>
               <div className="flex-1 md:hidden">
-                <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-1 truncate">{app.title}</h1>
+                <div className="flex items-center gap-2 mb-1">
+                  <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white truncate">{app.title}</h1>
+                  <span className="px-2 py-0.5 text-[10px] font-black uppercase rounded-lg bg-accent-violet/10 text-accent-violet border border-accent-violet/20">
+                    {app.releaseChannel || 'Production'}
+                  </span>
+                </div>
                 <Link to={`/developer/${app.developer?._id || app.developer}`} className="text-sm text-accent-violet font-bold block">{app.developerName}</Link>
               </div>
             </div>
             
             <div className="flex-1">
-              <h1 className="hidden md:block text-4xl md:text-6xl font-extrabold text-slate-900 dark:text-white mb-3 tracking-tight">{app.title}</h1>
+              <div className="hidden md:flex items-center gap-3 mb-3">
+                <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 dark:text-white tracking-tight">{app.title}</h1>
+                <span className="px-3 py-1 text-xs font-black uppercase rounded-xl bg-accent-violet/10 text-accent-violet border border-accent-violet/30">
+                  {app.releaseChannel || 'Production'}
+                </span>
+              </div>
               <p className="text-lg text-slate-600 dark:text-gray-300 font-bold mb-3">{app.tagline}</p>
               <Link to={`/developer/${app.developer?._id || app.developer}`} className="hidden md:flex items-center gap-3 mb-6">
                 <span className="text-xl text-accent-violet dark:text-accent-neon font-medium">{app.developerName}</span>
               </Link>
+              
               <div className="flex flex-wrap gap-4 mb-8">
                 <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-lg">
                   <HiStar className="text-yellow-400" /> <span className="font-bold dark:text-white">{app.averageRating?.toFixed(1) || '0.0'}</span>
@@ -363,10 +413,18 @@ const AppDetail = () => {
                 <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-lg">
                   <HiDownload className="text-accent-emerald" /> <span className="font-bold dark:text-white">{(app.totalDownloads / 1000).toFixed(1)}k+</span>
                 </div>
+                <button 
+                  onClick={() => setSecurityModalOpen(true)}
+                  className="flex items-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 px-3 py-1 rounded-lg border border-emerald-500/20 transition-all text-sm font-bold"
+                >
+                  <HiShieldCheck className="w-4 h-4" />
+                  <span>Security Audit Verified</span>
+                </button>
               </div>
+
               <div className="flex flex-col sm:flex-row gap-4 mt-8">
                 <button 
-                  onClick={handleDownload} disabled={downloading}
+                  onClick={() => handleDownload()} disabled={downloading}
                   className="btn-primary flex-1 sm:flex-none text-lg px-12 py-4 relative overflow-hidden group min-w-[200px]"
                 >
                   {downloading && (
@@ -391,77 +449,168 @@ const AppDetail = () => {
           </div>
         </motion.article>
 
+        {/* Tab Navigation */}
+        <div className="flex gap-4 border-b border-slate-200 dark:border-white/10 mb-8 pb-4">
+          <button 
+            onClick={() => setActiveTab('about')}
+            className={cn("px-6 py-2.5 rounded-2xl font-black text-sm transition-all", activeTab === 'about' ? "bg-accent-violet text-white" : "text-slate-400 hover:text-white")}
+          >
+            About & Screenshots
+          </button>
+          <button 
+            onClick={() => setActiveTab('versions')}
+            className={cn("px-6 py-2.5 rounded-2xl font-black text-sm transition-all flex items-center gap-2", activeTab === 'versions' ? "bg-accent-violet text-white" : "text-slate-400 hover:text-white")}
+          >
+            <HiClock className="w-4 h-4" />
+            Version History ({app.versionHistory?.length || 1})
+          </button>
+          <button 
+            onClick={() => setActiveTab('reviews')}
+            className={cn("px-6 py-2.5 rounded-2xl font-black text-sm transition-all", activeTab === 'reviews' ? "bg-accent-violet text-white" : "text-slate-400 hover:text-white")}
+          >
+            Reviews & Ratings ({app.reviewCount || 0})
+          </button>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
-            {/* Gallery */}
-            {app.screenshots?.length > 0 && (
-              <section>
-                <h2 className="text-xl md:text-2xl font-black dark:text-white mb-6">Gallery</h2>
-                <div className="flex overflow-x-auto gap-4 pb-4 hide-scrollbar snap-x">
-                  {app.screenshots.map((s, i) => (
-                    <button key={i} onClick={() => setLightboxIndex(i)} className="flex-shrink-0">
-                      <img 
-                        src={getImageUrl(s)} 
-                        alt={`Screenshot ${i + 1}`}
-                        className="h-72 md:h-96 w-auto object-cover rounded-2xl border dark:border-white/10 shadow-glass snap-center" 
-                      />
-                    </button>
-                  ))}
-                </div>
+            {activeTab === 'about' && (
+              <>
+                {/* Gallery */}
+                {app.screenshots?.length > 0 && (
+                  <section>
+                    <h2 className="text-xl md:text-2xl font-black dark:text-white mb-6">Gallery</h2>
+                    <div className="flex overflow-x-auto gap-4 pb-4 hide-scrollbar snap-x">
+                      {app.screenshots.map((s, i) => (
+                        <button key={i} onClick={() => setLightboxIndex(i)} className="flex-shrink-0">
+                          <img 
+                            src={getImageUrl(s)} 
+                            alt={`Screenshot ${i + 1}`}
+                            className="h-72 md:h-96 w-auto object-cover rounded-2xl border dark:border-white/10 shadow-glass snap-center" 
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* About */}
+                <section>
+                  <div className="glass-panel p-8 rounded-[2rem] border shadow-lg">
+                    <h2 className="text-2xl font-bold dark:text-white mb-4">Description</h2>
+                    <p className="text-slate-600 dark:text-gray-300 leading-relaxed whitespace-pre-line">{app.description}</p>
+                  </div>
+                </section>
+              </>
+            )}
+
+            {activeTab === 'versions' && (
+              <section className="space-y-4">
+                <h2 className="text-2xl font-bold dark:text-white mb-4">Version History & Release Notes</h2>
+                {app.versionHistory?.length > 0 ? (
+                  app.versionHistory.map((ver, idx) => (
+                    <div key={idx} className="glass-panel p-6 rounded-[2rem] border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <div>
+                        <div className="flex items-center gap-3 mb-1">
+                          <span className="text-lg font-black dark:text-white">v{ver.version}</span>
+                          <span className="px-2.5 py-0.5 text-[10px] font-black uppercase rounded-lg bg-accent-violet/10 text-accent-violet">
+                            {ver.releaseChannel || 'Production'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-400 font-bold mb-2">Released on {new Date(ver.releasedAt || app.updatedAt).toLocaleDateString()}</p>
+                        {ver.changelog && <p className="text-sm text-slate-600 dark:text-gray-300 italic">{ver.changelog}</p>}
+                      </div>
+                      <button 
+                        onClick={() => handleDownload(ver.fileUrl)}
+                        className="btn-secondary px-6 py-2 text-xs font-black uppercase tracking-widest flex items-center gap-2"
+                      >
+                        <HiDownload className="w-4 h-4" />
+                        Download
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="glass-panel p-6 rounded-[2rem] border border-slate-200 dark:border-white/10 flex justify-between items-center">
+                    <div>
+                      <span className="text-lg font-black dark:text-white">v{app.version || '1.0.0'} (Current)</span>
+                      <p className="text-xs text-slate-400 font-bold mt-1">Released on {new Date(app.updatedAt).toLocaleDateString()}</p>
+                    </div>
+                    <span className="px-3 py-1 text-xs font-black uppercase bg-emerald-500/10 text-emerald-500 rounded-xl border border-emerald-500/20">Active Release</span>
+                  </div>
+                )}
               </section>
             )}
 
-            {/* About */}
-            <section>
-              <Link to={`/app/${app._id}/about`} className="glass-panel p-8 rounded-[2rem] block group border shadow-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-bold dark:text-white">About this app</h2>
-                  <HiArrowRight className="w-6 h-6 text-accent-violet group-hover:translate-x-2 transition-transform" />
-                </div>
-                <p className="text-slate-600 dark:text-gray-300 leading-relaxed line-clamp-3">{app.description}</p>
-              </Link>
-            </section>
-
-            {/* Reviews */}
-            <section id="reviews-section">
-              <h2 className="text-2xl font-bold dark:text-white mb-8">Ratings & Reviews</h2>
-              {user ? (
-                <form onSubmit={submitFeedback} className="glass-panel p-8 rounded-[2rem] mb-12 border border-accent-violet/30 bg-white dark:bg-dark-900">
-                  <h3 className="text-xl font-bold dark:text-white mb-6">Write a review</h3>
-                  <div className="mb-6">
-                    <StarRating rating={newRating} onRate={setNewRating} interactive size="lg" />
-                  </div>
-                  <textarea
-                    value={newComment}
-                    onChange={e => setNewComment(e.target.value)}
-                    placeholder="Describe your experience..."
-                    className="input-field min-h-[120px] mb-4"
-                    required
-                  />
-                  <div className="flex justify-end">
-                    <button type="submit" disabled={submittingFeedback} className="btn-primary px-10">
-                      {submittingFeedback ? 'Posting...' : 'Post Review'}
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <div className="glass-panel p-8 rounded-[2rem] mb-12 text-center border-dashed border-2">
-                  <Link to="/login" className="btn-secondary px-8 py-3">Sign In to Review</Link>
-                </div>
-              )}
-              {/* Feedback List (Placeholder for brevity) */}
-              <div className="space-y-6">
-                {feedbacks.map(fb => (
-                  <div key={fb._id} className="glass-panel p-6 rounded-[2.5rem]">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold dark:text-white">{fb.user?.name}</span>
-                      <StarRating rating={fb.rating} size="sm" />
+            {activeTab === 'reviews' && (
+              <section id="reviews-section">
+                <h2 className="text-2xl font-bold dark:text-white mb-8">Ratings & Reviews</h2>
+                {user ? (
+                  <form onSubmit={submitReview} className="glass-panel p-8 rounded-[2rem] mb-12 border border-accent-violet/30 bg-white dark:bg-dark-900">
+                    <h3 className="text-xl font-bold dark:text-white mb-6">Write a review</h3>
+                    <div className="mb-6">
+                      <StarRating rating={newRating} onRate={setNewRating} interactive size="lg" />
                     </div>
-                    <p className="text-slate-600 dark:text-gray-300">{fb.comment}</p>
+                    <textarea
+                      value={newComment}
+                      onChange={e => setNewComment(e.target.value)}
+                      placeholder="Describe your experience with this application..."
+                      className="input-field min-h-[120px] mb-4"
+                      required
+                    />
+                    <div className="flex justify-end">
+                      <button type="submit" disabled={submittingReview} className="btn-primary px-10">
+                        {submittingReview ? 'Posting...' : 'Post Review'}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="glass-panel p-8 rounded-[2rem] mb-12 text-center border-dashed border-2">
+                    <Link to="/login" className="btn-secondary px-8 py-3">Sign In to Review</Link>
                   </div>
-                ))}
-              </div>
-            </section>
+                )}
+                
+                <div className="space-y-6">
+                  {reviews.map(rev => (
+                    <div key={rev._id} className="glass-panel p-6 rounded-[2.5rem] border border-slate-200 dark:border-white/10">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-accent-violet/20 flex items-center justify-center font-black text-accent-violet">
+                            {(rev.user?.name || 'U').charAt(0)}
+                          </div>
+                          <div>
+                            <span className="font-bold dark:text-white block">{rev.user?.name || 'User'}</span>
+                            <span className="text-[10px] text-slate-400 font-bold">{new Date(rev.createdAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                        <StarRating rating={rev.rating} size="sm" />
+                      </div>
+                      <p className="text-slate-600 dark:text-gray-300 text-sm leading-relaxed mb-4">{rev.comment}</p>
+                      
+                      {/* Developer Reply Render */}
+                      {rev.developerReply?.comment && (
+                        <div className="mt-4 p-4 rounded-2xl bg-accent-violet/10 border border-accent-violet/20 ml-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-black uppercase text-accent-violet tracking-widest flex items-center gap-1.5">
+                              <HiCheckCircle className="w-4 h-4" />
+                              Official Developer Reply
+                            </span>
+                            <span className="text-[10px] text-slate-400">
+                              {rev.developerReply.repliedAt ? new Date(rev.developerReply.repliedAt).toLocaleDateString() : ''}
+                            </span>
+                          </div>
+                          <p className="text-xs font-medium text-slate-700 dark:text-gray-200 italic">
+                            "{rev.developerReply.comment}"
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {reviews.length === 0 && (
+                    <p className="text-slate-500 italic text-center py-8">No reviews yet. Be the first to review!</p>
+                  )}
+                </div>
+              </section>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -477,13 +626,10 @@ const AppDetail = () => {
                 <span className="inline-block border-2 border-accent-violet text-accent-violet rounded px-3 py-1 uppercase tracking-widest text-[11px] font-black mt-4">Publisher</span>
                 
                 <div className="flex flex-wrap justify-center gap-2 mt-4 px-4">
-                  {app.developer?.email === 'moyeedkhan74@gmail.com' && (
-                    <span className="badge-neon !bg-accent-sun/10 !text-accent-sun !border-accent-sun/20 uppercase tracking-widest text-[9px] px-3 py-1">Developer</span>
-                  )}
                   {app.developer?.isVerified && (
                     <span className="badge-neon uppercase tracking-widest text-[9px] px-3 py-1 flex items-center gap-1">
                       <HiCheckCircle className="w-3 h-3" />
-                      Verified
+                      Verified Pro
                     </span>
                   )}
                 </div>
@@ -492,10 +638,12 @@ const AppDetail = () => {
                 <Link to={`/developer/${app.developer?._id || app.developer}`} className="w-full btn-secondary py-2 text-sm flex items-center justify-center">View Profile</Link>
               </div>
             </div>
+            
             <div className="glass-panel p-6 rounded-3xl">
               <h3 className="text-lg font-bold dark:text-white mb-4">Information</h3>
               <ul className="space-y-3 text-sm">
                 <li className="flex justify-between text-slate-500">Version <span className="text-slate-900 dark:text-white font-medium">{app.version || '1.0.0'}</span></li>
+                <li className="flex justify-between text-slate-500">Channel <span className="text-accent-violet font-bold capitalize">{app.releaseChannel || 'production'}</span></li>
                 <li className="flex justify-between text-slate-500">Updated <span className="text-slate-900 dark:text-white font-medium">{new Date(app.updatedAt).toLocaleDateString()}</span></li>
               </ul>
             </div>

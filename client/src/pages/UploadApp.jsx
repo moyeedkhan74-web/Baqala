@@ -34,7 +34,9 @@ const UploadApp = () => {
     version: '1.0.0', 
     platform: 'Windows', 
     developerName: user?.name || '',
-    tier: 'low'
+    tier: 'low',
+    releaseChannel: 'production',
+    changelog: ''
   });
   const [files, setFiles] = useState({ appFile: null, icon: null, banner: null, screenshots: [] });
 
@@ -248,6 +250,44 @@ const UploadApp = () => {
                       </button>
                     ))}
                   </div>
+                </div>
+
+                {/* Release Channel */}
+                <div className="pt-2">
+                  <label className="block text-sm font-semibold text-gray-400 mb-3">Release Channel</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { id: 'production', label: '🚀 Production', desc: 'Stable for all users' },
+                      { id: 'beta', label: '🧪 Beta', desc: 'Early access testers' },
+                      { id: 'alpha', label: '🔬 Alpha', desc: 'Internal / dev only' },
+                    ].map(ch => (
+                      <button
+                        key={ch.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, releaseChannel: ch.id })}
+                        className={`px-4 py-3 rounded-2xl border-2 transition-all flex flex-col items-center text-center gap-1 ${
+                          formData.releaseChannel === ch.id
+                            ? 'bg-accent-emerald/20 border-accent-emerald text-white shadow-[0_0_20px_rgba(16,185,129,0.2)]'
+                            : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/20'
+                        }`}
+                      >
+                        <span className="text-[11px] font-black">{ch.label}</span>
+                        <span className="text-[9px] opacity-60 leading-tight">{ch.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Changelog */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-400 mb-2">Release Notes / Changelog <span className="text-gray-500 text-[10px] font-normal">(optional)</span></label>
+                  <textarea
+                    rows="3"
+                    value={formData.changelog}
+                    onChange={e => setFormData({ ...formData, changelog: e.target.value })}
+                    className="input-field shadow-none min-h-[80px]"
+                    placeholder="What's new in this release? (e.g. Bug fixes, new features...)"
+                  />
                 </div>
               </div>
             )}
