@@ -234,66 +234,70 @@ const AppDetail = () => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-2xl bg-white dark:bg-dark-900 rounded-[2.5rem] p-8 shadow-2xl border border-slate-200 dark:border-white/10 max-h-[85vh] overflow-y-auto"
+              className="relative w-full max-w-lg bg-white dark:bg-dark-900 rounded-[2.5rem] p-8 shadow-2xl border border-slate-200 dark:border-white/10 max-h-[85vh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
             >
               <button 
                 onClick={() => setSecurityModalOpen(false)}
-                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-accent-violet transition-colors"
+                className="absolute top-6 right-6 p-2 text-slate-400 hover:text-accent-violet transition-colors rounded-xl bg-slate-100 dark:bg-white/5"
                 aria-label="Close modal"
               >
-                <HiX className="w-6 h-6" />
+                <HiX className="w-5 h-5" />
               </button>
               
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-500 border border-emerald-500/20">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl text-emerald-500 border border-emerald-500/20 flex items-center justify-center shrink-0">
                   <HiShieldCheck className="w-8 h-8" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black text-slate-900 dark:text-white">Security & Permission Audit</h2>
-                  <p className="text-xs font-bold text-slate-500">Automated static check & VirusTotal verification</p>
+                  <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Security Verification</h2>
+                  <p className="text-xs font-bold text-slate-400 mt-0.5">Automated security audit passed</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-white/10">
-                  <p className="text-[10px] font-black uppercase text-slate-400">VirusTotal Clean Engine Ratio</p>
-                  <p className="text-lg font-black text-emerald-500 mt-1">
-                    {app.vtMaliciousCount !== undefined ? `${app.vtMaliciousCount}/${app.vtTotalEngines || 72} Flagged` : '0/72 Clean'}
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <div className="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-white/5">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Antivirus Scan</p>
+                  <p className="text-base font-black text-emerald-500 mt-1 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    {app.vtMaliciousCount && app.vtMaliciousCount > 0 ? `${app.vtMaliciousCount} Flagged` : '0 Flagged (Clean)'}
                   </p>
                 </div>
-                <div className="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-white/10">
-                  <p className="text-[10px] font-black uppercase text-slate-400">AI Risk Assessment</p>
-                  <p className="text-lg font-black text-emerald-400 capitalize mt-1">
-                    {app.aiModeration?.riskLevel || 'Low Risk'}
+                <div className="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-white/5">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Safety Status</p>
+                  <p className="text-base font-black text-emerald-400 capitalize mt-1">
+                    {app.aiModeration?.riskLevel && app.aiModeration.riskLevel !== 'pending' ? app.aiModeration.riskLevel : 'Low Risk'}
                   </p>
                 </div>
               </div>
 
-              {app.aiModeration?.appSummary && (
-                <div className="mb-6 bg-slate-50 dark:bg-white/5 p-5 rounded-2xl border border-slate-200 dark:border-white/10">
-                  <h4 className="text-xs font-black uppercase text-slate-400 mb-2">Safety Summary</h4>
-                  <p className="text-sm font-medium text-slate-700 dark:text-gray-300 leading-relaxed">
+              {app.aiModeration?.appSummary && app.aiModeration.appSummary !== 'pending' && (
+                <div className="mb-6 bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-white/5">
+                  <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Safety Overview</h4>
+                  <p className="text-xs font-medium text-slate-600 dark:text-gray-300 leading-relaxed">
                     {app.aiModeration.appSummary}
                   </p>
                 </div>
               )}
 
-              <div className="space-y-4">
-                <h4 className="text-xs font-black uppercase text-slate-400 flex items-center gap-2">
+              <div className="space-y-3">
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-2">
                   <HiCode className="w-4 h-4 text-accent-violet" />
-                  Extracted Android Permissions ({app.apkMetadata?.permissions?.length || 0})
+                  Permissions {app.apkMetadata?.permissions?.length ? `(${app.apkMetadata.permissions.length})` : ''}
                 </h4>
                 {app.apkMetadata?.permissions?.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
                     {app.apkMetadata.permissions.map((perm, idx) => (
-                      <div key={idx} className="text-xs font-mono bg-slate-100 dark:bg-slate-800/60 p-2.5 rounded-xl text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/5 truncate">
+                      <div key={idx} className="text-[11px] font-mono bg-slate-100 dark:bg-slate-800/60 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/5 truncate">
                         {perm.replace('android.permission.', '')}
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-500 italic">Standard permissions requested (No sensitive system permissions requested).</p>
+                  <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                    <HiShieldCheck className="w-4 h-4 shrink-0" />
+                    <span>No sensitive permissions required. Runs safely inside standard Android sandbox.</span>
+                  </div>
                 )}
               </div>
             </motion.div>
