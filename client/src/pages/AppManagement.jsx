@@ -136,7 +136,7 @@ const AppManagement = () => {
     try {
       const { data } = await api.post(`/admin/apps/${appId}/reanalyze`);
       setApps(prev => prev.map(a => a._id === appId ? (data.app || a) : a));
-      toast.success('AI analysis complete ✅');
+      toast.success('AI analysis complete.');
     } catch (err) {
       const errMsg = err.response?.data?.message || err.response?.data?.error || 'AI analysis failed';
       toast.error(errMsg);
@@ -438,7 +438,7 @@ const AppManagement = () => {
                           const summary = app.aiModeration?.appSummary || app.aiModeration?.shortDescription;
                           const isPending = analyzingId === app._id;
 
-                          const riskLabel = risk === 'low' ? '🟢 Low' : risk === 'medium' ? '🟡 Medium' : risk === 'high' ? '🔴 High' : risk === 'critical' ? '🚨 Critical' : '⏳ Pending';
+                          const riskLabel = risk === 'low' ? 'Low' : risk === 'medium' ? 'Medium' : risk === 'high' ? 'High' : risk === 'critical' ? 'Critical' : 'Pending';
                           const recColor = (recommendation === 'approve' || recommendation === 'APPROVE') ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
                                            (recommendation === 'review' || recommendation === 'REVIEW') ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
                                            (recommendation === 'reject' || recommendation === 'REJECT') ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' :

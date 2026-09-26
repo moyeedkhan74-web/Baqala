@@ -51,7 +51,6 @@ const NotificationBell = () => {
         // Optional: Show a small toast for the new notification if the bell is closed
         if (!open) {
           toast.success(payload.payload.notification.title, {
-            icon: '🔔',
             duration: 4000,
             position: 'top-right'
           });

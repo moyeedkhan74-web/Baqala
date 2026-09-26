@@ -10,6 +10,7 @@ import {
   HiClipboardList, HiServer, HiFilter
 } from 'react-icons/hi';
 import { supabase } from '../supabase';
+import CustomSelect from '../components/CustomSelect';
 
 // ─── Severity badge styling ───────────────────────────────────────────────────
 const severityStyle = {
@@ -388,27 +389,25 @@ const DeveloperDashboard = () => {
               </div>
               <div className="flex flex-wrap gap-3">
                 {/* App filter */}
-                <select
+                <CustomSelect
                   value={filterAppId}
-                  onChange={e => setFilterAppId(e.target.value)}
-                  className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold text-white outline-none focus:ring-2 focus:ring-accent-violet/50"
-                >
-                  <option value="all" className="bg-dark-900">All Apps</option>
-                  {apps.map(a => (
-                    <option key={a._id} value={a._id} className="bg-dark-900">{a.title}</option>
-                  ))}
-                </select>
+                  onChange={val => setFilterAppId(val)}
+                  options={[{ value: 'all', label: 'All Apps' }, ...apps.map(a => ({ value: a._id, label: a.title }))]}
+                  placeholder="All Apps"
+                />
                 {/* Severity filter */}
-                <select
+                <CustomSelect
                   value={filterSeverity}
-                  onChange={e => setFilterSeverity(e.target.value)}
-                  className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold text-white outline-none focus:ring-2 focus:ring-accent-violet/50"
-                >
-                  <option value="all" className="bg-dark-900">All Severities</option>
-                  {['critical', 'high', 'medium', 'low'].map(s => (
-                    <option key={s} value={s} className="bg-dark-900 capitalize">{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-                  ))}
-                </select>
+                  onChange={val => setFilterSeverity(val)}
+                  options={[
+                    { value: 'all', label: 'All Severities' },
+                    { value: 'critical', label: 'Critical' },
+                    { value: 'high', label: 'High' },
+                    { value: 'medium', label: 'Medium' },
+                    { value: 'low', label: 'Low' },
+                  ]}
+                  placeholder="All Severities"
+                />
                 <button
                   onClick={loadCrashLogs}
                   className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white text-xs font-bold rounded-xl border border-white/10 transition-all"
@@ -432,7 +431,7 @@ const DeveloperDashboard = () => {
                 <h3 className="text-xl font-bold text-white mb-2">All Systems Nominal</h3>
                 <p className="text-gray-500 text-sm max-w-xs">
                   No crash logs found{filterAppId !== 'all' || filterSeverity !== 'all' ? ' matching your filters' : ''} in the last 30 days.
-                  Your apps are running smoothly! 🚀
+                  Your apps are running smoothly!
                 </p>
               </div>
             ) : (
@@ -459,7 +458,7 @@ const DeveloperDashboard = () => {
                           </div>
                           <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-gray-500">
                             <span className="font-mono">{log.logType?.replace(/_/g, ' ')}</span>
-                            {log.app?.title && <span>📱 {log.app.title}</span>}
+                            {log.app?.title && <span className="font-semibold text-slate-300">{log.app.title}</span>}
                             <span>v{log.deviceInfo?.appVersion}</span>
                             <span>{log.deviceInfo?.deviceModel}</span>
                             <span>{new Date(log.createdAt).toLocaleDateString()}</span>

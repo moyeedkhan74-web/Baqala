@@ -25,6 +25,7 @@ import {
 } from 'recharts';
 import api from '../api/axios';
 import { cn } from '../utils/cn.js';
+import CustomSelect from '../components/CustomSelect';
 
 const KPICard = ({ title, value, change, isPositive, icon: Icon, color }) => (
   <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-xl transition-all duration-300 group">
@@ -169,15 +170,16 @@ const AdminDashboard = () => {
               <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight leading-none">Downloads Activity</h2>
               <p className="text-xs text-slate-500 font-bold mt-2">Platform performance trend</p>
             </div>
-            <div className="flex items-center gap-3">
-              <select 
+            <div className="w-32">
+              <CustomSelect
                 value={period}
-                onChange={(e) => setPeriod(parseInt(e.target.value))}
-                className="bg-slate-100 dark:bg-white/5 border-none rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest outline-none cursor-pointer"
-              >
-                <option value={7}>7 Days</option>
-                <option value={30}>30 Days</option>
-              </select>
+                onChange={(val) => setPeriod(parseInt(val))}
+                options={[
+                  { value: 7, label: '7 Days' },
+                  { value: 30, label: '30 Days' }
+                ]}
+                placeholder="Period"
+              />
             </div>
           </div>
           

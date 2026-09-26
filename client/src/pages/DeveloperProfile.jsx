@@ -8,6 +8,7 @@ import { HiDownload, HiViewGrid, HiCalendar, HiUserCircle, HiGlobeAlt, HiX, HiFl
 import { SkeletonCard } from '../components/Skeleton';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import CustomSelect from '../components/CustomSelect';
 
 const DeveloperProfile = () => {
   const { id } = useParams();
@@ -121,21 +122,22 @@ const DeveloperProfile = () => {
               
               <form onSubmit={handleReport} className="space-y-6">
                 <div>
-                  <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-3">Category</label>
-                  <select 
+                  <CustomSelect
+                    label="Category"
                     value={reportData.category}
-                    onChange={e => setReportData({...reportData, category: e.target.value})}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-accent-violet/50"
-                  >
-                    <option value="scam_fake" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Scam or Fake Apps</option>
-                    <option value="inappropriate_content" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Inappropriate Content</option>
-                    <option value="copyright_violation" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Copyright Violations</option>
-                    <option value="misleading_description" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Misleading Description</option>
-                    <option value="spam" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Spamming Activities</option>
-                    <option value="harassment" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Harassment</option>
-                    <option value="impersonation" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Impersonation</option>
-                    <option value="other" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Other Issue</option>
-                  </select>
+                    onChange={val => setReportData({...reportData, category: val})}
+                    options={[
+                      { value: 'scam_fake', label: 'Scam or Fake Apps' },
+                      { value: 'inappropriate_content', label: 'Inappropriate Content' },
+                      { value: 'copyright_violation', label: 'Copyright Violations' },
+                      { value: 'misleading_description', label: 'Misleading Description' },
+                      { value: 'spam', label: 'Spamming Activities' },
+                      { value: 'harassment', label: 'Harassment' },
+                      { value: 'impersonation', label: 'Impersonation' },
+                      { value: 'other', label: 'Other Issue' },
+                    ]}
+                    placeholder="Select Category"
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-3">Reason</label>

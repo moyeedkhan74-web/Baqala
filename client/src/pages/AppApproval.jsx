@@ -75,7 +75,7 @@ const AppApproval = () => {
         return a;
       }));
       
-      toast.success('AI analysis complete ✅');
+      toast.success('AI analysis complete.');
     } catch (err) {
       const errMsg = err.response?.data?.message || err.response?.data?.error || 'AI analysis failed';
       console.error('[AI_ANALYZE]', errMsg);
@@ -162,7 +162,7 @@ const AppApproval = () => {
             const isPending = analyzingId === app._id;
             
             const scoreColor = score >= 85 ? 'text-emerald-500' : score >= 60 ? 'text-amber-500' : score >= 40 ? 'text-orange-500' : 'text-rose-500';
-            const riskBadge = risk === 'low' ? '🟢 Low' : risk === 'medium' ? '🟡 Medium' : risk === 'high' ? '🔴 High' : risk === 'critical' ? '🚨 Critical' : '⏳ Pending';
+            const riskBadge = risk === 'low' ? 'Low' : risk === 'medium' ? 'Medium' : risk === 'high' ? 'High' : risk === 'critical' ? 'Critical' : 'Pending';
             const recBadge = recommendation === 'approve' ? { text: 'Approve', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' }
                            : recommendation === 'review' ? { text: 'Review', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20' }
                            : recommendation === 'reject' ? { text: 'Reject', color: 'bg-rose-500/10 text-rose-500 border-rose-500/20' }
@@ -563,7 +563,7 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
               </div>
               
               <div className="p-5 rounded-2xl bg-amber-50/50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/10">
-                 <h4 className="text-[10px] font-black uppercase text-amber-600 tracking-wider mb-2">⚠️ Policy Violations</h4>
+                 <h4 className="text-[10px] font-black uppercase text-amber-600 tracking-wider mb-2 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Policy Violations</h4>
                  {legal.playPolicyViolations?.length > 0 || legal.concerns?.length > 0 ? (
                    <ul className="space-y-1">
                      {legal.playPolicyViolations?.map((v, i) => (
@@ -580,7 +580,7 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
                  ) : (
                    <p className="text-[10px] font-bold text-slate-400">
                       {isLegacy 
-                        ? (app.vtResult === 'clean' ? '✅ VirusTotal: Clean' : app.vtResult ? `⚠️ VT Result: ${app.vtResult}` : 'N/A')
+                        ? (app.vtResult === 'clean' ? 'VirusTotal: Clean' : app.vtResult ? `VT Result: ${app.vtResult}` : 'N/A')
                         : 'No major policy flags detected.'}
                     </p>
                  )}
@@ -604,7 +604,7 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
             {/* Technical Audits Accordion/Stack */}
             <div className="space-y-4">
               <AuditSection 
-                title="🔒 Permission Audit" 
+                title="Permission Audit" 
                 icon={Shield} 
                 data={ai.permissionAudit} 
                 itemKey="permission" 
@@ -612,7 +612,7 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
                 reasonKey="reason" 
               />
               <AuditSection 
-                title="🌐 Network & URL Audit" 
+                title="Network & URL Audit" 
                 icon={FileSearch} 
                 data={ai.networkAudit} 
                 itemKey="url" 
@@ -620,7 +620,7 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
                 reasonKey="reason" 
               />
               <AuditSection 
-                title="🔤 String & Keyword Audit" 
+                title="String & Keyword Audit" 
                 icon={StickyNote} 
                 data={ai.stringAudit} 
                 itemKey="string" 
@@ -628,7 +628,7 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
                 reasonKey="reason" 
               />
               <AuditSection 
-                title="⚙️ Background Service Audit" 
+                title="Background Service Audit" 
                 icon={Clock} 
                 data={ai.serviceAudit} 
                 itemKey="service" 
@@ -642,7 +642,7 @@ const AiNotebookModal = ({ app, onClose, onReanalyze, isAnalyzing }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {ai.rejectionReasons?.length > 0 && (
                   <div className="p-5 rounded-2xl bg-rose-50/50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/10">
-                    <h4 className="text-[10px] font-black uppercase text-rose-500 tracking-wider mb-2">🚩 Rejection Reasons</h4>
+                    <h4 className="text-[10px] font-black uppercase text-rose-500 tracking-wider mb-2 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Rejection Reasons</h4>
                     <ul className="space-y-1">
                       {ai.rejectionReasons.map((r, i) => (
                         <li key={i} className="text-[10px] font-bold text-rose-700 dark:text-rose-300 flex items-start gap-1.5">

@@ -16,7 +16,9 @@ import {
   Check,
   Zap,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  AlertTriangle,
+  ShieldCheck
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import api, { API_BASE_URL } from '../../api/axios';
@@ -303,7 +305,11 @@ const AdminAppDetailModal = ({ app, onClose, onUpdate }) => {
                       "text-xs font-black",
                       app.isFlagged ? "text-rose-500" : "text-emerald-500"
                     )}>
-                      {app.isFlagged ? '🚩 Flagged' : '✅ Verified'}
+                      {app.isFlagged ? (
+                        <span className="flex items-center gap-1 text-rose-500"><AlertTriangle className="w-3 h-3" /> Flagged</span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-emerald-500"><ShieldCheck className="w-3 h-3" /> Verified</span>
+                      )}
                     </span>
                   </div>
                    <div className="flex justify-between items-center">

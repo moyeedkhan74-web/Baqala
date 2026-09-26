@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, CheckCircle2, AlertTriangle, XCircle, ShieldAlert } from 'lucide-react';
 import api from '../../api/axios';
 import { cn } from '../../utils/cn';
 import toast from 'react-hot-toast';
 
 /* ── colour helpers ─────────────────────────────── */
 const scoreColor = (s) => s >= 85 ? '#10b981' : s >= 60 ? '#f59e0b' : s >= 40 ? '#f97316' : '#ef4444';
-const riskBadge = (r) => ({ low: '🟢 Low', medium: '🟡 Medium', high: '🔴 High', critical: '🚨 Critical' })[r] || r;
+const riskBadge = (r) => ({ low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' })[r] || r;
 const recStyles = { approve: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', review: 'bg-amber-500/10 text-amber-500 border-amber-500/20', reject: 'bg-rose-500/10 text-rose-500 border-rose-500/20' };
 
 /* ── circular gauge (CSS-only) ──────────────────── */
@@ -38,7 +38,7 @@ const AiAnalysisCard = ({ app, onUpdate }) => {
     setLoading(true);
     try {
       const { data } = await api.post(`/admin/apps/${app._id}/reanalyze`);
-      toast.success('AI re-analysis complete ✅');
+      toast.success('AI re-analysis complete.');
       if (onUpdate) onUpdate(data.app?.aiModeration || data.aiModeration);
     } catch (err) {
       const errMsg = err.response?.data?.message || 'Re-analysis failed';
@@ -95,7 +95,13 @@ const AiAnalysisCard = ({ app, onUpdate }) => {
           <ScoreGauge score={ai.approvalScore} />
           {ai.recommendation && (
             <span className={cn("mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider", recStyles[ai.recommendation] || 'bg-slate-100 text-slate-500 border-slate-200')}>
-              {ai.recommendation === 'approve' ? '✅ Approve' : ai.recommendation === 'review' ? '⚠️ Review' : '❌ Reject'}
+              {ai.recommendation === 'approve' ? (
+                <><CheckCircle2 className="w-3 h-3" /> Approve</>
+              ) : ai.recommendation === 'review' ? (
+                <><AlertTriangle className="w-3 h-3" /> Review</>
+              ) : (
+                <><XCircle className="w-3 h-3" /> Reject</>
+              )}
             </span>
           )}
         </div>

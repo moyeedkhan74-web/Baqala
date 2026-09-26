@@ -63,7 +63,6 @@ const Settings = () => {
 
       updateUser(res.data.user);
       toast.success('Profile updated successfully!', {
-        icon: '🚀',
         style: { borderRadius: '15px', background: '#333', color: '#fff' }
       });
       setAvatarFile(null);

@@ -4,6 +4,7 @@ import api from '../api/axios';
 import toast from 'react-hot-toast';
 import SEOHead from '../components/SEOHead';
 import { HiMail, HiChatAlt } from 'react-icons/hi';
+import CustomSelect from '../components/CustomSelect';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -112,19 +113,19 @@ const Contact = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 dark:text-gray-300 ml-1">Reason for Contact</label>
-              <select
-                name="reason"
+            <div>
+              <CustomSelect
+                label="Reason for Contact"
                 value={formData.reason}
-                onChange={handleChange}
-                className="input-field cursor-pointer"
-              >
-                <option value="General">General Inquiry</option>
-                <option value="Report App">Report an App</option>
-                <option value="Request Takedown">Request Takedown (DMCA)</option>
-                <option value="Developer Support">Developer Support</option>
-              </select>
+                onChange={(val) => setFormData({ ...formData, reason: val })}
+                options={[
+                  { value: 'General', label: 'General Inquiry' },
+                  { value: 'Report App', label: 'Report an App' },
+                  { value: 'Request Takedown', label: 'Request Takedown (DMCA)' },
+                  { value: 'Developer Support', label: 'Developer Support' }
+                ]}
+                placeholder="Select Reason"
+              />
             </div>
 
             <div className="space-y-2">

@@ -5,6 +5,8 @@ import api from '../api/axios';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { HiUpload, HiDocumentText, HiPhotograph, HiCheckCircle, HiArrowRight, HiArrowLeft, HiOutlineSparkles } from 'react-icons/hi';
+import { Zap, TestTube, Code2 } from 'lucide-react';
+import CustomSelect from '../components/CustomSelect';
 
 const UploadApp = () => {
   const navigate = useNavigate();
@@ -214,12 +216,13 @@ const UploadApp = () => {
                       ))}
                     </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-400 mb-2">Platform</label>
-                    <div className="relative">
-                      <select value={formData.platform} onChange={e => setFormData({...formData, platform: e.target.value})} className="select-field">
-                        {platforms.map(p => <option key={p} value={p} className="bg-dark-900">{p}</option>)}
-                      </select>
-                    </div>
+                    <CustomSelect
+                      label="Platform"
+                      value={formData.platform}
+                      onChange={val => setFormData({...formData, platform: val})}
+                      options={platforms}
+                      placeholder="Select Platform"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-400 mb-2">Version</label>
@@ -257,24 +260,30 @@ const UploadApp = () => {
                   <label className="block text-sm font-semibold text-gray-400 mb-3">Release Channel</label>
                   <div className="grid grid-cols-3 gap-3">
                     {[
-                      { id: 'production', label: '🚀 Production', desc: 'Stable for all users' },
-                      { id: 'beta', label: '🧪 Beta', desc: 'Early access testers' },
-                      { id: 'alpha', label: '🔬 Alpha', desc: 'Internal / dev only' },
-                    ].map(ch => (
-                      <button
-                        key={ch.id}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, releaseChannel: ch.id })}
-                        className={`px-4 py-3 rounded-2xl border-2 transition-all flex flex-col items-center text-center gap-1 ${
-                          formData.releaseChannel === ch.id
-                            ? 'bg-accent-emerald/20 border-accent-emerald text-white shadow-[0_0_20px_rgba(16,185,129,0.2)]'
-                            : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/20'
-                        }`}
-                      >
-                        <span className="text-[11px] font-black">{ch.label}</span>
-                        <span className="text-[9px] opacity-60 leading-tight">{ch.desc}</span>
-                      </button>
-                    ))}
+                      { id: 'production', label: 'Production', icon: Zap, desc: 'Stable for all users' },
+                      { id: 'beta', label: 'Beta', icon: TestTube, desc: 'Early access testers' },
+                      { id: 'alpha', label: 'Alpha', icon: Code2, desc: 'Internal / dev only' },
+                    ].map(ch => {
+                      const IconComponent = ch.icon;
+                      return (
+                        <button
+                          key={ch.id}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, releaseChannel: ch.id })}
+                          className={`px-4 py-3 rounded-2xl border-2 transition-all flex flex-col items-center text-center gap-1 ${
+                            formData.releaseChannel === ch.id
+                              ? 'bg-accent-emerald/20 border-accent-emerald text-white shadow-[0_0_20px_rgba(16,185,129,0.2)]'
+                              : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/20'
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <IconComponent className="w-3.5 h-3.5 text-accent-emerald" />
+                            <span className="text-[11px] font-black">{ch.label}</span>
+                          </div>
+                          <span className="text-[9px] opacity-60 leading-tight">{ch.desc}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 

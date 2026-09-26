@@ -8,6 +8,7 @@ const HeroCarousel = lazy(() => import('../components/HeroCarousel'));
 import SEOHead from '../components/SEOHead';
 const SkeletonCard = lazy(() => import('../components/Skeleton').then(m => ({ default: m.SkeletonCard })));
 import { HiSearch, HiX, HiAdjustments, HiTrendingUp, HiCollection } from 'react-icons/hi';
+import CustomSelect from '../components/CustomSelect';
 
 const Home = () => {
   const [apps, setApps] = useState([]);
@@ -127,17 +128,17 @@ const Home = () => {
                 </span>
              </div>
              
-             <div className="flex items-center gap-3 bg-slate-100 dark:bg-white/5 px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10">
-                <HiAdjustments className="w-4 h-4 text-slate-400" />
-                <select
+             <div className="w-52">
+                <CustomSelect
                   value={sort}
-                  onChange={(e) => setSort(e.target.value)}
-                  className="bg-transparent border-none text-slate-700 dark:text-white font-bold text-xs focus:ring-0 cursor-pointer appearance-none outline-none"
-                >
-                  <option value="newest" className="bg-white dark:bg-dark-900">Newest Arrivals</option>
-                  <option value="rating" className="bg-white dark:bg-dark-900">Top Rated</option>
-                  <option value="downloads" className="bg-white dark:bg-dark-900">Most Popular</option>
-                </select>
+                  onChange={(val) => setSort(val)}
+                  options={[
+                    { value: 'newest', label: 'Newest Arrivals' },
+                    { value: 'rating', label: 'Top Rated' },
+                    { value: 'downloads', label: 'Most Popular' }
+                  ]}
+                  placeholder="Sort by"
+                />
              </div>
           </div>
         </div>

@@ -29,6 +29,7 @@ import {
   Pie
 } from 'recharts';
 import api from '../api/axios';
+import CustomSelect from '../components/CustomSelect';
 
 const Analytics = () => {
   const [data, setData] = useState({
@@ -112,15 +113,18 @@ const Analytics = () => {
               <h2 className="text-xl font-black text-slate-900 dark:text-white">Growth Overview</h2>
               <p className="text-sm text-slate-500 font-bold">Total downloads tracked</p>
             </div>
-            <select 
-              value={period}
-              onChange={(e) => setPeriod(parseInt(e.target.value))}
-              className="bg-slate-100 dark:bg-white/5 border-none rounded-xl px-4 py-2 text-xs font-bold outline-none cursor-pointer"
-            >
-              <option value={7}>Last 7 Days</option>
-              <option value={14}>Last 14 Days</option>
-              <option value={30}>Last 30 Days</option>
-            </select>
+            <div className="w-40">
+              <CustomSelect
+                value={period}
+                onChange={(val) => setPeriod(parseInt(val))}
+                options={[
+                  { value: 7, label: 'Last 7 Days' },
+                  { value: 14, label: 'Last 14 Days' },
+                  { value: 30, label: 'Last 30 Days' }
+                ]}
+                placeholder="Select Period"
+              />
+            </div>
           </div>
 
           <div className="h-[300px] w-full min-w-0">

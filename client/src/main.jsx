@@ -39,7 +39,7 @@ class ErrorBoundary extends React.Component {
           padding: '20px',
           fontFamily: 'monospace'
         }}>
-          <h1 style={{ fontSize: '2rem', marginBottom: '20px' }}>⚠️ Something went wrong</h1>
+          <h1 style={{ fontSize: '2rem', marginBottom: '20px' }}>Something went wrong</h1>
           <p style={{ fontSize: '0.9rem', maxWidth: '600px', marginBottom: '20px', color: '#ccc' }}>
             {this.state.error?.message || 'An unexpected error occurred'}
           </p>
