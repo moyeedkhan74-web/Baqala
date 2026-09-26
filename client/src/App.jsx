@@ -228,90 +228,96 @@ function App() {
                 <Navbar />
                 
                 <main id="main-content" className="flex-1 w-full flex flex-col">
-                  <AnimatePresence mode="wait">
-                    <Routes location={location} key={location.pathname}>
-                      <Route path="/" element={<AnimatedLayout skipInitial><Home /></AnimatedLayout>} />
-                      <Route path="/login" element={<AnimatedLayout><Login /></AnimatedLayout>} />
-                      <Route path="/register" element={<AnimatedLayout><Register /></AnimatedLayout>} />
-                      <Route path="/app/:id" element={<AnimatedLayout><AppDetail /></AnimatedLayout>} />
-                      <Route path="/app/:id/about" element={<AnimatedLayout><AppAbout /></AnimatedLayout>} />
-                      <Route path="/privacy-policy" element={<AnimatedLayout><PrivacyPolicy /></AnimatedLayout>} />
-                      <Route path="/terms-of-service" element={<AnimatedLayout><TermsOfService /></AnimatedLayout>} />
-                      <Route path="/cookie-policy" element={<AnimatedLayout><CookiePolicy /></AnimatedLayout>} />
-                      <Route path="/revenue-share" element={<AnimatedLayout><RevenueShare /></AnimatedLayout>} />
-                      <Route path="/contact" element={<AnimatedLayout><Contact /></AnimatedLayout>} />
-                      <Route path="/about" element={<AnimatedLayout><About /></AnimatedLayout>} />
-                      <Route path="/search" element={<AnimatedLayout><SearchResults /></AnimatedLayout>} />
-                      <Route path="/category/:name" element={<AnimatedLayout><CategoryPage /></AnimatedLayout>} />
-                      <Route path="/developer/:id" element={<AnimatedLayout><DeveloperProfile /></AnimatedLayout>} />
-                      <Route path="/settings" element={
-                        <ProtectedRoute>
-                          <AnimatedLayout><Settings /></AnimatedLayout>
-                        </ProtectedRoute>
-                      } />
-                      
-                      <Route path="/developer" element={
-                        <ProtectedRoute>
-                          <AnimatedLayout><DeveloperDashboard /></AnimatedLayout>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/upload" element={
-                        <ProtectedRoute>
-                          <AnimatedLayout><UploadApp /></AnimatedLayout>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/edit/:id" element={
-                        <ProtectedRoute>
-                          <AnimatedLayout><EditApp /></AnimatedLayout>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/admin" element={
-                        <ProtectedRoute roles={['admin']}>
-                          <AnimatedLayout><AdminDashboard /></AnimatedLayout>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/admin/apps" element={
-                        <ProtectedRoute roles={['admin']}>
-                          <AnimatedLayout><AppManagement /></AnimatedLayout>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/admin/approval" element={
-                        <ProtectedRoute roles={['admin']}>
-                          <AnimatedLayout><AppApproval /></AnimatedLayout>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/admin/users" element={
-                        <ProtectedRoute roles={['admin']}>
-                          <AnimatedLayout><UserManagement /></AnimatedLayout>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/admin/reviews" element={
-                        <ProtectedRoute roles={['admin']}>
-                          <AnimatedLayout><ModerationQueue /></AnimatedLayout>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/admin/analytics" element={
-                        <ProtectedRoute roles={['admin']}>
-                          <AnimatedLayout><Analytics /></AnimatedLayout>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/admin/featured" element={
-                        <ProtectedRoute roles={['admin']}>
-                          <AnimatedLayout><FeaturedCuration /></AnimatedLayout>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/admin/settings" element={
-                        <ProtectedRoute roles={['admin']}>
-                          <AnimatedLayout><PlatformSettings /></AnimatedLayout>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/admin/monitoring" element={
-                        <ProtectedRoute roles={['admin']}>
-                          <AnimatedLayout><StorageMonitoring /></AnimatedLayout>
-                        </ProtectedRoute>
-                      } />
-                    </Routes>
-                  </AnimatePresence>
+                  <Suspense fallback={
+                    <div className="min-h-[60vh] flex items-center justify-center p-8">
+                      <div className="w-10 h-10 border-4 border-accent-violet border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  }>
+                    <AnimatePresence mode="wait">
+                      <Routes location={location} key={location.pathname}>
+                        <Route path="/" element={<AnimatedLayout skipInitial><Home /></AnimatedLayout>} />
+                        <Route path="/login" element={<AnimatedLayout><Login /></AnimatedLayout>} />
+                        <Route path="/register" element={<AnimatedLayout><Register /></AnimatedLayout>} />
+                        <Route path="/app/:id" element={<AnimatedLayout><AppDetail /></AnimatedLayout>} />
+                        <Route path="/app/:id/about" element={<AnimatedLayout><AppAbout /></AnimatedLayout>} />
+                        <Route path="/privacy-policy" element={<AnimatedLayout><PrivacyPolicy /></AnimatedLayout>} />
+                        <Route path="/terms-of-service" element={<AnimatedLayout><TermsOfService /></AnimatedLayout>} />
+                        <Route path="/cookie-policy" element={<AnimatedLayout><CookiePolicy /></AnimatedLayout>} />
+                        <Route path="/revenue-share" element={<AnimatedLayout><RevenueShare /></AnimatedLayout>} />
+                        <Route path="/contact" element={<AnimatedLayout><Contact /></AnimatedLayout>} />
+                        <Route path="/about" element={<AnimatedLayout><About /></AnimatedLayout>} />
+                        <Route path="/search" element={<AnimatedLayout><SearchResults /></AnimatedLayout>} />
+                        <Route path="/category/:name" element={<AnimatedLayout><CategoryPage /></AnimatedLayout>} />
+                        <Route path="/developer/:id" element={<AnimatedLayout><DeveloperProfile /></AnimatedLayout>} />
+                        <Route path="/settings" element={
+                          <ProtectedRoute>
+                            <AnimatedLayout><Settings /></AnimatedLayout>
+                          </ProtectedRoute>
+                        } />
+                        
+                        <Route path="/developer" element={
+                          <ProtectedRoute>
+                            <AnimatedLayout><DeveloperDashboard /></AnimatedLayout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/upload" element={
+                          <ProtectedRoute>
+                            <AnimatedLayout><UploadApp /></AnimatedLayout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/edit/:id" element={
+                          <ProtectedRoute>
+                            <AnimatedLayout><EditApp /></AnimatedLayout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/admin" element={
+                          <ProtectedRoute roles={['admin']}>
+                            <AnimatedLayout><AdminDashboard /></AnimatedLayout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/admin/apps" element={
+                          <ProtectedRoute roles={['admin']}>
+                            <AnimatedLayout><AppManagement /></AnimatedLayout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/admin/approval" element={
+                          <ProtectedRoute roles={['admin']}>
+                            <AnimatedLayout><AppApproval /></AnimatedLayout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/admin/users" element={
+                          <ProtectedRoute roles={['admin']}>
+                            <AnimatedLayout><UserManagement /></AnimatedLayout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/admin/reviews" element={
+                          <ProtectedRoute roles={['admin']}>
+                            <AnimatedLayout><ModerationQueue /></AnimatedLayout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/admin/analytics" element={
+                          <ProtectedRoute roles={['admin']}>
+                            <AnimatedLayout><Analytics /></AnimatedLayout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/admin/featured" element={
+                          <ProtectedRoute roles={['admin']}>
+                            <AnimatedLayout><FeaturedCuration /></AnimatedLayout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/admin/settings" element={
+                          <ProtectedRoute roles={['admin']}>
+                            <AnimatedLayout><PlatformSettings /></AnimatedLayout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/admin/monitoring" element={
+                          <ProtectedRoute roles={['admin']}>
+                            <AnimatedLayout><StorageMonitoring /></AnimatedLayout>
+                          </ProtectedRoute>
+                        } />
+                      </Routes>
+                    </AnimatePresence>
+                  </Suspense>
                 </main>
                 
                 <Footer />

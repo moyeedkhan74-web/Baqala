@@ -1,11 +1,11 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
-const AppCard = lazy(() => import('../components/AppCard'));
+import AppCard from '../components/AppCard';
 import SEOHead from '../components/SEOHead';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiSearch, HiXCircle } from 'react-icons/hi';
-const SkeletonCard = lazy(() => import('../components/Skeleton').then(m => ({ default: m.SkeletonCard })));
+import { SkeletonCard } from '../components/Skeleton';
 
 const SearchResults = () => {
   const [searchParams] = useSearchParams();

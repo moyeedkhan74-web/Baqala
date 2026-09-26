@@ -83,6 +83,16 @@ app.use(helmet({
     },
   },
 }));
+
+// Health check endpoint (Bypasses rate limiter for uptime monitors and ping)
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 app.use(generalLimiter);
 
 // Body parsers
@@ -107,14 +117,6 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/crash-logs', require('./routes/crashLogs'));
 app.use('/api/admin/monitoring', require('./routes/monitoring'));
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
-});
 
 // 404 handler
 app.use((req, res) => {

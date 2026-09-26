@@ -1,12 +1,12 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
-const AppCard = lazy(() => import('../components/AppCard'));
-const HeroCarousel = lazy(() => import('../components/HeroCarousel'));
+import AppCard from '../components/AppCard';
+import HeroCarousel from '../components/HeroCarousel';
 import SEOHead from '../components/SEOHead';
-const SkeletonCard = lazy(() => import('../components/Skeleton').then(m => ({ default: m.SkeletonCard })));
+import { SkeletonCard } from '../components/Skeleton';
 import { HiSearch, HiX, HiAdjustments, HiTrendingUp, HiCollection } from 'react-icons/hi';
 import CustomSelect from '../components/CustomSelect';
 
