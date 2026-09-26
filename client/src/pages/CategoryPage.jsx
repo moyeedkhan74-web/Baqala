@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api/axios';
 import AppCard from '../components/AppCard';
