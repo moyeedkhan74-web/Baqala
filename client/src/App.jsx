@@ -141,7 +141,7 @@ function App() {
       
       {config && (
         <>
-          {config.isMaintenanceMode && !isAdmin && location.pathname !== '/login' ? (
+          {config.isMaintenanceMode && !isAdmin && location.pathname !== '/login' && location.pathname !== '/contact' ? (
             <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6 relative overflow-hidden">
               {/* Animated Background Orbs */}
               <div className="absolute inset-0 overflow-hidden pointer-events-none">

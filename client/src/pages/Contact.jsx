@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 import SEOHead from '../components/SEOHead';
-import { HiMail, HiChatAlt } from 'react-icons/hi';
+import { HiMail, HiChatAlt, HiShieldCheck } from 'react-icons/hi';
 import CustomSelect from '../components/CustomSelect';
 
 const Contact = () => {
@@ -14,6 +15,15 @@ const Contact = () => {
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
+
+  useEffect(() => {
+    api.get('/config').then(res => {
+      if (res.data?.config?.isMaintenanceMode) {
+        setIsMaintenanceMode(true);
+      }
+    }).catch(() => {});
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -39,6 +49,30 @@ const Contact = () => {
         title="Contact Us | Baqala Support"
         description="Get in touch with the Baqala team for support, feedbacks, or reporting issues."
       />
+
+      {isMaintenanceMode && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-10 p-5 bg-amber-500/10 border border-amber-500/30 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-amber-500 dark:text-amber-400 backdrop-blur-md shadow-lg"
+        >
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-amber-500/20 rounded-2xl shrink-0">
+              <HiShieldCheck className="w-6 h-6 text-amber-500" />
+            </div>
+            <div>
+              <p className="text-sm font-black uppercase tracking-wider">Platform Maintenance Active</p>
+              <p className="text-xs font-semibold opacity-90">Systems operation under maintenance. Support inquiries are actively monitored.</p>
+            </div>
+          </div>
+          <Link 
+            to="/" 
+            className="text-xs font-black uppercase tracking-widest bg-amber-500 text-slate-950 px-5 py-2.5 rounded-xl hover:bg-amber-400 transition-all shrink-0 self-end sm:self-center"
+          >
+            System Status Screen
+          </Link>
+        </motion.div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
         {/* Info Section */}
