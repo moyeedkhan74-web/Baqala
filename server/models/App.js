@@ -191,7 +191,23 @@ const appSchema = new mongoose.Schema({
     changelog: { type: String, default: '' },
     releasedAt: { type: Date, default: Date.now },
     rolloutPercentage: { type: Number, default: 100, min: 0, max: 100 }
-  }]
+  }],
+  marketingVariants: [{
+    variantName: { type: String, required: true },
+    icon: { type: String, default: '' },
+    banner: { type: String, default: '' },
+    impressions: { type: Number, default: 0 },
+    downloads: { type: Number, default: 0 }
+  }],
+  earnings: {
+    totalEarned: { type: Number, default: 0 },
+    downloadCredits: { type: Number, default: 0 },
+    payoutHistory: [{
+      amount: { type: Number, required: true },
+      status: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending' },
+      date: { type: Date, default: Date.now }
+    }]
+  }
 }, {
   timestamps: true
 });

@@ -1,5 +1,6 @@
 const Review = require('../models/Review');
 const App = require('../models/App');
+const { dispatchNewReview } = require('../services/webhookNotifier');
 
 exports.createReview = async (req, res) => {
   try {
@@ -34,6 +35,11 @@ exports.createReview = async (req, res) => {
     });
 
     await review.populate('user', 'name avatar');
+
+    const populatedApp = await App.findById(appId);
+    if (populatedApp) {
+      dispatchNewReview(review, populatedApp).catch(() => {});
+    }
 
     res.status(201).json({ review });
   } catch (error) {

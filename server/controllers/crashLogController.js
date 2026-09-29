@@ -1,5 +1,7 @@
 const CrashLog = require('../models/CrashLog');
 const App = require('../models/App');
+const { dispatchCriticalCrash } = require('../services/webhookNotifier');
+const { dispatchCriticalCrash } = require('../services/webhookNotifier');
 
 exports.createCrashLog = async (req, res) => {
   try {
@@ -19,6 +21,10 @@ exports.createCrashLog = async (req, res) => {
       deviceInfo: deviceInfo || {},
       aiDiagnostic: aiDiagnostic || {}
     });
+
+    if (crashLog.aiDiagnostic?.severity === 'critical') {
+      dispatchCriticalCrash(crashLog).catch(() => {});
+    }
 
     res.status(201).json({ message: 'Crash log recorded successfully', crashLog });
   } catch (error) {
@@ -92,6 +98,10 @@ exports.explainCrashWithAI = async (req, res) => {
       severity: crashLog.errorStack.length > 500 ? 'high' : 'medium'
     };
     await crashLog.save();
+
+    if (crashLog.aiDiagnostic?.severity === 'critical') {
+      dispatchCriticalCrash(crashLog).catch(() => {});
+    }
 
     res.json({ message: 'AI Diagnostic complete', aiDiagnostic: crashLog.aiDiagnostic });
   } catch (error) {

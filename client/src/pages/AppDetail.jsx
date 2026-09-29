@@ -22,6 +22,15 @@ const AppDetail = () => {
     return url;
   };
 
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('Copied to clipboard');
+    } catch {
+      toast.error('Failed to copy');
+    }
+  };
+
   const { id } = useParams();
   const { user } = useAuth();
   const [app, setApp] = useState(null);
@@ -473,6 +482,39 @@ const AppDetail = () => {
                   <HiFlag className="w-5 h-5" />
                   Report
                 </button>
+              </div>
+
+              {/* Security & Trust Verification Card */}
+              <div className="glass-panel rounded-3xl p-6 border border-white/10 mt-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <HiShieldCheck className="w-6 h-6 text-accent-neon" />
+                  <h3 className="text-lg font-bold text-white uppercase tracking-wider">Security & Trust Verification</h3>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-2">VirusTotal Status</p>
+                    <p className="text-sm font-black text-emerald-400 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      {(app.vtMaliciousCount || 0) === 0 ? 'Clean' : 'Flagged'}
+                    </p>
+                    <p className="text-[10px] text-gray-500 mt-1">{app.vtMaliciousCount || 0}/{app.vtTotalEngines || 'N/A'} engines</p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-2">AI Risk Audit</p>
+                    <p className="text-sm font-black text-emerald-400 capitalize">{app.aiModeration?.riskLevel || 'Low Risk'}</p>
+                    <p className="text-[10px] text-gray-500 mt-1">Automated moderation</p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-2">SHA-256 Checksum</p>
+                    <p className="text-[10px] font-mono text-gray-300 break-all leading-relaxed">{app.fileHash || 'N/A'}</p>
+                    <button
+                      onClick={() => app.fileHash && copyToClipboard(app.fileHash)}
+                      className="text-[10px] font-bold text-accent-neon mt-2 hover:text-accent-neon/80"
+                    >
+                      Copy Hash
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

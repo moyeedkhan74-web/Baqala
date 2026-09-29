@@ -193,6 +193,25 @@ const DeveloperDashboard = () => {
   const [selectedRelease, setSelectedRelease] = useState(null);
   const [rolloutValue, setRolloutValue] = useState({});
 
+  // API & Integrations tab state
+  const [apiKeys, setApiKeys] = useState([]);
+  const [webhooks, setWebhooks] = useState([]);
+  const [integrationsLoading, setIntegrationsLoading] = useState(false);
+  const [newKeyName, setNewKeyName] = useState('');
+  const [newKeyScopes, setNewKeyScopes] = useState(['read:analytics', 'read:crash_logs']);
+  const [generatedKey, setGeneratedKey] = useState(null);
+  const [webhookForm, setWebhookForm] = useState({ url: '', events: ['crash_critical'], appId: '', secret: '' });
+
+  // A/B Store Experiments tab state
+  const [abAppFilter, setAbAppFilter] = useState('all');
+  const [abLoading, setAbLoading] = useState(false);
+  const [abData, setAbData] = useState({ variants: [], conversionLift: null, trafficSplit: 50 });
+  const [abForm, setAbForm] = useState({ variantName: 'A', icon: '', banner: '' });
+
+  // Revenue & Payouts tab state
+  const [revenueData, setRevenueData] = useState({ totalEarned: 0, downloadCredits: 0, payoutHistory: [] });
+  const [revenueLoading, setRevenueLoading] = useState(false);
+
   // ── Load apps ──────────────────────────────────────────────────────────────
   const loadApps = async () => {
     try {
@@ -247,6 +266,148 @@ const DeveloperDashboard = () => {
     } finally { setReleasesLoading(false); }
   };
 
+  // ── Load integrations ──────────────────────────────────────────────────────
+  const loadIntegrations = async () => {
+    setIntegrationsLoading(true);
+    try {
+      const [keysRes, webhooksRes] = await Promise.all([
+        api.get('/developer/keys'),
+        api.get('/developer/webhooks')
+      ]);
+      setApiKeys(keysRes.data?.keys || []);
+      setWebhooks(webhooksRes.data?.webhooks || []);
+    } catch {
+      setApiKeys([]);
+      setWebhooks([]);
+    } finally { setIntegrationsLoading(false); }
+  };
+
+  // ── API key actions ────────────────────────────────────────────────────────
+  const handleGenerateKey = async () => {
+    if (!newKeyName.trim()) return toast.error('Key name is required');
+    try {
+      const { data } = await api.post('/developer/keys/generate', { name: newKeyName, scopes: newKeyScopes });
+      setGeneratedKey(data.key);
+      setNewKeyName('');
+      setNewKeyScopes(['read:analytics', 'read:crash_logs']);
+      loadIntegrations();
+      toast.success('API key generated');
+    } catch {
+      toast.error('Failed to generate API key');
+    }
+  };
+
+  const handleRevokeKey = async (keyId) => {
+    if (!window.confirm('Revoke this API key? This action cannot be undone.')) return;
+    try {
+      await api.post(`/developer/keys/${keyId}/revoke`);
+      setApiKeys(prev => prev.filter(k => k._id !== keyId));
+      toast.success('API key revoked');
+    } catch {
+      toast.error('Failed to revoke API key');
+    }
+  };
+
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('Copied to clipboard');
+    } catch {
+      toast.error('Failed to copy');
+    }
+  };
+
+  // ── Webhook actions ────────────────────────────────────────────────────────
+  const handleCreateWebhook = async () => {
+    if (!webhookForm.url.trim()) return toast.error('Webhook URL is required');
+    try {
+      await api.post('/developer/webhooks', webhookForm);
+      setWebhookForm({ url: '', events: ['crash_critical'], appId: '', secret: '' });
+      loadIntegrations();
+      toast.success('Webhook created');
+    } catch {
+      toast.error('Failed to create webhook');
+    }
+  };
+
+  const handleDeleteWebhook = async (webhookId) => {
+    if (!window.confirm('Delete this webhook?')) return;
+    try {
+      await api.delete(`/developer/webhooks/${webhookId}`);
+      setWebhooks(prev => prev.filter(w => w._id !== webhookId));
+      toast.success('Webhook deleted');
+    } catch {
+      toast.error('Failed to delete webhook');
+    }
+  };
+
+  const handleTestWebhook = async (webhookId) => {
+    try {
+      await api.post(`/developer/webhooks/${webhookId}/test`);
+      toast.success('Test notification sent');
+    } catch {
+      toast.error('Failed to send test notification');
+    }
+  };
+
+  // ── A/B test actions ────────────────────────────────────────────────────────
+  const loadAbTest = async (appId) => {
+    setAbLoading(true);
+    try {
+      const { data } = await api.get(`/developer/apps/${appId}/ab-test`);
+      setAbData({
+        variants: data?.variants || [],
+        conversionLift: data?.conversionLift,
+        trafficSplit: data?.trafficSplit || 50
+      });
+    } catch {
+      setAbData({ variants: [], conversionLift: null, trafficSplit: 50 });
+    } finally { setAbLoading(false); }
+  };
+
+  const handleUpdateAbTest = async () => {
+    if (!abAppFilter || abAppFilter === 'all') return toast.error('Select an app');
+    try {
+      await api.post(`/developer/apps/${abAppFilter}/ab-test`, {
+        variants: [
+          { variantName: 'A', icon: abForm.icon, banner: abForm.banner },
+          { variantName: 'B', icon: abForm.icon, banner: abForm.banner }
+        ],
+        trafficSplit: 50
+      });
+      toast.success('A/B test updated');
+      loadAbTest(abAppFilter);
+    } catch {
+      toast.error('Failed to update A/B test');
+    }
+  };
+
+  // ── Revenue actions ─────────────────────────────────────────────────────────
+  const loadRevenue = async () => {
+    setRevenueLoading(true);
+    try {
+      const { data } = await api.get('/developer/revenue');
+      setRevenueData({
+        totalEarned: data?.totalEarned || 0,
+        downloadCredits: data?.downloadCredits || 0,
+        payoutHistory: data?.payoutHistory || []
+      });
+    } catch {
+      setRevenueData({ totalEarned: 0, downloadCredits: 0, payoutHistory: [] });
+    } finally { setRevenueLoading(false); }
+  };
+
+  const handlePayoutRequest = async () => {
+    if (revenueData.downloadCredits < 1000) return toast.error('Minimum 1000 credits required for payout');
+    try {
+      await api.post('/developer/revenue/payout', { amount: revenueData.downloadCredits });
+      toast.success('Payout request submitted');
+      loadRevenue();
+    } catch {
+      toast.error('Failed to request payout');
+    }
+  };
+
   // ── Release actions ─────────────────────────────────────────────────────────
   const handleRolloutChange = async (releaseId, value) => {
     setRolloutValue(prev => ({ ...prev, [releaseId]: value }));
@@ -291,6 +452,21 @@ const DeveloperDashboard = () => {
 
   useEffect(() => {
     if (activeTab === 'releases') loadReleases();
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'integrations') loadIntegrations();
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'ab-testing') {
+      if (!abAppFilter || abAppFilter === 'all') return;
+      loadAbTest(abAppFilter);
+    }
+  }, [activeTab, abAppFilter]);
+
+  useEffect(() => {
+    if (activeTab === 'revenue') loadRevenue();
   }, [activeTab]);
 
   // ── Delete app ─────────────────────────────────────────────────────────────
@@ -380,6 +556,9 @@ const DeveloperDashboard = () => {
             { id: 'projects',    label: 'Project Matrix',  icon: HiChartBar },
             { id: 'analytics',   label: 'Analytics & Growth', icon: HiTrendingUp },
             { id: 'releases',    label: 'Release Management', icon: HiTemplate },
+            { id: 'integrations', label: 'API & Integrations', icon: HiLightningBolt },
+            { id: 'ab-testing',  label: 'A/B Store Experiments', icon: HiTemplate },
+            { id: 'revenue',     label: 'Revenue & Payouts', icon: HiLightningBolt },
             { id: 'diagnostics', label: 'App Health',      icon: HiShieldExclamation },
           ].map(tab => (
             <button
@@ -835,6 +1014,310 @@ const DeveloperDashboard = () => {
           </motion.div>
         )}
 
+        {/* ── INTEGRATIONS TAB ───────────────────────────────────────────── */}
+        {activeTab === 'integrations' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 relative z-10">
+            {integrationsLoading ? (
+              <div className="p-20 text-center flex flex-col items-center glass-panel rounded-3xl">
+                <div className="w-12 h-12 border-4 border-accent-violet border-t-transparent rounded-full animate-spin mb-4" />
+                <p className="text-gray-400 font-medium">Loading integrations...</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* API Keys Card */}
+                <div className="glass-panel rounded-3xl p-6 border border-white/10">
+                  <div className="flex items-center gap-3 mb-6">
+                    <HiLightningBolt className="w-6 h-6 text-accent-neon" />
+                    <h2 className="text-xl font-bold text-white uppercase tracking-wider">API Keys</h2>
+                  </div>
+
+                  <div className="space-y-3 mb-6">
+                    <input
+                      type="text"
+                      value={newKeyName}
+                      onChange={(e) => setNewKeyName(e.target.value)}
+                      placeholder="Key name (e.g. CI/CD Pipeline)"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-accent-violet"
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      {['read:analytics', 'write:apps', 'read:crash_logs', 'read:releases', 'write:releases'].map(scope => (
+                        <label key={scope} className="flex items-center gap-2 text-xs text-gray-300">
+                          <input
+                            type="checkbox"
+                            checked={newKeyScopes.includes(scope)}
+                            onChange={(e) => {
+                              setNewKeyScopes(prev => e.target.checked ? [...prev, scope] : prev.filter(s => s !== scope));
+                            }}
+                            className="rounded bg-white/5 border-white/10 text-accent-violet focus:ring-accent-violet"
+                          />
+                          {scope}
+                        </label>
+                      ))}
+                    </div>
+                    <button
+                      onClick={handleGenerateKey}
+                      className="w-full py-3 bg-gradient-to-r from-accent-violet to-accent-neon text-white text-sm font-bold rounded-xl shadow-glow-violet"
+                    >
+                      Generate New Key
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {apiKeys.length === 0 && <p className="text-xs text-gray-500">No API keys yet.</p>}
+                    {apiKeys.map(key => (
+                      <div key={key._id} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
+                        <div>
+                          <p className="text-sm font-bold text-white">{key.name}</p>
+                          <p className="text-[10px] text-gray-500 font-mono">bq_live_...{key.prefix?.slice(-4)} · {key.scopes?.join(', ')}</p>
+                          <p className="text-[10px] text-gray-500">Created {new Date(key.createdAt).toLocaleDateString()} · Last used {key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleDateString() : 'Never'}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-1 rounded-full text-[10px] font-black uppercase border ${key.status === 'active' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
+                            {key.status}
+                          </span>
+                          {key.status === 'active' && (
+                            <button onClick={() => handleRevokeKey(key._id)} className="text-[10px] font-bold text-rose-400 hover:text-rose-300">Revoke</button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Webhooks Card */}
+                <div className="glass-panel rounded-3xl p-6 border border-white/10">
+                  <div className="flex items-center gap-3 mb-6">
+                    <HiLightningBolt className="w-6 h-6 text-accent-neon" />
+                    <h2 className="text-xl font-bold text-white uppercase tracking-wider">Webhooks</h2>
+                  </div>
+
+                  <div className="space-y-3 mb-6">
+                    <input
+                      type="url"
+                      value={webhookForm.url}
+                      onChange={(e) => setWebhookForm(prev => ({ ...prev, url: e.target.value }))}
+                      placeholder="https://discord.com/api/webhooks/..."
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-accent-violet"
+                    />
+                    <CustomSelect
+                      value={webhookForm.appId}
+                      onChange={(val) => setWebhookForm(prev => ({ ...prev, appId: val }))}
+                      options={[{ value: '', label: 'All Apps' }, ...apps.map(a => ({ value: a._id, label: a.title }))]}
+                      placeholder="All Apps"
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      {['crash_critical', 'new_review', 'milestone_download'].map(event => (
+                        <label key={event} className="flex items-center gap-2 text-xs text-gray-300">
+                          <input
+                            type="checkbox"
+                            checked={webhookForm.events.includes(event)}
+                            onChange={(e) => {
+                              setWebhookForm(prev => ({
+                                ...prev,
+                                events: e.target.checked ? [...prev.events, event] : prev.events.filter(ev => ev !== event)
+                              }));
+                            }}
+                            className="rounded bg-white/5 border-white/10 text-accent-violet focus:ring-accent-violet"
+                          />
+                          {event.replace('_', ' ')}
+                        </label>
+                      ))}
+                    </div>
+                    <input
+                      type="text"
+                      value={webhookForm.secret}
+                      onChange={(e) => setWebhookForm(prev => ({ ...prev, secret: e.target.value }))}
+                      placeholder="Optional webhook secret"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-accent-violet"
+                    />
+                    <button
+                      onClick={handleCreateWebhook}
+                      className="w-full py-3 bg-gradient-to-r from-accent-violet to-accent-neon text-white text-sm font-bold rounded-xl shadow-glow-violet"
+                    >
+                      Add Webhook
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {webhooks.length === 0 && <p className="text-xs text-gray-500">No webhooks configured.</p>}
+                    {webhooks.map(webhook => (
+                      <div key={webhook._id} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
+                        <div>
+                          <p className="text-sm font-bold text-white">{webhook.url}</p>
+                          <p className="text-[10px] text-gray-500">{webhook.events?.join(', ')} · {webhook.app?.title || 'All apps'}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => handleTestWebhook(webhook._id)} className="text-[10px] font-bold text-accent-neon hover:text-accent-neon/80">Test</button>
+                          <button onClick={() => handleDeleteWebhook(webhook._id)} className="text-[10px] font-bold text-rose-400 hover:text-rose-300">Delete</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* ── A/B STORE EXPERIMENTS TAB ───────────────────────────────────── */}
+        {activeTab === 'ab-testing' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 relative z-10">
+            <div className="glass-panel p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-white/10">
+              <div className="flex items-center gap-3">
+                <HiTemplate className="w-5 h-5 text-gray-400" />
+                <span className="text-sm text-gray-400 font-bold uppercase tracking-widest">Select App</span>
+              </div>
+              <div className="flex gap-3">
+                <CustomSelect
+                  value={abAppFilter}
+                  onChange={(val) => setAbAppFilter(val)}
+                  options={[{ value: 'all', label: 'Select an app' }, ...apps.map(a => ({ value: a._id, label: a.title }))]}
+                  placeholder="Select an app"
+                />
+                <button
+                  onClick={() => abAppFilter && abAppFilter !== 'all' && loadAbTest(abAppFilter)}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white text-xs font-bold rounded-xl border border-white/10 transition-all"
+                >
+                  <HiRefresh className="w-4 h-4" /> Load
+                </button>
+              </div>
+            </div>
+
+            {abLoading ? (
+              <div className="p-20 text-center flex flex-col items-center glass-panel rounded-3xl">
+                <div className="w-12 h-12 border-4 border-accent-violet border-t-transparent rounded-full animate-spin mb-4" />
+                <p className="text-gray-400 font-medium">Loading experiment data...</p>
+              </div>
+            ) : !abAppFilter || abAppFilter === 'all' ? (
+              <div className="p-24 text-center glass-panel rounded-3xl flex flex-col items-center border border-white/10">
+                <HiTemplate className="w-16 h-16 text-gray-600 mb-6" />
+                <h3 className="text-xl font-bold text-white mb-2">Select an app</h3>
+                <p className="text-gray-500 text-sm max-w-xs">Choose an app from the dropdown above to view or configure A/B experiments.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="glass-panel rounded-3xl p-6 border border-white/10">
+                  <h3 className="text-lg font-bold text-white mb-4">Variant Assets</h3>
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={abForm.icon}
+                      onChange={(e) => setAbForm(prev => ({ ...prev, icon: e.target.value }))}
+                      placeholder="Icon URL (Variant A & B)"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-accent-violet"
+                    />
+                    <input
+                      type="text"
+                      value={abForm.banner}
+                      onChange={(e) => setAbForm(prev => ({ ...prev, banner: e.target.value }))}
+                      placeholder="Banner URL (Variant A & B)"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-accent-violet"
+                    />
+                    <button
+                      onClick={handleUpdateAbTest}
+                      className="w-full py-3 bg-gradient-to-r from-accent-violet to-accent-neon text-white text-sm font-bold rounded-xl shadow-glow-violet"
+                    >
+                      Update Variants
+                    </button>
+                  </div>
+                </div>
+
+                <div className="glass-panel rounded-3xl p-6 border border-white/10">
+                  <h3 className="text-lg font-bold text-white mb-4">Conversion Lift</h3>
+                  {abData.variants.length === 2 ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-400">Variant A</span>
+                        <span className="text-sm font-bold text-white">{(abData.variants[0].downloads / (abData.variants[0].impressions || 1) * 100).toFixed(1)}% CVR</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-400">Variant B</span>
+                        <span className="text-sm font-bold text-white">{(abData.variants[1].downloads / (abData.variants[1].impressions || 1) * 100).toFixed(1)}% CVR</span>
+                      </div>
+                      <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Conversion Lift</p>
+                        <p className="text-2xl font-black text-white">{abData.conversionLift !== null ? `${abData.conversionLift}%` : 'N/A'}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">No A/B test data available yet. Configure variants to start testing.</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* ── REVENUE & PAYOUTS TAB ───────────────────────────────────────── */}
+        {activeTab === 'revenue' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 relative z-10">
+            {revenueLoading ? (
+              <div className="p-20 text-center flex flex-col items-center glass-panel rounded-3xl">
+                <div className="w-12 h-12 border-4 border-accent-violet border-t-transparent rounded-full animate-spin mb-4" />
+                <p className="text-gray-400 font-medium">Loading revenue data...</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="glass-panel rounded-3xl p-6 border border-white/10">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-2">Total Earned</p>
+                  <p className="text-3xl font-black text-white">${revenueData.totalEarned.toFixed(2)}</p>
+                </div>
+                <div className="glass-panel rounded-3xl p-6 border border-white/10">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-2">Download Credits</p>
+                  <p className="text-3xl font-black text-white">{revenueData.downloadCredits.toLocaleString()}</p>
+                </div>
+                <div className="glass-panel rounded-3xl p-6 border border-white/10 flex items-center justify-center">
+                  <button
+                    onClick={handlePayoutRequest}
+                    disabled={revenueData.downloadCredits < 1000}
+                    className="px-6 py-3 bg-gradient-to-r from-accent-violet to-accent-neon text-white text-sm font-bold rounded-xl shadow-glow-violet disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Request Payout
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {!revenueLoading && revenueData.payoutHistory.length > 0 && (
+              <div className="glass-panel rounded-3xl overflow-hidden border border-white/10">
+                <div className="p-6 border-b border-white/10">
+                  <h3 className="text-lg font-bold text-white uppercase tracking-wider">Payout History</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-white/5 text-gray-400 text-[10px] uppercase tracking-[0.2em]">
+                        <th className="p-6 font-bold">App</th>
+                        <th className="p-6 font-bold text-center">Amount</th>
+                        <th className="p-6 font-bold text-center">Status</th>
+                        <th className="p-6 font-bold text-center">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {revenueData.payoutHistory.map((payout, i) => (
+                        <tr key={i} className="group hover:bg-white/[0.02] transition-colors">
+                          <td className="p-6 text-sm font-bold text-white">{payout.appTitle || 'N/A'}</td>
+                          <td className="p-6 text-center text-sm font-bold text-white">${payout.amount.toFixed(2)}</td>
+                          <td className="p-6 text-center">
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                              payout.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
+                              payout.status === 'pending' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
+                              'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                            }`}>
+                              {payout.status}
+                            </span>
+                          </td>
+                          <td className="p-6 text-center text-xs text-gray-500">{new Date(payout.date).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+
         {/* ── DIAGNOSTICS TAB ─────────────────────────────────────────────── */}
         {activeTab === 'diagnostics' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 relative z-10">
@@ -950,6 +1433,36 @@ const DeveloperDashboard = () => {
       {selectedLog && <CrashDrawer log={selectedLog} onClose={() => setSelectedLog(null)} />}
       {/* Changelog Modal */}
       {selectedRelease && <ChangelogModal release={selectedRelease} onClose={() => setSelectedRelease(null)} />}
+      {/* Generated API Key Modal */}
+      {generatedKey && (
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+            onClick={() => setGeneratedKey(null)}
+          >
+            <motion.div
+              initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25 }}
+              className="relative w-full max-w-xl bg-dark-900 rounded-[2rem] p-8 border border-white/10 shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <button onClick={() => setGeneratedKey(null)} className="absolute top-5 right-5 text-gray-500 hover:text-white transition-colors text-2xl leading-none">&times;</button>
+              <h3 className="text-2xl font-bold text-white mb-2">Your New API Key</h3>
+              <p className="text-sm text-gray-400 mb-6">Copy it now. You will not be able to see it again.</p>
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 font-mono text-sm text-white break-all mb-4">
+                {generatedKey}
+              </div>
+              <button
+                onClick={() => copyToClipboard(generatedKey)}
+                className="w-full py-3 bg-gradient-to-r from-accent-violet to-accent-neon text-white text-sm font-bold rounded-xl shadow-glow-violet"
+              >
+                Copy to Clipboard
+              </button>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
+      )}
     </div>
   );
 };

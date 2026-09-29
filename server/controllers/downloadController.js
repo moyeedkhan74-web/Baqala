@@ -1,6 +1,7 @@
 const Download = require('../models/Download');
 const App = require('../models/App');
 const { getDownloadUrl } = require('../utils/b2Storage');
+const { checkMilestone } = require('../services/webhookNotifier');
 
 exports.downloadApp = async (req, res) => {
   try {
@@ -23,6 +24,8 @@ exports.downloadApp = async (req, res) => {
 
     // Increment download counter
     await App.findByIdAndUpdate(app._id, { $inc: { totalDownloads: 1 } });
+
+    checkMilestone(app._id).catch(() => {});
 
     // Return the external file URL so the client can download it directly
     if (!app.fileUrl) {

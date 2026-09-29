@@ -1,7 +1,17 @@
 const App = require('../models/App');
 const Download = require('../models/Download');
 const Review = require('../models/Review');
+const ApiKey = require('../models/ApiKey');
+const Webhook = require('../models/Webhook');
 const mongoose = require('mongoose');
+const crypto = require('crypto');
+
+const hashKey = (rawKey) => crypto.createHash('sha256').update(rawKey).digest('hex');
+
+const extractPrefix = (rawKey) => {
+  const parts = String(rawKey).split('_');
+  return parts.length >= 2 ? `${parts[0]}_${parts[1]}` : String(rawKey).slice(0, 8);
+};
 
 const startOfDay = (date) => {
   const d = new Date(date);
@@ -226,3 +236,302 @@ exports.promoteRelease = async (req, res) => {
     res.status(500).json({ message: 'Server error promoting release.' });
   }
 };
+
+// POST /api/developer/keys/generate
+exports.generateApiKey = async (req, res) => {
+  try {
+    const { name, scopes } = req.body;
+    if (!name || !scopes || !scopes.length) {
+      return res.status(400).json({ message: 'Key name and scopes are required.' });
+    }
+
+    const rawKey = `bq_live_${crypto.randomBytes(24).toString('hex')}`;
+    const prefix = extractPrefix(rawKey);
+    const keyHash = hashKey(rawKey);
+
+    const apiKey = await ApiKey.create({
+      developer: req.user._id,
+      name,
+      prefix,
+      keyHash,
+      scopes
+    });
+
+    res.status(201).json({
+      message: 'API key generated. Save it now, it will not be shown again.',
+      key: rawKey,
+      keyId: apiKey._id,
+      prefix
+    });
+  } catch (error) {
+    console.error('Generate API key error:', error);
+    res.status(500).json({ message: 'Server error generating API key.' });
+  }
+};
+
+// GET /api/developer/keys
+exports.getApiKeys = async (req, res) => {
+  try {
+    const keys = await ApiKey.find({ developer: req.user._id })
+      .select('name prefix createdAt lastUsedAt status scopes')
+      .sort({ createdAt: -1 });
+
+    res.json({ keys });
+  } catch (error) {
+    console.error('Get API keys error:', error);
+    res.status(500).json({ message: 'Server error fetching API keys.' });
+  }
+};
+
+// POST /api/developer/keys/:id/revoke
+exports.revokeApiKey = async (req, res) => {
+  try {
+    const key = await ApiKey.findOne({ _id: req.params.id, developer: req.user._id });
+    if (!key) {
+      return res.status(404).json({ message: 'API key not found.' });
+    }
+
+    key.status = 'revoked';
+    await key.save();
+
+    res.json({ message: 'API key revoked.', keyId: key._id });
+  } catch (error) {
+    console.error('Revoke API key error:', error);
+    res.status(500).json({ message: 'Server error revoking API key.' });
+  }
+};
+
+// POST /api/developer/webhooks
+exports.createWebhook = async (req, res) => {
+  try {
+    const { url, events, appId, secret } = req.body;
+    if (!url || !events || !events.length) {
+      return res.status(400).json({ message: 'Webhook URL and at least one event are required.' });
+    }
+
+    const webhook = await Webhook.create({
+      developer: req.user._id,
+      app: appId || null,
+      url,
+      events,
+      secret: secret || ''
+    });
+
+    res.status(201).json({ message: 'Webhook created.', webhook });
+  } catch (error) {
+    console.error('Create webhook error:', error);
+    res.status(500).json({ message: 'Server error creating webhook.' });
+  }
+};
+
+// GET /api/developer/webhooks
+exports.getWebhooks = async (req, res) => {
+  try {
+    const webhooks = await Webhook.find({ developer: req.user._id })
+      .populate('app', 'title')
+      .sort({ createdAt: -1 });
+
+    res.json({ webhooks });
+  } catch (error) {
+    console.error('Get webhooks error:', error);
+    res.status(500).json({ message: 'Server error fetching webhooks.' });
+  }
+};
+
+// DELETE /api/developer/webhooks/:id
+exports.deleteWebhook = async (req, res) => {
+  try {
+    const webhook = await Webhook.findOne({ _id: req.params.id, developer: req.user._id });
+    if (!webhook) {
+      return res.status(404).json({ message: 'Webhook not found.' });
+    }
+
+    await webhook.deleteOne();
+    res.json({ message: 'Webhook deleted.', webhookId: webhook._id });
+  } catch (error) {
+    console.error('Delete webhook error:', error);
+    res.status(500).json({ message: 'Server error deleting webhook.' });
+  }
+};
+
+// POST /api/developer/webhooks/:id/test
+exports.testWebhook = async (req, res) => {
+  try {
+    const webhook = await Webhook.findOne({ _id: req.params.id, developer: req.user._id });
+    if (!webhook) {
+      return res.status(404).json({ message: 'Webhook not found.' });
+    }
+
+    const axios = require('axios');
+    const payload = {
+      title: '🧪 Test Ping',
+      description: 'This is a test notification from Baqala. Your webhook is configured correctly!',
+      color: 5763719,
+      fields: [
+        { name: 'Status', value: 'Active', inline: true },
+        { name: 'URL', value: webhook.url, inline: true }
+      ]
+    };
+
+    await axios.post(webhook.url, payload, { timeout: 10000 });
+    res.json({ message: 'Test notification sent.' });
+  } catch (error) {
+    console.error('Test webhook error:', error);
+    res.status(500).json({ message: 'Server error sending test webhook.' });
+  }
+};
+
+// POST /api/developer/cli-deploy
+exports.cliDeploy = async (req, res) => {
+  try {
+    const appId = req.body.appId;
+    const channel = req.body.channel;
+    const changelog = req.body.changelog || '';
+    const file = req.file;
+
+    if (!appId || !channel || !file) {
+      return res.status(400).json({ message: 'appId, channel, and APK file are required.' });
+    }
+
+    const validChannels = ['alpha', 'beta', 'stable'];
+    if (!validChannels.includes(channel)) {
+      return res.status(400).json({ message: 'Invalid channel. Use alpha, beta, or stable.' });
+    }
+
+    const app = await App.findOne({ developer: req.user._id, _id: appId });
+    if (!app) {
+      return res.status(404).json({ message: 'App not found.' });
+    }
+
+    // In a real implementation, you would upload the file to B2 here
+    // For now, we'll update the version history with the new deployment
+    const versionEntry = {
+      version: req.body.version || app.version,
+      releaseChannel: channel,
+      fileUrl: app.fileUrl, // Would be updated with new B2 URL
+      fileName: file.originalname,
+      fileSize: file.size,
+      changelog,
+      releasedAt: new Date(),
+      rolloutPercentage: channel === 'stable' ? 100 : 25
+    };
+
+    app.versionHistory.push(versionEntry);
+    app.releaseChannel = channel;
+    app.changelog = changelog;
+    await app.save();
+
+    res.json({ message: 'Deployment successful.', version: versionEntry.version, channel });
+  } catch (error) {
+    console.error('CLI deploy error:', error);
+    res.status(500).json({ message: 'Server error during deployment.' });
+  }
+};
+
+// POST /api/developer/apps/:id/ab-test
+exports.updateAbTest = async (req, res) => {
+  try {
+    const appId = req.params.id;
+    const { variants, trafficSplit } = req.body;
+
+    const app = await App.findOne({ developer: req.user._id, _id: appId });
+    if (!app) {
+      return res.status(404).json({ message: 'App not found.' });
+    }
+
+    if (!variants || !Array.isArray(variants) || variants.length !== 2) {
+      return res.status(400).json({ message: 'Exactly two variants (A and B) are required.' });
+    }
+
+    app.marketingVariants = variants.map(v => ({
+      variantName: v.variantName,
+      icon: v.icon || '',
+      banner: v.banner || '',
+      impressions: 0,
+      downloads: 0
+    }));
+
+    app.abTestTrafficSplit = trafficSplit || 50;
+    await app.save();
+
+    res.json({ message: 'A/B test updated.', variants: app.marketingVariants });
+  } catch (error) {
+    console.error('A/B test error:', error);
+    res.status(500).json({ message: 'Server error updating A/B test.' });
+  }
+};
+
+// GET /api/developer/apps/:id/ab-test
+exports.getAbTest = async (req, res) => {
+  try {
+    const appId = req.params.id;
+    const app = await App.findOne({ developer: req.user._id, _id: appId }).select('marketingVariants abTestTrafficSplit');
+    if (!app) {
+      return res.status(404).json({ message: 'App not found.' });
+    }
+
+    const variants = app.marketingVariants || [];
+    const conversionLift = variants.length === 2 && variants[0].impressions > 0
+      ? (((variants[1].downloads / variants[1].impressions) - (variants[0].downloads / variants[0].impressions)) * 100).toFixed(1)
+      : null;
+
+    res.json({ variants, conversionLift, trafficSplit: app.abTestTrafficSplit });
+  } catch (error) {
+    console.error('Get A/B test error:', error);
+    res.status(500).json({ message: 'Server error fetching A/B test.' });
+  }
+};
+
+// GET /api/developer/revenue
+exports.getRevenue = async (req, res) => {
+  try {
+    const apps = await App.find({ developer: req.user._id }).select('title totalDownloads earnings payoutHistory');
+    const totalEarned = apps.reduce((sum, app) => sum + (app.earnings?.totalEarned || 0), 0);
+    const totalCredits = apps.reduce((sum, app) => sum + (app.earnings?.downloadCredits || 0), 0);
+    const payoutHistory = apps.flatMap(app => (app.earnings?.payoutHistory || []).map(p => ({ ...p, appTitle: app.title })));
+
+    res.json({
+      totalEarned,
+      downloadCredits: totalCredits,
+      payoutHistory: payoutHistory.sort((a, b) => new Date(b.date) - new Date(a.date))
+    });
+  } catch (error) {
+    console.error('Get revenue error:', error);
+    res.status(500).json({ message: 'Server error fetching revenue data.' });
+  }
+};
+
+// POST /api/developer/revenue/payout
+exports.requestPayout = async (req, res) => {
+  try {
+    const { amount } = req.body;
+    if (!amount || amount < 1000) {
+      return res.status(400).json({ message: 'Minimum payout amount is 1000 credits.' });
+    }
+
+    const apps = await App.find({ developer: req.user._id });
+    const totalCredits = apps.reduce((sum, app) => sum + (app.earnings?.downloadCredits || 0), 0);
+
+    if (amount > totalCredits) {
+      return res.status(400).json({ message: 'Insufficient credits.' });
+    }
+
+    const payout = {
+      amount,
+      status: 'pending',
+      date: new Date()
+    };
+
+    await App.updateMany(
+      { developer: req.user._id },
+      { $inc: { 'earnings.downloadCredits': -amount }, $push: { 'earnings.payoutHistory': payout } }
+    );
+
+    res.json({ message: 'Payout request submitted.', payout });
+  } catch (error) {
+    console.error('Request payout error:', error);
+    res.status(500).json({ message: 'Server error requesting payout.' });
+  }
+};
+
+
