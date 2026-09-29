@@ -189,7 +189,8 @@ const appSchema = new mongoose.Schema({
     fileName: { type: String, default: 'app_file' },
     fileSize: { type: Number, default: 0 },
     changelog: { type: String, default: '' },
-    releasedAt: { type: Date, default: Date.now }
+    releasedAt: { type: Date, default: Date.now },
+    rolloutPercentage: { type: Number, default: 100, min: 0, max: 100 }
   }]
 }, {
   timestamps: true
