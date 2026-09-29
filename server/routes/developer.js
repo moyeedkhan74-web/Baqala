@@ -7,9 +7,12 @@ const {
   promoteRelease
 } = require('../controllers/developerController');
 
+const { developerLimiter } = require('../middleware/rateLimiter');
+
 const router = express.Router();
 
 router.use(auth);
+router.use(developerLimiter);
 
 router.get('/analytics', getAnalytics);
 router.get('/releases', getReleases);

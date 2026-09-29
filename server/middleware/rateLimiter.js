@@ -34,4 +34,20 @@ const downloadLimiter = rateLimit({
   legacyHeaders: false
 });
 
-module.exports = { generalLimiter, authLimiter, otpLimiter, downloadLimiter };
+const developerLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { message: 'Too many developer requests, please try again after 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const crashLogLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 30, // Max 30 logs per hour
+  message: { message: 'Crash log reporting limit reached for this hour.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+module.exports = { generalLimiter, authLimiter, otpLimiter, downloadLimiter, developerLimiter, crashLogLimiter };

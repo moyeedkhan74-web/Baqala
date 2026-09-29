@@ -95,9 +95,16 @@ app.get('/api/health', (req, res) => {
 
 app.use(generalLimiter);
 
+const mongoSanitize = require('express-mongo-sanitize');
+
 // Body parsers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// NoSQL Injection Prevention
+app.use(mongoSanitize({
+  replaceWith: '_'
+}));
 
 const userRoutes = require('./routes/users');
 const developerRoutes = require('./routes/developer');
